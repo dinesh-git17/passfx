@@ -90,7 +90,6 @@ FooterKey > .footer-key--key {
     background: #334155;
     color: #f8fafc;
     border: tall #1d4ed8;
-    padding: 1 2;
 }
 
 #password-input:focus {
@@ -102,7 +101,6 @@ FooterKey > .footer-key--key {
     background: #334155;
     color: #f8fafc;
     border: tall #1d4ed8;
-    padding: 1 2;
 }
 
 #confirm-input:focus {
@@ -161,6 +159,7 @@ FooterKey > .footer-key--key {
 
 OptionList {
     background: #1e293b;
+    color: #f8fafc;
     border: round #3b82f6;
     padding: 1 2;
     margin: 1 0;
@@ -173,22 +172,22 @@ OptionList:focus {
 }
 
 OptionList > .option-list--option {
-    padding: 1 2;
+    color: #f8fafc;
 }
 
 OptionList > .option-list--option-highlighted {
     background: #3b82f6;
-    text-style: bold reverse;
-    padding: 1 2;
+    color: #0f172a;
+    text-style: bold;
 }
 
 OptionList > .option-list--option-hover {
     background: #334155;
+    color: #f8fafc;
 }
 
 OptionList > .option-list--option-disabled {
     color: #64748b;
-    padding: 0 2;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -239,7 +238,6 @@ Input {
     background: #334155;
     color: #f8fafc;
     border: tall #475569;
-    padding: 0 1;
     margin: 0 0 1 0;
 }
 
