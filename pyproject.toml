@@ -37,9 +37,9 @@ dependencies = [
 passfx = "passfx.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/passfx/passfx"
-Documentation = "https://github.com/passfx/passfx#readme"
-Issues = "https://github.com/passfx/passfx/issues"
+Homepage = "https://github.com/dinesh-git17/passfx"
+Documentation = "https://github.com/dinesh-git17/passfx#readme"
+Issues = "https://github.com/dinesh-git17/passfx/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["passfx"]
