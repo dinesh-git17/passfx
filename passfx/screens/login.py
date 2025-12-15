@@ -7,26 +7,22 @@ from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Vertical
+from textual.containers import Center, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Input, Label, Static
 
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
 
-# ASCII Logo with Rich markup
-LOGO = """
-[bold #00d4ff]╔════════════════════════════════════════════════════════════╗[/]
-[bold #00d4ff]║[/]                                                            [bold #00d4ff]║[/]
-[bold #00d4ff]║[/]  [bold #00d4ff]██████╗  █████╗ ███████╗███████╗███████╗██╗  ██╗[/]  [bold #00d4ff]║[/]
-[bold #00d4ff]║[/]  [bold #00d4ff]██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝╚██╗██╔╝[/]  [bold #00d4ff]║[/]
-[bold #00d4ff]║[/]  [bold #00d4ff]██████╔╝███████║███████╗███████╗█████╗   ╚███╔╝[/]   [bold #00d4ff]║[/]
-[bold #00d4ff]║[/]  [bold #00d4ff]██╔═══╝ ██╔══██║╚════██║╚════██║██╔══╝   ██╔██╗[/]   [bold #00d4ff]║[/]
-[bold #00d4ff]║[/]  [bold #00d4ff]██║     ██║  ██║███████║███████║██║     ██╔╝ ██╗[/]  [bold #00d4ff]║[/]
-[bold #00d4ff]║[/]  [bold #00d4ff]╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚═╝  ╚═╝[/]  [bold #00d4ff]║[/]
-[bold #00d4ff]║[/]                                                            [bold #00d4ff]║[/]
-[bold #00d4ff]╚════════════════════════════════════════════════════════════╝[/]
-"""
+# Single-line ASCII Logo for split-view layout
+LOGO = """[bold #00d4ff]
+██████╗  █████╗ ███████╗███████╗███████╗██╗  ██╗
+██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝╚██╗██╔╝
+██████╔╝███████║███████╗███████╗█████╗   ╚███╔╝
+██╔═══╝ ██╔══██║╚════██║╚════██║██╔══╝   ██╔██╗
+██║     ██║  ██║███████║███████║██║     ██╔╝ ██╗
+╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚═╝  ╚═╝
+[/]"""
 
 TAGLINES = [
     "Your secrets are safe with us. Probably.",
@@ -43,7 +39,7 @@ TAGLINES = [
 
 
 class LoginScreen(Screen):
-    """Login screen with logo, password input, and unlock button."""
+    """Login screen with split-view: logo on left, form on right."""
 
     BINDINGS = [
         Binding("enter", "submit", "Submit", show=False),
@@ -56,38 +52,48 @@ class LoginScreen(Screen):
         self.max_attempts = 3
 
     def compose(self) -> ComposeResult:
-        """Create the login screen layout."""
+        """Create the split-view login screen layout."""
         app: PassFXApp = self.app  # type: ignore
 
         with Center():
-            with Vertical(id="login-container"):
-                yield Static(LOGO, id="logo")
-                yield Static(f'[italic #ff006e]"{random.choice(TAGLINES)}"[/]', id="tagline")
+            with Horizontal(id="login-container"):
+                # Left pane: Logo and tagline
+                with Vertical(id="login-sidebar"):
+                    yield Static(LOGO, id="logo")
+                    yield Static(
+                        f'[italic #ff006e]"{random.choice(TAGLINES)}"[/]',
+                        id="tagline",
+                    )
 
-                if app.vault.exists and not self.new_vault:
-                    yield Label("Enter your master password to unlock", classes="muted")
-                    yield Input(
-                        placeholder="Master Password",
-                        password=True,
-                        id="password-input",
-                    )
-                    yield Button("Unlock", variant="primary", id="unlock-button")
-                else:
-                    yield Label("Create a new vault", classes="title")
-                    yield Label("Choose a strong master password", classes="muted")
-                    yield Input(
-                        placeholder="Master Password",
-                        password=True,
-                        id="password-input",
-                    )
-                    yield Input(
-                        placeholder="Confirm Password",
-                        password=True,
-                        id="confirm-input",
-                    )
-                    yield Button("Create Vault", variant="primary", id="create-button")
+                # Right pane: Form
+                with Vertical(id="login-form"):
+                    if app.vault.exists and not self.new_vault:
+                        yield Static("[bold #60a5fa]Welcome Back[/]", id="form-title")
+                        yield Label("Enter your master password", classes="muted")
+                        yield Input(
+                            placeholder="Master Password",
+                            password=True,
+                            id="password-input",
+                        )
+                        yield Button("Unlock", variant="primary", id="unlock-button")
+                    else:
+                        yield Static("[bold #60a5fa]Create Vault[/]", id="form-title")
+                        yield Label("Choose a strong master password", classes="muted")
+                        yield Input(
+                            placeholder="Master Password",
+                            password=True,
+                            id="password-input",
+                        )
+                        yield Input(
+                            placeholder="Confirm Password",
+                            password=True,
+                            id="confirm-input",
+                        )
+                        yield Button(
+                            "Create Vault", variant="primary", id="create-button"
+                        )
 
-                yield Static("", id="error-message")
+                    yield Static("", id="error-message")
 
     def on_mount(self) -> None:
         """Focus the password input on mount."""

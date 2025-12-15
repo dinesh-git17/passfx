@@ -64,23 +64,41 @@ FooterKey > .footer-key--key {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 #login-container {
-    width: 70;
+    width: auto;
     height: auto;
     background: #1e293b;
     border: double #3b82f6;
     padding: 2 4;
     margin: 2;
+    align: center middle;
+}
+
+#login-sidebar {
+    width: 55;
+    height: auto;
+    padding: 1 2;
+}
+
+#login-form {
+    width: 40;
+    height: auto;
+    padding: 1 2;
+}
+
+#form-title {
+    text-align: left;
+    padding: 1 0;
 }
 
 #logo {
     color: #60a5fa;
-    text-align: center;
+    text-align: left;
     padding: 1 0;
 }
 
 #tagline {
     color: #8b5cf6;
-    text-align: center;
+    text-align: left;
     text-style: italic;
     padding: 0 0 2 0;
 }
