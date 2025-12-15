@@ -148,13 +148,118 @@ FooterKey > .footer-key--key {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   MAIN MENU SCREEN
+   MAIN MENU - COMMAND CENTER
    ═══════════════════════════════════════════════════════════════════════════ */
 
-#menu-container {
-    width: 80;
+#main-container {
+    width: 100%;
+    height: 100%;
+}
+
+#sidebar {
+    width: 28;
+    height: 100%;
+    background: #0f172a;
+    border-right: heavy #1d4ed8;
+    padding: 1 1;
+}
+
+#sidebar-logo {
+    text-align: center;
+    padding: 1 0;
+    margin-bottom: 1;
+}
+
+#sidebar-menu {
+    background: transparent;
+    border: none;
     height: auto;
-    padding: 2;
+    padding: 0;
+    margin: 0;
+}
+
+#sidebar-menu:focus {
+    border: none;
+}
+
+#sidebar-menu > .option-list--option-highlighted {
+    background: #3b82f6;
+    color: #0f172a;
+    text-style: bold;
+}
+
+#sidebar-version {
+    dock: bottom;
+    text-align: center;
+    padding: 1 0;
+    color: #475569;
+}
+
+#dashboard-view {
+    width: 1fr;
+    height: 100%;
+    background: #1e293b;
+    padding: 1 2;
+}
+
+#dashboard-title {
+    text-align: center;
+    padding: 1 0;
+    margin-bottom: 1;
+}
+
+#stats-row {
+    height: auto;
+    align: center middle;
+    padding: 1 0;
+}
+
+.stat-card {
+    width: 16;
+    height: 4;
+    background: #0f172a;
+    border: tall #3b82f6;
+    text-align: center;
+    content-align: center middle;
+    padding: 0;
+    margin: 0 1;
+    color: #22c55e;
+    text-style: bold;
+    /* Remove default button styling */
+    border-top: tall #3b82f6;
+    border-bottom: tall #3b82f6;
+}
+
+.stat-card:hover {
+    background: #1e293b;
+    border: tall #60a5fa;
+    border-top: tall #60a5fa;
+    border-bottom: tall #60a5fa;
+}
+
+.stat-card:focus {
+    background: #334155;
+    border: tall #60a5fa;
+    border-top: tall #60a5fa;
+    border-bottom: tall #60a5fa;
+    color: #22c55e;
+}
+
+.gauge-panel {
+    height: auto;
+    background: #0f172a;
+    border: heavy #3b82f6;
+    padding: 1 2;
+    margin: 1 0;
+    text-align: center;
+}
+
+.log-panel {
+    height: auto;
+    background: #0f172a;
+    border: heavy #1d4ed8;
+    padding: 1 2;
+    margin: 1 0;
 }
 
 .title {
