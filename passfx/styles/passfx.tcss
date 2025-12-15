@@ -694,3 +694,64 @@ Toast.-warning {
 Toast.-error {
     border: solid #ef4444;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMMAND PALETTE - NETRUNNER THEME
+   Purple accent for System/Command distinction (Blue = Data, Purple = System)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+CommandPalette {
+    background: $pfx-bg;
+    border: heavy $pfx-accent;
+    width: 60%;
+    height: auto;
+    padding: 0;
+}
+
+CommandPalette > Input {
+    background: transparent;
+    border: none;
+    border-bottom: heavy $pfx-accent;
+    padding: 1 2;
+    color: $pfx-fg;
+}
+
+CommandPalette > Input:focus {
+    border-bottom: heavy #a78bfa;
+}
+
+CommandPalette > Input > .input--placeholder {
+    color: $pfx-muted;
+}
+
+CommandPalette > Vertical {
+    background: transparent;
+    padding: 0;
+}
+
+CommandPalette OptionList {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+CommandPalette OptionList:focus {
+    border: none;
+}
+
+CommandPalette OptionList > .option-list--option {
+    padding: 1 2;
+    color: $pfx-muted;
+}
+
+CommandPalette OptionList > .option-list--option-highlighted {
+    background: $pfx-accent;
+    color: $pfx-bg;
+    text-style: bold;
+}
+
+CommandPalette OptionList > .option-list--option-hover {
+    background: $pfx-accent-dim;
+    color: $pfx-fg;
+}
