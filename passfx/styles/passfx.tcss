@@ -1,0 +1,536 @@
+/* PassFX - Modern Cyberpunk Theme */
+/* A visually stunning terminal UI */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLOR PALETTE - Using pfx- prefix to avoid Textual theme conflicts
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+$pfx-primary: #3b82f6;
+$pfx-primary-dim: #1d4ed8;
+$pfx-primary-light: #60a5fa;
+$pfx-accent: #8b5cf6;
+$pfx-accent-dim: #6d28d9;
+$pfx-success: #22c55e;
+$pfx-warning: #f59e0b;
+$pfx-error: #ef4444;
+$pfx-bg: #0f172a;
+$pfx-surface: #1e293b;
+$pfx-surface-light: #334155;
+$pfx-surface-lighter: #475569;
+$pfx-fg: #f8fafc;
+$pfx-muted: #94a3b8;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Screen {
+    background: #0f172a;
+    color: $foreground;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEADER & FOOTER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Header {
+    background: #1e293b;
+    color: #60a5fa;
+    text-style: bold;
+    height: 1;
+    dock: top;
+}
+
+Footer {
+    background: #1e293b;
+    color: #94a3b8;
+    height: 1;
+    dock: bottom;
+}
+
+FooterKey {
+    background: #1e293b;
+    color: #60a5fa;
+}
+
+FooterKey > .footer-key--key {
+    background: #3b82f6;
+    color: #0f172a;
+    text-style: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN SCREEN
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#login-container {
+    width: 70;
+    height: auto;
+    background: #1e293b;
+    border: double #3b82f6;
+    padding: 2 4;
+    margin: 2;
+}
+
+#logo {
+    color: #60a5fa;
+    text-align: center;
+    padding: 1 0;
+}
+
+#tagline {
+    color: #8b5cf6;
+    text-align: center;
+    text-style: italic;
+    padding: 0 0 2 0;
+}
+
+#password-input {
+    margin: 1 2;
+    background: #334155;
+    color: #f8fafc;
+    border: tall #1d4ed8;
+    padding: 1 2;
+}
+
+#password-input:focus {
+    border: tall #3b82f6;
+}
+
+#confirm-input {
+    margin: 1 2;
+    background: #334155;
+    color: #f8fafc;
+    border: tall #1d4ed8;
+    padding: 1 2;
+}
+
+#confirm-input:focus {
+    border: tall #3b82f6;
+}
+
+#unlock-button, #create-button {
+    margin: 2 2 1 2;
+    width: 100%;
+    background: #3b82f6;
+    color: #0f172a;
+    text-style: bold;
+    border: none;
+    padding: 1 2;
+}
+
+#unlock-button:hover, #create-button:hover {
+    background: #8b5cf6;
+}
+
+#error-message {
+    color: #ef4444;
+    text-align: center;
+    text-style: bold;
+    padding: 1;
+    margin: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN MENU SCREEN
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#menu-container {
+    width: 80;
+    height: auto;
+    padding: 2;
+}
+
+.title {
+    color: #60a5fa;
+    text-style: bold;
+    text-align: center;
+    padding: 1 0;
+}
+
+.subtitle {
+    color: #94a3b8;
+    text-align: center;
+    text-style: italic;
+    padding: 0 0 2 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OPTION LIST - THE STAR OF THE SHOW
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+OptionList {
+    background: #1e293b;
+    border: round #3b82f6;
+    padding: 1 2;
+    margin: 1 0;
+    height: auto;
+    max-height: 20;
+}
+
+OptionList:focus {
+    border: round #60a5fa;
+}
+
+OptionList > .option-list--option {
+    padding: 1 2;
+}
+
+OptionList > .option-list--option-highlighted {
+    background: #3b82f6;
+    text-style: bold reverse;
+    padding: 1 2;
+}
+
+OptionList > .option-list--option-hover {
+    background: #334155;
+}
+
+OptionList > .option-list--option-disabled {
+    color: #64748b;
+    padding: 0 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DATA TABLE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+DataTable {
+    background: #1e293b;
+    color: #f8fafc;
+    border: round #1d4ed8;
+    padding: 0;
+    margin: 1 0;
+    height: auto;
+    max-height: 15;
+}
+
+DataTable:focus {
+    border: round #3b82f6;
+}
+
+DataTable > .datatable--header {
+    background: #334155;
+    color: #60a5fa;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #3b82f6;
+    color: #0f172a;
+    text-style: bold;
+}
+
+DataTable > .datatable--even-row {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+DataTable > .datatable--odd-row {
+    background: #334155;
+    color: #f8fafc;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INPUT FIELDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Input {
+    background: #334155;
+    color: #f8fafc;
+    border: tall #475569;
+    padding: 0 1;
+    margin: 0 0 1 0;
+}
+
+Input:focus {
+    border: tall #3b82f6;
+}
+
+Input.-invalid {
+    border: tall #ef4444;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Button {
+    background: #334155;
+    color: #60a5fa;
+    border: solid #1d4ed8;
+    text-style: bold;
+    min-width: 10;
+    width: auto;
+    height: auto;
+    padding: 1 3;
+    margin: 0 1;
+}
+
+Button:hover {
+    background: #1d4ed8;
+    color: #f8fafc;
+    border: solid #3b82f6;
+}
+
+Button:focus {
+    background: #3b82f6;
+    color: #0f172a;
+    border: solid #3b82f6;
+    text-style: bold;
+}
+
+Button.-primary {
+    background: #3b82f6;
+    color: #0f172a;
+    border: solid #3b82f6;
+}
+
+Button.-primary:hover {
+    background: #8b5cf6;
+    border: solid #8b5cf6;
+}
+
+Button.-error {
+    background: #ef4444;
+    color: #f8fafc;
+    border: solid #ef4444;
+}
+
+Button.-error:hover {
+    background: #8b5cf6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LABELS & TEXT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Label {
+    padding: 1 0 0 0;
+    color: #94a3b8;
+}
+
+Static {
+    padding: 0;
+    color: $foreground;
+}
+
+.info {
+    color: #3b82f6;
+}
+
+.warning {
+    color: #f59e0b;
+}
+
+.error {
+    color: #ef4444;
+}
+
+.success {
+    color: #22c55e;
+}
+
+.muted {
+    color: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTAINERS & LAYOUT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Horizontal {
+    height: auto;
+    align: center middle;
+}
+
+Vertical {
+    height: auto;
+}
+
+Center {
+    align: center middle;
+}
+
+.box {
+    background: #1e293b;
+    color: #f8fafc;
+    border: round #1d4ed8;
+    padding: 1 2;
+    margin: 1 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACTION BAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#action-bar {
+    dock: bottom;
+    height: auto;
+    min-height: 5;
+    background: #1e293b;
+    border-top: solid #475569;
+    padding: 1 2;
+    align: center middle;
+}
+
+#action-bar Button {
+    margin: 0 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PASSWORD STRENGTH
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#strength-bar {
+    height: 1;
+    margin: 1 0;
+}
+
+.strength-weak { color: #ef4444; }
+.strength-fair { color: #f59e0b; }
+.strength-good { color: #22c55e; }
+.strength-strong { color: #3b82f6; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL SCREENS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+ModalScreen {
+    align: center middle;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#modal-container {
+    width: 70;
+    height: auto;
+    background: #1e293b;
+    color: #f8fafc;
+    border: double #3b82f6;
+    padding: 2 3;
+}
+
+#modal-title {
+    text-style: bold;
+    color: #60a5fa;
+    text-align: center;
+    padding: 0 0 1 0;
+    border-bottom: solid #475569;
+    margin-bottom: 1;
+}
+
+#modal-content {
+    padding: 1 0;
+    color: #f8fafc;
+}
+
+#modal-buttons {
+    padding: 2 0 0 0;
+    align: center middle;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GENERATOR SCREEN
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#password-options, #passphrase-options, #pin-options {
+    background: #1e293b;
+    color: #f8fafc;
+    border: round #475569;
+    padding: 1 2;
+    margin: 1 0;
+}
+
+#result-display {
+    background: #334155;
+    color: #22c55e;
+    border: double #22c55e;
+    padding: 2;
+    margin: 2 0;
+    text-align: center;
+    min-height: 3;
+}
+
+#strength-display {
+    text-align: center;
+    color: #94a3b8;
+    padding: 1 0;
+}
+
+#generate-button {
+    width: 100%;
+    margin: 1 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHECKBOX
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Checkbox {
+    background: transparent;
+    color: #f8fafc;
+    padding: 1 0;
+}
+
+Checkbox:focus {
+    background: #334155;
+}
+
+Checkbox > .toggle--button {
+    background: #475569;
+}
+
+Checkbox.-on > .toggle--button {
+    background: #3b82f6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBARS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Scrollbar {
+    background: #1e293b;
+}
+
+ScrollBar > .scrollbar--bar {
+    background: #1d4ed8;
+}
+
+ScrollBar > .scrollbar--bar:hover {
+    background: #3b82f6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATS DISPLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#stats-display {
+    background: #1e293b;
+    color: #f8fafc;
+    border: round #1d4ed8;
+    padding: 2;
+    margin: 2 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOAST NOTIFICATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Toast {
+    background: #1e293b;
+    color: #f8fafc;
+    border: solid #3b82f6;
+    padding: 1 2;
+}
+
+Toast.-information {
+    border: solid #3b82f6;
+}
+
+Toast.-warning {
+    border: solid #f59e0b;
+}
+
+Toast.-error {
+    border: solid #ef4444;
+}
