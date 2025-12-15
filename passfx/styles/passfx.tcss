@@ -26,7 +26,7 @@ $pfx-muted: #94a3b8;
 
 Screen {
     background: #0f172a;
-    color: $foreground;
+    color: $pfx-fg;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -312,7 +312,7 @@ Label {
 
 Static {
     padding: 0;
-    color: $foreground;
+    color: $pfx-fg;
 }
 
 .info {
