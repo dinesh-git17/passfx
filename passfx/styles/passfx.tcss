@@ -38,7 +38,6 @@ Screen {
     height: auto;
     dock: top;
     background: #0f172a;
-    border-bottom: solid #1d4ed8;
     padding: 1 0 0 0;
 }
 
@@ -78,7 +77,6 @@ Footer {
     color: #94a3b8;
     height: auto;
     dock: bottom;
-    border-top: solid #1d4ed8;
     padding: 0 0 1 0;
 }
 
@@ -238,12 +236,15 @@ FooterKey > .footer-key--description {
     width: 1fr;
     height: 100%;
     background: #1e293b;
-    padding: 1 2;
+    padding: 0 2 0 2;
+    border-top: solid #1d4ed8;
+    border-bottom: solid #1d4ed8;
 }
 
 #dashboard-title {
     text-align: center;
     padding: 1 0;
+    margin-top: 1;
     margin-bottom: 1;
 }
 
