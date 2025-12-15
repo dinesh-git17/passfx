@@ -30,33 +30,72 @@ Screen {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   HEADER & FOOTER
+   CUSTOM HEADER - SYSTEM STATUS BAR
    ═══════════════════════════════════════════════════════════════════════════ */
 
-Header {
-    background: #1e293b;
-    color: #60a5fa;
-    text-style: bold;
-    height: 1;
+#app-header {
+    width: 100%;
+    height: auto;
     dock: top;
+    background: #0f172a;
+    border-bottom: solid #1d4ed8;
+    padding: 1 0 0 0;
 }
 
-Footer {
-    background: #1e293b;
-    color: #94a3b8;
-    height: 1;
-    dock: bottom;
+#app-header > Static {
+    height: auto;
 }
 
-FooterKey {
-    background: #1e293b;
-    color: #60a5fa;
-}
-
-FooterKey > .footer-key--key {
+#header-branding {
     background: #3b82f6;
     color: #0f172a;
     text-style: bold;
+    padding: 0 1;
+    width: auto;
+}
+
+#header-status {
+    width: 1fr;
+    color: #475569;
+    text-align: center;
+    content-align: center middle;
+    padding-left: 28;
+}
+
+#header-lock {
+    color: #22c55e;
+    padding: 0 1;
+    text-style: bold;
+    width: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER - COMMAND STRIP
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+Footer {
+    background: #0f172a;
+    color: #94a3b8;
+    height: auto;
+    dock: bottom;
+    border-top: solid #1d4ed8;
+    padding: 0 0 1 0;
+}
+
+FooterKey {
+    background: transparent;
+    color: #94a3b8;
+    padding: 0 1;
+}
+
+FooterKey > .footer-key--key {
+    background: transparent;
+    color: #8b5cf6;
+    text-style: bold;
+}
+
+FooterKey > .footer-key--description {
+    color: #64748b;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

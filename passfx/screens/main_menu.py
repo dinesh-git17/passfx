@@ -11,7 +11,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, OptionList, Static
+from textual.widgets import Button, Footer, OptionList, Static
 from textual.widgets.option_list import Option
 
 from passfx.utils.strength import check_strength
@@ -70,7 +70,11 @@ class MainMenuScreen(Screen):
 
     def compose(self) -> ComposeResult:
         """Create the command center layout."""
-        yield Header()
+        # Custom header - System Status Bar
+        with Horizontal(id="app-header"):
+            yield Static(" PASSFX ", id="header-branding")
+            yield Static("░░ SECURITY COMMAND CENTER ░░", id="header-status")
+            yield Static("🔓 DECRYPTED", id="header-lock")
 
         with Horizontal(id="main-container"):
             # Left pane: Navigation sidebar
