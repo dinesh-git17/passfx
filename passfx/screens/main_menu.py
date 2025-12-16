@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING
 
+from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
@@ -56,6 +57,24 @@ SIDEBAR_LOGO = """[bold #00d4ff]╔═══════════════
 VERSION = "v1.0.0"
 
 
+def _make_menu_item(code: str, label: str) -> Text:
+    """Create a menu item with fixed-width icon and label columns.
+
+    Args:
+        code: The short code (e.g., "KEY", "PIN")
+        label: The menu item label
+
+    Returns:
+        Rich Text object with consistent formatting
+    """
+    text = Text()
+    # Icon part: Cyan/Blue, fixed width 7 chars, centered
+    text.append(f"{code:^7}", style="bold #3b82f6")
+    # Label part: White, bold
+    text.append(f" {label}", style="bold white")
+    return text
+
+
 class MainMenuScreen(Screen):
     """Security Command Center - main dashboard with navigation sidebar."""
 
@@ -76,12 +95,12 @@ class MainMenuScreen(Screen):
             with Vertical(id="sidebar"):
                 yield Static(SIDEBAR_LOGO, id="sidebar-logo")
                 yield OptionList(
-                    Option("  [ KEY ]  Passwords  ", id="passwords"),
-                    Option("  [ PIN ]  Phones     ", id="phones"),
-                    Option("  [ CRD ]  Cards      ", id="cards"),
-                    Option("  [ GEN ]  Generator  ", id="generator"),
-                    Option("  [ SET ]  Settings   ", id="settings"),
-                    Option("  [ EXIT ] Quit       ", id="exit"),
+                    Option(_make_menu_item("KEY", "Passwords"), id="passwords"),
+                    Option(_make_menu_item("PIN", "Phones"), id="phones"),
+                    Option(_make_menu_item("CRD", "Cards"), id="cards"),
+                    Option(_make_menu_item("GEN", "Generator"), id="generator"),
+                    Option(_make_menu_item("SET", "Settings"), id="settings"),
+                    Option(_make_menu_item("EXIT", "Quit"), id="exit"),
                     id="sidebar-menu",
                 )
 

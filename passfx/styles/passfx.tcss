@@ -109,7 +109,7 @@ FooterKey > .footer-key--description {
 #footer-version {
     width: 28;
     height: 100%;
-    background: #0f172a;
+    background: #0a0e27;
     color: #475569;
     content-align: center middle;
 }
