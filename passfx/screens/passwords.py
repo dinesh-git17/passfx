@@ -300,13 +300,7 @@ class PasswordsScreen(Screen):
         if table.cursor_row is None:
             return None
 
-        try:
-            row_key = table.get_row_at(table.cursor_row)
-            cred_id = table.get_row_key(row_key).value if hasattr(table.get_row_key(row_key), 'value') else str(row_key)
-        except Exception:
-            return None
-
-        # Get credentials and find by index
+        # Get credentials and find by cursor row index
         credentials = app.vault.get_emails()
         if 0 <= table.cursor_row < len(credentials):
             return credentials[table.cursor_row]
