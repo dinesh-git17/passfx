@@ -209,23 +209,20 @@ class MainMenuScreen(Screen):
         gauge_widget.border_title = "SECURITY SCORE"
         gauge_widget.update("\n".join(gauge_lines))
 
-        # System log with timestamps (title goes in border)
+        # System log with bracketed timestamps (terminal buffer style)
         ts = datetime.now().strftime("%H:%M:%S")
         status_lines = [
-            f"[dim]{ts}[/] [bold #22c55e]➜[/] Vault filesystem mounted (AES-256)",
-            f"[dim]{ts}[/] [bold #22c55e]➜[/] Session active (User: Admin)",
-            f"[dim]{ts}[/] [bold #3b82f6]i[/] Indexing complete: {total} records loaded",
-            f"[dim]{ts}[/] [bold #22c55e]✓[/] Encryption verified (PBKDF2-SHA256)",
-            f"[dim]{ts}[/] [bold #8b5cf6]~[/] Auto-lock: 5 min timeout active",
+            f"[dim #555555][{ts}][/] [bold #22c55e]➜[/] VAULT MOUNTED (AES-256)",
+            f"[dim #555555][{ts}][/] [bold #3b82f6]i[/] INDEXED: {total} ITEMS",
+            f"[dim #555555][{ts}][/] [bold #22c55e]✓[/] ENCRYPTION VERIFIED",
         ]
 
         if analysis.issues:
-            status_lines.append("")
-            for issue in analysis.issues[:3]:  # Limit to 3 issues
-                status_lines.append(f"[dim]{ts}[/] [bold #ef4444]![/] {issue}")
+            for issue in analysis.issues[:2]:  # Limit to 2 issues
+                status_lines.append(f"[dim #555555][{ts}][/] [bold #ef4444]![/] {issue.upper()}")
         else:
-            status_lines.append(f"[dim]{ts}[/] [bold #22c55e]✓[/] No security issues detected")
-            status_lines.append(f"[dim]{ts}[/] [bold #3b82f6]i[/] System ready")
+            status_lines.append(f"[dim #555555][{ts}][/] [bold #22c55e]✓[/] SECURITY AUDIT: PASS")
+            status_lines.append(f"[dim #555555][{ts}][/] [bold #3b82f6]i[/] SYSTEM READY")
 
         log_widget = self.query_one("#system-log", Static)
         log_widget.border_title = "SYSTEM LOG"
@@ -380,19 +377,20 @@ class MainMenuScreen(Screen):
     def _build_strength_histogram(
         self, analysis: SecurityAnalysis, score_color: str
     ) -> list[str]:
-        """Build a horizontal bar chart of password strength distribution."""
+        """Build a VFD-style segmented gauge with strength distribution."""
         lines: list[str] = []
 
-        # Overall score header
+        # VFD-style segmented gauge (20 segments)
         num_segments = 20
         filled = int((analysis.score / 100) * num_segments)
         empty = num_segments - filled
-        bar_str = f"[{score_color}]{'|' * filled}[/][dim #334155]{'·' * empty}[/]"
+        # Use pipe characters for retro LED/VFD look
+        bar_str = f"[{score_color}]{'▮' * filled}[/][dim #222222]{'·' * empty}[/]"
         lines.append(f"{bar_str}  [bold {score_color}]{analysis.score}%[/]")
         lines.append("")
 
         if not analysis.password_scores:
-            lines.append("[dim]No passwords to analyze[/]")
+            lines.append("[dim #555555]No passwords to analyze[/]")
             return lines
 
         # Count occurrences of each strength level (0-4)
@@ -420,7 +418,6 @@ class MainMenuScreen(Screen):
 
         # Add issue summary if any
         if analysis.reused_passwords > 0 or analysis.weak_pins > 0:
-            lines.append("")
             if analysis.reused_passwords > 0:
                 lines.append(f"[#ef4444]⚠ Reused:[/] {analysis.reused_passwords}")
             if analysis.weak_pins > 0:

@@ -4,6 +4,17 @@ from __future__ import annotations
 
 import sys
 
+import setproctitle
+
+# Terminal title - shown in terminal tab/window
+TERMINAL_TITLE = "PassFX | Your passwords. Offline. Encrypted. Yours."
+
+
+def set_terminal_title(title: str) -> None:
+    """Set the terminal window/tab title using ANSI escape sequence."""
+    sys.stdout.write(f"\033]0;{title}\007")
+    sys.stdout.flush()
+
 
 def main() -> int:
     """Main entry point for PassFX.
@@ -12,6 +23,10 @@ def main() -> int:
         Exit code (0 for success).
     """
     from passfx.app import PassFXApp
+
+    # Set process title (removes "Python" from terminal tab)
+    setproctitle.setproctitle("PassFX")
+    set_terminal_title(TERMINAL_TITLE)
 
     app = PassFXApp()
     app.run()

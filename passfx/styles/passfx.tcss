@@ -356,15 +356,17 @@ FooterKey > .footer-key--description {
     align: center top;
 }
 
+/* CRT-style dashboard panels - deep recessed screen effect */
 .gauge-panel {
     width: 1fr;
     height: auto;
-    min-height: 8;
-    background: $pfx-bg;
-    border: heavy $pfx-primary;
+    min-height: 10;
+    background: #02040a;
+    border: heavy $pfx-primary-dim;
     border-title-color: $pfx-primary-light;
     border-title-style: bold;
-    padding: 2 2 1 2;
+    border-title-background: #02040a;
+    padding: 1 2;
     margin: 1 1 1 0;
     text-align: center;
 }
@@ -372,14 +374,21 @@ FooterKey > .footer-key--description {
 .log-panel {
     width: 1fr;
     height: auto;
-    min-height: 8;
-    background: $pfx-bg;
-    border: heavy $pfx-accent;
+    min-height: 10;
+    background: #02040a;
+    border: heavy $pfx-accent-dim;
     border-title-color: $pfx-accent;
     border-title-style: bold;
+    border-title-background: #02040a;
     padding: 1 2;
     margin: 1 0 1 1;
     text-align: left;
+}
+
+/* High contrast text inside CRT panels */
+.gauge-panel Static,
+.log-panel Static {
+    color: $pfx-fg;
 }
 
 .title {
