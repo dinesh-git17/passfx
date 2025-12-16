@@ -5,10 +5,15 @@ Uses zxcvbn for realistic password strength estimation.
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
-from typing import Any
+from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from rich.text import Text
+
+if TYPE_CHECKING:
+    from passfx.core.models import Credential
 
 
 @dataclass
@@ -255,3 +260,205 @@ def meets_requirements(
         issues.extend(result.suggestions[:2])
 
     return len(issues) == 0, issues
+
+
+# Password age threshold in days
+PASSWORD_AGE_THRESHOLD_DAYS = 90
+
+# Common weak PINs to check against
+WEAK_PINS = {
+    "0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999",
+    "1234", "4321", "1212", "2121", "1122", "2211", "0123", "3210", "9876", "6789",
+    "1010", "2020", "1357", "2468", "1379", "2580", "0852", "1590", "7531", "8642",
+    "0001", "0002", "0007", "0011", "0069", "0420", "1004", "1007", "2000", "2001",
+    "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011",
+    "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021",
+    "2022", "2023", "2024", "2025", "6969", "4200", "1337",
+}
+
+
+@dataclass
+class VaultHealthResult:
+    """Vault health analysis result.
+
+    Attributes:
+        overall_score: Weighted security score from 0-100.
+        reuse_count: Number of passwords used in multiple entries.
+        old_count: Number of passwords not updated in 90 days.
+        weak_count: Number of passwords with strength score < 3.
+        total_analyzed: Total number of entries analyzed.
+        password_scores: Individual strength scores for histogram display.
+        issues: List of specific security issues found.
+    """
+
+    overall_score: int
+    reuse_count: int
+    old_count: int
+    weak_count: int
+    total_analyzed: int
+    password_scores: list[int]
+    issues: list[str]
+
+
+def analyze_vault(credentials: list[Credential]) -> VaultHealthResult:
+    """Analyze vault security health across all credentials.
+
+    Performs comprehensive analysis including:
+    - Password strength evaluation
+    - Password reuse detection
+    - Password age analysis (>90 days warning)
+    - Weak PIN detection for phone credentials
+
+    Args:
+        credentials: List of all vault credentials.
+
+    Returns:
+        VaultHealthResult with detailed analysis data.
+    """
+    from passfx.core.models import EmailCredential, PhoneCredential
+
+    if not credentials:
+        return VaultHealthResult(
+            overall_score=100,
+            reuse_count=0,
+            old_count=0,
+            weak_count=0,
+            total_analyzed=0,
+            password_scores=[],
+            issues=[],
+        )
+
+    now = datetime.now()
+    password_scores: list[int] = []
+    all_passwords: list[str] = []
+    old_count = 0
+    weak_count = 0
+    issues: list[str] = []
+
+    # Process email credentials
+    for cred in credentials:
+        if isinstance(cred, EmailCredential):
+            password = cred.password
+            all_passwords.append(password)
+
+            # Check strength
+            strength = check_strength(password)
+            password_scores.append(strength.score)
+
+            if strength.score < 3:
+                weak_count += 1
+                if strength.score <= 1:
+                    issues.append(f"Very weak password: {cred.label}")
+
+            # Check age using updated_at
+            try:
+                updated = datetime.fromisoformat(cred.updated_at)
+                age_days = (now - updated).days
+                if age_days > PASSWORD_AGE_THRESHOLD_DAYS:
+                    old_count += 1
+            except (ValueError, TypeError):
+                pass
+
+        elif isinstance(cred, PhoneCredential):
+            pin = cred.password
+            all_passwords.append(pin)
+
+            # Check for weak PINs
+            is_weak_pin = (
+                pin in WEAK_PINS
+                or len(pin) < 4
+                or len(set(pin)) == 1  # All same digits
+            )
+
+            if is_weak_pin:
+                weak_count += 1
+                issues.append(f"Weak PIN: {cred.label}")
+
+            # Check age for PINs too
+            try:
+                updated = datetime.fromisoformat(cred.updated_at)
+                age_days = (now - updated).days
+                if age_days > PASSWORD_AGE_THRESHOLD_DAYS:
+                    old_count += 1
+            except (ValueError, TypeError):
+                pass
+
+    # Detect password reuse
+    password_counts = Counter(all_passwords)
+    reuse_count = sum(1 for count in password_counts.values() if count > 1)
+
+    if reuse_count > 0:
+        issues.append(f"{reuse_count} password(s) reused across entries")
+
+    # Calculate overall weighted score
+    overall_score = _compute_vault_score(
+        password_scores=password_scores,
+        reuse_count=reuse_count,
+        old_count=old_count,
+        weak_count=weak_count,
+        total_analyzed=len(all_passwords),
+    )
+
+    return VaultHealthResult(
+        overall_score=overall_score,
+        reuse_count=reuse_count,
+        old_count=old_count,
+        weak_count=weak_count,
+        total_analyzed=len(all_passwords),
+        password_scores=password_scores,
+        issues=issues[:5],
+    )
+
+
+def _compute_vault_score(
+    password_scores: list[int],
+    reuse_count: int,
+    old_count: int,
+    weak_count: int,
+    total_analyzed: int,
+) -> int:
+    """Compute weighted vault security score.
+
+    Weighting:
+    - Password strength: 40%
+    - Password reuse: 25%
+    - Password age: 15%
+    - Weak passwords/PINs: 20%
+
+    Args:
+        password_scores: List of individual strength scores (0-4).
+        reuse_count: Number of reused passwords.
+        old_count: Number of old passwords.
+        weak_count: Number of weak passwords/PINs.
+        total_analyzed: Total credentials analyzed.
+
+    Returns:
+        Score from 0-100.
+    """
+    if total_analyzed == 0:
+        return 100
+
+    score = 100.0
+
+    # Password strength component (40% of score)
+    if password_scores:
+        avg_strength = sum(password_scores) / len(password_scores)
+        strength_points = (avg_strength / 4) * 40
+        score = score - 40 + strength_points
+
+    # Password reuse penalty (25% of score)
+    if reuse_count > 0:
+        reuse_penalty = min(25, reuse_count * 10)
+        score -= reuse_penalty
+
+    # Password age penalty (15% of score)
+    if old_count > 0:
+        age_penalty = min(15, old_count * 5)
+        score -= age_penalty
+
+    # Weak password/PIN penalty (20% of score)
+    if weak_count > 0:
+        weak_penalty = min(20, weak_count * 8)
+        score -= weak_penalty
+
+    return max(0, min(100, int(score)))

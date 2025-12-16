@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import Counter
-from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -16,38 +15,10 @@ from textual.screen import Screen
 from textual.widgets import Digits, Label, OptionList, Static
 from textual.widgets.option_list import Option
 
-from passfx.utils.strength import check_strength
+from passfx.utils.strength import VaultHealthResult, analyze_vault
 
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
-
-
-# Common weak PINs to check against
-WEAK_PINS = {
-    "0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999",
-    "1234", "4321", "1212", "2121", "1122", "2211", "0123", "3210", "9876", "6789",
-    "1010", "2020", "1357", "2468", "1379", "2580", "0852", "1590", "7531", "8642",
-    "0001", "0002", "0007", "0011", "0069", "0420", "1004", "1007", "2000", "2001",
-    "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011",
-    "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021",
-    "2022", "2023", "2024", "2025", "6969", "4200", "1337",
-}
-
-# Password age threshold in days
-PASSWORD_AGE_WARNING_DAYS = 90
-
-
-@dataclass
-class SecurityAnalysis:
-    """Detailed security analysis results."""
-
-    score: int  # 0-100
-    password_scores: list[int]  # Individual password strength scores (0-4)
-    reused_passwords: int  # Count of reused passwords
-    weak_pins: int  # Count of weak PINs
-    old_passwords: int  # Passwords older than threshold
-    total_items: int
-    issues: list[str]  # List of security issues found
 
 # Compact sidebar logo
 SIDEBAR_LOGO = """[bold #00d4ff]╔══════════════════════╗
@@ -56,6 +27,100 @@ SIDEBAR_LOGO = """[bold #00d4ff]╔═══════════════
 ╚══════════════════════╝[/]"""
 
 VERSION = "v1.0.0"
+
+
+class SecurityScore(Static):
+    """Widget displaying vault health analysis with score and statistics.
+
+    Renders everything as formatted text for precise layout control.
+    """
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._health: VaultHealthResult | None = None
+
+    def update_health(self, health: VaultHealthResult) -> None:
+        """Update the widget with new health data."""
+        self._health = health
+        self._render_display()
+
+    def _render_display(self) -> None:
+        """Render the complete health display."""
+        if self._health is None:
+            self.update("[dim]No data[/]")
+            return
+
+        health = self._health
+        lines: list[str] = []
+
+        # Score bar
+        score_color = self._get_score_color(health.overall_score)
+        num_segments = 20
+        filled = int((health.overall_score / 100) * num_segments)
+        empty = num_segments - filled
+        bar_str = f"[{score_color}]{'▮' * filled}[/][dim #222222]{'·' * empty}[/]"
+        lines.append(f"{bar_str}  [bold {score_color}]{health.overall_score}%[/]")
+        lines.append("")  # Breathing room
+
+        # Stats row - values and labels combined
+        reuse_color = "#ef4444" if health.reuse_count > 0 else "#22c55e"
+        old_color = "#f59e0b" if health.old_count > 0 else "#22c55e"
+        weak_color = "#ef4444" if health.weak_count > 0 else "#22c55e"
+
+        lines.append(
+            f"[bold {reuse_color}]{health.reuse_count:^12}[/]"
+            f"[bold {old_color}]{health.old_count:^12}[/]"
+            f"[bold {weak_color}]{health.weak_count:^12}[/]"
+        )
+        lines.append(
+            f"[#64748b]{'REUSED':^12}{'OLD (90d)':^12}{'WEAK':^12}[/]"
+        )
+        lines.append("")  # Breathing room
+
+        # Histogram
+        lines.extend(self._build_histogram(health))
+
+        self.update("\n".join(lines))
+
+    def _get_score_color(self, score: int) -> str:
+        """Get color based on security score."""
+        if score >= 80:
+            return "#22c55e"
+        elif score >= 60:
+            return "#60a5fa"
+        elif score >= 40:
+            return "#f59e0b"
+        else:
+            return "#ef4444"
+
+    def _build_histogram(self, health: VaultHealthResult) -> list[str]:
+        """Build strength distribution histogram."""
+        lines: list[str] = []
+
+        if not health.password_scores:
+            lines.append("[dim #555555]No passwords to analyze[/]")
+            return lines
+
+        strength_counts = Counter(health.password_scores)
+        max_count = max(strength_counts.values()) if strength_counts else 1
+        bar_width = 12
+
+        levels = [
+            (0, "WEAK  ", "#ef4444"),
+            (1, "POOR  ", "#ef4444"),
+            (2, "FAIR  ", "#f59e0b"),
+            (3, "GOOD  ", "#60a5fa"),
+            (4, "STRONG", "#22c55e"),
+        ]
+
+        for level, label, color in levels:
+            count = strength_counts.get(level, 0)
+            if count > 0 or level in (0, 4):
+                bar_len = int((count / max_count) * bar_width) if max_count > 0 else 0
+                bar = "█" * bar_len + "░" * (bar_width - bar_len)
+                lines.append(f"[{color}]{label}[/] [{color}]{bar}[/] {count}")
+
+        return lines
 
 
 def _make_menu_item(code: str, label: str) -> Text:
@@ -154,7 +219,7 @@ class MainMenuScreen(Screen):
 
                 # Security gauge and System log - side by side (responsive)
                 with Horizontal(id="panels-row"):
-                    yield Static(id="security-gauge", classes="gauge-panel")
+                    yield SecurityScore(id="security-gauge", classes="gauge-panel")
                     yield Static(id="system-log", classes="log-panel")
 
         # Custom footer - Mechanical keycap command strip
@@ -233,16 +298,18 @@ class MainMenuScreen(Screen):
         self.query_one("#digits-envs", Digits).update(f"{envs_count:02d}")
         self.query_one("#digits-recovery", Digits).update(f"{recovery_count:02d}")
 
-        # Run security analysis
-        analysis = self._analyze_security(app)
-        bar_color = self._get_score_color(analysis.score)
+        # Run security analysis using the new analyze_vault function
+        credentials: list = []
+        if app._unlocked:
+            credentials.extend(app.vault.get_emails())
+            credentials.extend(app.vault.get_phones())
 
-        # Build strength frequency histogram
-        gauge_lines = self._build_strength_histogram(analysis, bar_color)
+        health = analyze_vault(credentials)
 
-        gauge_widget = self.query_one("#security-gauge", Static)
-        gauge_widget.border_title = "SECURITY SCORE"
-        gauge_widget.update("\n".join(gauge_lines))
+        # Update the SecurityScore widget
+        gauge_widget = self.query_one("#security-gauge", SecurityScore)
+        gauge_widget.border_title = "VAULT HEALTH"
+        gauge_widget.update_health(health)
 
         # System log with bracketed timestamps (terminal buffer style)
         ts = datetime.now().strftime("%H:%M:%S")
@@ -252,8 +319,8 @@ class MainMenuScreen(Screen):
             f"[dim #555555][{ts}][/] [bold #22c55e]✓[/] ENCRYPTION VERIFIED",
         ]
 
-        if analysis.issues:
-            for issue in analysis.issues[:2]:  # Limit to 2 issues
+        if health.issues:
+            for issue in health.issues[:2]:  # Limit to 2 issues
                 status_lines.append(f"[dim #555555][{ts}][/] [bold #ef4444]![/] {issue.upper()}")
         else:
             status_lines.append(f"[dim #555555][{ts}][/] [bold #22c55e]✓[/] SECURITY AUDIT: PASS")
@@ -262,203 +329,6 @@ class MainMenuScreen(Screen):
         log_widget = self.query_one("#system-log", Static)
         log_widget.border_title = "SYSTEM LOG"
         log_widget.update("\n".join(status_lines))
-
-    def _analyze_security(self, app: PassFXApp) -> SecurityAnalysis:
-        """Perform comprehensive security analysis of vault contents."""
-        if not app._unlocked:
-            return SecurityAnalysis(
-                score=0,
-                password_scores=[],
-                reused_passwords=0,
-                weak_pins=0,
-                old_passwords=0,
-                total_items=0,
-                issues=["Vault is locked"],
-            )
-
-        emails = app.vault.get_emails()
-        phones = app.vault.get_phones()
-        cards = app.vault.get_cards()
-
-        total_items = len(emails) + len(phones) + len(cards)
-
-        if total_items == 0:
-            return SecurityAnalysis(
-                score=100,  # Empty vault is "secure" by default
-                password_scores=[],
-                reused_passwords=0,
-                weak_pins=0,
-                old_passwords=0,
-                total_items=0,
-                issues=[],
-            )
-
-        issues: list[str] = []
-        password_scores: list[int] = []
-        all_passwords: list[str] = []
-        old_passwords = 0
-        weak_pins = 0
-        now = datetime.now()
-
-        # Analyze email credentials
-        for cred in emails:
-            # Check password strength
-            strength = check_strength(cred.password)
-            password_scores.append(strength.score)
-            all_passwords.append(cred.password)
-
-            if strength.score <= 1:
-                issues.append(f"Weak password: {cred.label}")
-
-            # Check password age
-            try:
-                created = datetime.fromisoformat(cred.created_at)
-                age_days = (now - created).days
-                if age_days > PASSWORD_AGE_WARNING_DAYS:
-                    old_passwords += 1
-            except (ValueError, TypeError):
-                pass
-
-        # Analyze phone PINs
-        for cred in phones:
-            pin = cred.password
-            all_passwords.append(pin)
-
-            # Check for weak PINs
-            if pin in WEAK_PINS:
-                weak_pins += 1
-                issues.append(f"Weak PIN: {cred.label}")
-            elif len(pin) < 4:
-                weak_pins += 1
-                issues.append(f"Short PIN: {cred.label}")
-            elif len(set(pin)) == 1:  # All same digits
-                weak_pins += 1
-                issues.append(f"Repeating PIN: {cred.label}")
-
-        # Check for password reuse
-        password_counts = Counter(all_passwords)
-        reused = sum(1 for count in password_counts.values() if count > 1)
-        if reused > 0:
-            issues.append(f"{reused} reused password(s) detected")
-
-        # Calculate overall score
-        score = self._compute_score(
-            password_scores=password_scores,
-            reused_passwords=reused,
-            weak_pins=weak_pins,
-            old_passwords=old_passwords,
-            total_items=total_items,
-        )
-
-        return SecurityAnalysis(
-            score=score,
-            password_scores=password_scores,
-            reused_passwords=reused,
-            weak_pins=weak_pins,
-            old_passwords=old_passwords,
-            total_items=total_items,
-            issues=issues[:5],  # Limit to top 5 issues
-        )
-
-    def _compute_score(
-        self,
-        password_scores: list[int],
-        reused_passwords: int,
-        weak_pins: int,
-        old_passwords: int,
-        total_items: int,
-    ) -> int:
-        """Compute the final security score from analysis data."""
-        if total_items == 0:
-            return 100
-
-        score = 100.0
-
-        # Password strength component (40% of score)
-        if password_scores:
-            avg_strength = sum(password_scores) / len(password_scores)
-            # Convert 0-4 scale to 0-40 points
-            strength_points = (avg_strength / 4) * 40
-            score = score - 40 + strength_points
-
-        # Password reuse penalty (25% of score)
-        if reused_passwords > 0:
-            reuse_penalty = min(25, reused_passwords * 10)
-            score -= reuse_penalty
-
-        # Weak PIN penalty (20% of score)
-        if weak_pins > 0:
-            pin_penalty = min(20, weak_pins * 10)
-            score -= pin_penalty
-
-        # Password age penalty (15% of score)
-        if old_passwords > 0:
-            age_penalty = min(15, old_passwords * 5)
-            score -= age_penalty
-
-        return max(0, min(100, int(score)))
-
-    def _get_score_color(self, score: int) -> str:
-        """Get color based on security score."""
-        if score >= 80:
-            return "#22c55e"  # Green - Excellent
-        elif score >= 60:
-            return "#60a5fa"  # Blue - Good
-        elif score >= 40:
-            return "#f59e0b"  # Yellow/Orange - Fair
-        else:
-            return "#ef4444"  # Red - Poor
-
-    def _build_strength_histogram(
-        self, analysis: SecurityAnalysis, score_color: str
-    ) -> list[str]:
-        """Build a VFD-style segmented gauge with strength distribution."""
-        lines: list[str] = []
-
-        # VFD-style segmented gauge (20 segments)
-        num_segments = 20
-        filled = int((analysis.score / 100) * num_segments)
-        empty = num_segments - filled
-        # Use pipe characters for retro LED/VFD look
-        bar_str = f"[{score_color}]{'▮' * filled}[/][dim #222222]{'·' * empty}[/]"
-        lines.append(f"{bar_str}  [bold {score_color}]{analysis.score}%[/]")
-        lines.append("")
-
-        if not analysis.password_scores:
-            lines.append("[dim #555555]No passwords to analyze[/]")
-            return lines
-
-        # Count occurrences of each strength level (0-4)
-        strength_counts = Counter(analysis.password_scores)
-        max_count = max(strength_counts.values()) if strength_counts else 1
-        bar_width = 12  # Maximum bar width in characters
-
-        # Strength level definitions with colors
-        levels = [
-            (0, "WEAK  ", "#ef4444"),
-            (1, "POOR  ", "#ef4444"),
-            (2, "FAIR  ", "#f59e0b"),
-            (3, "GOOD  ", "#60a5fa"),
-            (4, "STRONG", "#22c55e"),
-        ]
-
-        # Build histogram bars with spacing
-        for level, label, color in levels:
-            count = strength_counts.get(level, 0)
-            if count > 0 or level in (0, 4):  # Always show WEAK and STRONG
-                bar_len = int((count / max_count) * bar_width) if max_count > 0 else 0
-                bar = "█" * bar_len + "░" * (bar_width - bar_len)
-                lines.append(f"[{color}]{label}[/] [{color}]{bar}[/] {count}")
-                lines.append("")  # Breathing room between bars
-
-        # Add issue summary if any
-        if analysis.reused_passwords > 0 or analysis.weak_pins > 0:
-            if analysis.reused_passwords > 0:
-                lines.append(f"[#ef4444]⚠ Reused:[/] {analysis.reused_passwords}")
-            if analysis.weak_pins > 0:
-                lines.append(f"[#f59e0b]⚠ Weak PINs:[/] {analysis.weak_pins}")
-
-        return lines
 
     def on_click(self, event: Click) -> None:
         """Handle clicks on stat segments."""
