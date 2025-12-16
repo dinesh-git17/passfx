@@ -341,6 +341,173 @@ class ConfirmDeleteModal(ModalScreen[bool]):
         self.dismiss(True)
 
 
+class ViewPhoneModal(ModalScreen[None]):
+    """Modal displaying a Secure Comms Uplink visualization."""
+
+    BINDINGS = [
+        Binding("escape", "close", "Close"),
+        Binding("c", "copy_pin", "Copy"),
+    ]
+
+    def __init__(self, credential: PhoneCredential) -> None:
+        super().__init__()
+        self.credential = credential
+
+    def compose(self) -> ComposeResult:
+        """Create the secure comms uplink layout."""
+        # Get PIN strength for visual indicator
+        strength = check_strength(self.credential.password)
+        strength_color = _get_strength_color(strength.score)
+
+        # Build signal strength indicator (synthwave style)
+        signal_bars = ""
+        for i in range(5):
+            if i < strength.score + 1:
+                signal_bars += f"[#d946ef]▓[/]"
+            else:
+                signal_bars += "[#2d1f3d]░[/]"
+
+        # Format phone number with styling
+        phone_display = self.credential.phone
+
+        # Format timestamp
+        try:
+            created = datetime.fromisoformat(self.credential.created_at).strftime("%Y.%m.%d")
+        except (ValueError, TypeError):
+            created = "UNKNOWN"
+
+        # Build encryption lock visual
+        lock_icon = "[#d946ef]◈[/]" if strength.score >= 2 else "[#8b5cf6]◇[/]"
+
+        with Vertical(id="phone-modal"):
+            # Physical SIM Card Container
+            with Vertical(id="physical-sim-card"):
+                # Header Row
+                yield Static(
+                    "[bold #8b5cf6]╔══════════════════════════════════════════════╗[/]",
+                    id="sim-card-border-top",
+                )
+                yield Static(
+                    "[bold #8b5cf6]║[/]  [on #8b5cf6][bold #000000] SECURE COMMS UPLINK [/]                [bold #8b5cf6]║[/]",
+                    id="sim-card-header",
+                )
+                yield Static(
+                    "[bold #8b5cf6]╠══════════════════════════════════════════════╣[/]",
+                    id="sim-card-divider",
+                )
+
+                # Device Label Row
+                yield Static(
+                    f"[bold #8b5cf6]║[/]  [dim #64748b]DEVICE:[/] [bold #f8fafc]{self.credential.label.upper():<36}[/] [bold #8b5cf6]║[/]",
+                    id="sim-card-device",
+                )
+
+                # Spacer
+                yield Static(
+                    "[bold #8b5cf6]║[/]                                              [bold #8b5cf6]║[/]",
+                    id="sim-card-spacer1",
+                )
+
+                # Signal Strength Visual
+                yield Static(
+                    f"[bold #8b5cf6]║[/]  [dim #475569]SIGNAL:[/] {signal_bars}  {lock_icon} [#d946ef]ENCRYPTED[/]             [bold #8b5cf6]║[/]",
+                    id="sim-card-signal",
+                )
+
+                # Spacer
+                yield Static(
+                    "[bold #8b5cf6]║[/]                                              [bold #8b5cf6]║[/]",
+                    id="sim-card-spacer2",
+                )
+
+                # Phone Number Section
+                yield Static(
+                    "[bold #8b5cf6]║[/]  [dim #475569]┌─ UPLINK NUMBER ─────────────────────────┐[/]  [bold #8b5cf6]║[/]",
+                    id="sim-card-number-header",
+                )
+                yield Static(
+                    f"[bold #8b5cf6]║[/]  [dim #475569]│[/] [#d946ef]☎[/] [bold #e2e8f0]{phone_display:<38}[/] [dim #475569]│[/]  [bold #8b5cf6]║[/]",
+                    id="sim-card-number",
+                )
+                yield Static(
+                    "[bold #8b5cf6]║[/]  [dim #475569]└─────────────────────────────────────────┘[/]  [bold #8b5cf6]║[/]",
+                    id="sim-card-number-footer",
+                )
+
+                # Spacer
+                yield Static(
+                    "[bold #8b5cf6]║[/]                                              [bold #8b5cf6]║[/]",
+                    id="sim-card-spacer3",
+                )
+
+                # Access PIN Section
+                yield Static(
+                    "[bold #8b5cf6]║[/]  [dim #475569]┌─ ACCESS PIN ────────────────────────────┐[/]  [bold #8b5cf6]║[/]",
+                    id="sim-card-pin-header",
+                )
+                yield Static(
+                    f"[bold #8b5cf6]║[/]  [dim #475569]│[/] [#d946ef]►[/] [bold #d946ef]{self.credential.password:<38}[/] [dim #475569]│[/]  [bold #8b5cf6]║[/]",
+                    id="sim-card-pin",
+                )
+                yield Static(
+                    "[bold #8b5cf6]║[/]  [dim #475569]└─────────────────────────────────────────┘[/]  [bold #8b5cf6]║[/]",
+                    id="sim-card-pin-footer",
+                )
+
+                # Spacer
+                yield Static(
+                    "[bold #8b5cf6]║[/]                                              [bold #8b5cf6]║[/]",
+                    id="sim-card-spacer4",
+                )
+
+                # Security Level
+                yield Static(
+                    f"[bold #8b5cf6]║[/]  [dim #64748b]COMPLEXITY:[/] [{strength_color}]{strength.label.upper():<16}[/]             [bold #8b5cf6]║[/]",
+                    id="sim-card-security",
+                )
+
+                # Footer with metadata
+                yield Static(
+                    "[bold #8b5cf6]╠══════════════════════════════════════════════╣[/]",
+                    id="sim-card-footer-divider",
+                )
+                yield Static(
+                    f"[bold #8b5cf6]║[/]  [dim #475569]ID:[/] [#64748b]{self.credential.id[:8]}[/]          [dim #475569]LINKED:[/] [#64748b]{created}[/]     [bold #8b5cf6]║[/]",
+                    id="sim-card-footer",
+                )
+                yield Static(
+                    "[bold #8b5cf6]╚══════════════════════════════════════════════╝[/]",
+                    id="sim-card-border-bottom",
+                )
+
+            # Action Buttons
+            with Horizontal(id="phone-modal-buttons"):
+                yield Button("[C] COPY PIN", id="copy-button")
+                yield Button("[ESC] CLOSE", id="close-button")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press."""
+        if event.button.id == "close-button":
+            self.dismiss(None)
+        elif event.button.id == "copy-button":
+            self._copy_pin()
+
+    def _copy_pin(self) -> None:
+        """Copy PIN to clipboard."""
+        if copy_to_clipboard(self.credential.password, auto_clear=True, clear_after=30):
+            self.notify("PIN copied! Clears in 30s", title="Copied")
+        else:
+            self.notify("Failed to copy to clipboard", severity="error")
+
+    def action_close(self) -> None:
+        """Close the modal."""
+        self.dismiss(None)
+
+    def action_copy_pin(self) -> None:
+        """Copy PIN via keybinding."""
+        self._copy_pin()
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN PHONES SCREEN
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -603,17 +770,13 @@ class PhonesScreen(Screen):
         self.app.push_screen(ConfirmDeleteModal(cred.label), handle_result)
 
     def action_view(self) -> None:
-        """View credential details."""
+        """View credential details in Secure Comms Uplink modal."""
         cred = self._get_selected_credential()
         if not cred:
             self.notify("No credential selected", severity="warning")
             return
 
-        # Show details in notification for now
-        details = f"Label: {cred.label}\nPhone: {cred.phone}\nPIN: {cred.password}"
-        if cred.notes:
-            details += f"\nNotes: {cred.notes}"
-        self.notify(details, title="Credential Details", timeout=10)
+        self.app.push_screen(ViewPhoneModal(cred))
 
     def action_back(self) -> None:
         """Go back to main menu."""

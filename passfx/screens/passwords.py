@@ -341,6 +341,154 @@ class ConfirmDeleteModal(ModalScreen[bool]):
         self.dismiss(True)
 
 
+class ViewPasswordModal(ModalScreen[None]):
+    """Modal displaying an Identity Access Token visualization."""
+
+    BINDINGS = [
+        Binding("escape", "close", "Close"),
+        Binding("c", "copy_password", "Copy"),
+    ]
+
+    def __init__(self, credential: EmailCredential) -> None:
+        super().__init__()
+        self.credential = credential
+
+    def compose(self) -> ComposeResult:
+        """Create the identity access token layout."""
+        # Get password strength for visual indicator
+        strength = check_strength(self.credential.password)
+        strength_color = _get_strength_color(strength.score)
+
+        # Build security level indicator bars
+        filled = strength.score + 1
+        security_bars = (
+            f"[{strength_color}]" + ("█" * filled) + "[/]"
+            + "[#1e293b]" + ("░" * (5 - filled)) + "[/]"
+        )
+
+        # Format timestamp
+        try:
+            created = datetime.fromisoformat(self.credential.created_at).strftime("%Y.%m.%d")
+        except (ValueError, TypeError):
+            created = "UNKNOWN"
+
+        with Vertical(id="password-modal"):
+            # Physical ID Card Container
+            with Vertical(id="physical-id-card"):
+                # Header Row: Token Type Badge
+                yield Static(
+                    "[bold #00d4ff]╔══════════════════════════════════════════════╗[/]",
+                    id="id-card-border-top",
+                )
+                yield Static(
+                    "[bold #00d4ff]║[/]  [on #00d4ff][bold #000000] IDENTITY ACCESS TOKEN [/]              [bold #00d4ff]║[/]",
+                    id="id-card-header",
+                )
+                yield Static(
+                    "[bold #00d4ff]╠══════════════════════════════════════════════╣[/]",
+                    id="id-card-divider",
+                )
+
+                # System Label Row
+                yield Static(
+                    f"[bold #00d4ff]║[/]  [dim #64748b]SYSTEM:[/] [bold #f8fafc]{self.credential.label.upper():<36}[/] [bold #00d4ff]║[/]",
+                    id="id-card-system",
+                )
+
+                # Spacer
+                yield Static(
+                    "[bold #00d4ff]║[/]                                              [bold #00d4ff]║[/]",
+                    id="id-card-spacer1",
+                )
+
+                # User Identity Section
+                yield Static(
+                    "[bold #00d4ff]║[/]  [dim #475569]┌─ USER IDENTITY ─────────────────────────┐[/]  [bold #00d4ff]║[/]",
+                    id="id-card-identity-header",
+                )
+                yield Static(
+                    f"[bold #00d4ff]║[/]  [dim #475569]│[/] [#22c55e]►[/] [bold #e2e8f0]{self.credential.email:<38}[/] [dim #475569]│[/]  [bold #00d4ff]║[/]",
+                    id="id-card-email",
+                )
+                yield Static(
+                    "[bold #00d4ff]║[/]  [dim #475569]└─────────────────────────────────────────┘[/]  [bold #00d4ff]║[/]",
+                    id="id-card-identity-footer",
+                )
+
+                # Spacer
+                yield Static(
+                    "[bold #00d4ff]║[/]                                              [bold #00d4ff]║[/]",
+                    id="id-card-spacer2",
+                )
+
+                # Access Key Section
+                yield Static(
+                    "[bold #00d4ff]║[/]  [dim #475569]┌─ ACCESS KEY ────────────────────────────┐[/]  [bold #00d4ff]║[/]",
+                    id="id-card-key-header",
+                )
+                yield Static(
+                    f"[bold #00d4ff]║[/]  [dim #475569]│[/] [#22c55e]►[/] [bold #22c55e]{self.credential.password:<38}[/] [dim #475569]│[/]  [bold #00d4ff]║[/]",
+                    id="id-card-password",
+                )
+                yield Static(
+                    "[bold #00d4ff]║[/]  [dim #475569]└─────────────────────────────────────────┘[/]  [bold #00d4ff]║[/]",
+                    id="id-card-key-footer",
+                )
+
+                # Spacer
+                yield Static(
+                    "[bold #00d4ff]║[/]                                              [bold #00d4ff]║[/]",
+                    id="id-card-spacer3",
+                )
+
+                # Security Level Bar
+                yield Static(
+                    f"[bold #00d4ff]║[/]  [dim #64748b]SECURITY:[/] {security_bars} [{strength_color}]{strength.label.upper():<12}[/]      [bold #00d4ff]║[/]",
+                    id="id-card-security",
+                )
+
+                # Footer with metadata
+                yield Static(
+                    "[bold #00d4ff]╠══════════════════════════════════════════════╣[/]",
+                    id="id-card-footer-divider",
+                )
+                yield Static(
+                    f"[bold #00d4ff]║[/]  [dim #475569]ID:[/] [#64748b]{self.credential.id[:8]}[/]          [dim #475569]ISSUED:[/] [#64748b]{created}[/]     [bold #00d4ff]║[/]",
+                    id="id-card-footer",
+                )
+                yield Static(
+                    "[bold #00d4ff]╚══════════════════════════════════════════════╝[/]",
+                    id="id-card-border-bottom",
+                )
+
+            # Action Buttons
+            with Horizontal(id="password-modal-buttons"):
+                yield Button("[C] COPY KEY", id="copy-button")
+                yield Button("[ESC] CLOSE", id="close-button")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press."""
+        if event.button.id == "close-button":
+            self.dismiss(None)
+        elif event.button.id == "copy-button":
+            self._copy_password()
+
+    def _copy_password(self) -> None:
+        """Copy password to clipboard."""
+        if copy_to_clipboard(self.credential.password, auto_clear=True, clear_after=30):
+            self.notify("Password copied! Clears in 30s", title="Copied")
+        else:
+            self.notify("Failed to copy to clipboard", severity="error")
+
+    def action_close(self) -> None:
+        """Close the modal."""
+        self.dismiss(None)
+
+    def action_copy_password(self) -> None:
+        """Copy password via keybinding."""
+        self._copy_password()
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN PASSWORDS SCREEN
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -603,17 +751,13 @@ class PasswordsScreen(Screen):
         self.app.push_screen(ConfirmDeleteModal(cred.label), handle_result)
 
     def action_view(self) -> None:
-        """View credential details."""
+        """View credential details in Identity Access Token modal."""
         cred = self._get_selected_credential()
         if not cred:
             self.notify("No credential selected", severity="warning")
             return
 
-        # Show details in notification for now
-        details = f"Label: {cred.label}\nEmail: {cred.email}\nPassword: {cred.password}"
-        if cred.notes:
-            details += f"\nNotes: {cred.notes}"
-        self.notify(details, title="Credential Details", timeout=10)
+        self.app.push_screen(ViewPasswordModal(cred))
 
     def action_back(self) -> None:
         """Go back to main menu."""

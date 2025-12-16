@@ -172,9 +172,9 @@ class GeneratorScreen(Screen):
     """Screen for generating passwords, passphrases, and PINs."""
 
     BINDINGS = [
-        Binding("enter", "generate", "Generate", priority=False),
-        Binding("f2", "copy", "Copy"),
-        Binding("f3", "save_to_vault", "Save"),
+        Binding("g", "generate", "Generate"),
+        Binding("c", "copy", "Copy"),
+        Binding("s", "save_to_vault", "Save"),
         Binding("escape", "back", "Back"),
     ]
 
@@ -275,7 +275,7 @@ class GeneratorScreen(Screen):
         with Horizontal(id="app-footer"):
             yield Static(" TOOLS ", id="footer-version")
             yield Static(
-                " \\[ENTER] Generate  \\[F2] Copy  \\[F3] Save  \\[ESC] Back",
+                " \\[G] Generate  \\[C] Copy  \\[S] Save  \\[ESC] Back",
                 id="footer-keys-static",
             )
 

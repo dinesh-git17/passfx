@@ -1667,3 +1667,113 @@ CommandPalette OptionList > .option-list--option-hover {
     background: $pfx-surface-light;
     color: $pfx-fg;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIEW PASSWORD MODAL - IDENTITY ACCESS TOKEN VISUALIZATION
+   Theme: Cyberpunk Green (#22c55e) & Cyan (#00d4ff)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#password-modal {
+    width: 60;
+    height: auto;
+    align: center middle;
+}
+
+#physical-id-card {
+    width: 56;
+    height: auto;
+    background: #0a0e27;
+    padding: 0;
+    margin: 0;
+}
+
+#physical-id-card Static {
+    width: 100%;
+    height: 1;
+    background: transparent;
+    padding: 0;
+}
+
+#password-modal-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    padding: 2 0 0 0;
+}
+
+#password-modal-buttons #copy-button {
+    background: #0a2e1a;
+    color: #22c55e;
+    border: solid #22c55e;
+}
+
+#password-modal-buttons #copy-button:hover {
+    background: #22c55e;
+    color: #000000;
+}
+
+#password-modal-buttons #close-button {
+    background: $pfx-surface;
+    color: $pfx-muted;
+    border: solid $pfx-surface-light;
+}
+
+#password-modal-buttons #close-button:hover {
+    background: $pfx-surface-light;
+    color: $pfx-fg;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIEW PHONE MODAL - SECURE COMMS UPLINK VISUALIZATION
+   Theme: Synthwave Purple (#8b5cf6) & Pink (#d946ef)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#phone-modal {
+    width: 60;
+    height: auto;
+    align: center middle;
+}
+
+#physical-sim-card {
+    width: 56;
+    height: auto;
+    background: #0f0a1a;
+    padding: 0;
+    margin: 0;
+}
+
+#physical-sim-card Static {
+    width: 100%;
+    height: 1;
+    background: transparent;
+    padding: 0;
+}
+
+#phone-modal-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    padding: 2 0 0 0;
+}
+
+#phone-modal-buttons #copy-button {
+    background: #1a0f2e;
+    color: #d946ef;
+    border: solid #d946ef;
+}
+
+#phone-modal-buttons #copy-button:hover {
+    background: #d946ef;
+    color: #000000;
+}
+
+#phone-modal-buttons #close-button {
+    background: $pfx-surface;
+    color: $pfx-muted;
+    border: solid $pfx-surface-light;
+}
+
+#phone-modal-buttons #close-button:hover {
+    background: $pfx-surface-light;
+    color: $pfx-fg;
+}
