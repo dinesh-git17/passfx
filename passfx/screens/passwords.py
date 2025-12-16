@@ -240,14 +240,16 @@ class PasswordsScreen(Screen):
         with Horizontal(id="vault-body"):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
-                with Horizontal(classes="pane-header"):
-                    yield Static("[dim #555555]\\[///][/] CREDENTIAL_DATABASE.DB")
+                # Inverted Block Header
+                yield Static(" ≡ CREDENTIAL_DATABASE ", classes="pane-header-block")
                 yield DataTable(id="passwords-table", cursor_type="row")
+                # Footer with object count
+                yield Static(" └── SYSTEM_READY", classes="pane-footer", id="grid-footer")
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
-                with Horizontal(classes="pane-header"):
-                    yield Static("[bold #60a5fa]ITEM_PROPERTIES[/]")
+                # Inverted Block Header
+                yield Static(" ≡ OBJECT_INSPECTOR ", classes="pane-header-block")
                 yield Vertical(id="inspector-content")  # Dynamic content here
 
         # 3. Global Footer (matches MainMenuScreen pattern)
@@ -302,6 +304,11 @@ class PasswordsScreen(Screen):
                 updated = cred.updated_at or "-"
             notes = (cred.notes[:20] + "...") if cred.notes and len(cred.notes) > 20 else (cred.notes or "-")
             table.add_row(str(i), cred.label, cred.email, masked_pwd, updated, notes, key=cred.id)
+
+        # Update the grid footer with object count
+        footer = self.query_one("#grid-footer", Static)
+        count = len(credentials)
+        footer.update(f" └── [{count}] OBJECTS LOADED")
 
     def _get_selected_credential(self) -> EmailCredential | None:
         """Get the currently selected credential."""
@@ -506,23 +513,20 @@ class PasswordsScreen(Screen):
         ))
 
         # ═══════════════════════════════════════════════════════════════
-        # SECTION 4: Notes Terminal
+        # SECTION 4: Notes Terminal (Fills remaining vertical space)
         # ═══════════════════════════════════════════════════════════════
         if cred.notes:
             notes_content = (
-                f"[#22c55e]>_[/] [dim #6b7280]ACCESSING METADATA...[/]\n"
-                f"[#22c55e]>_[/] [dim #6b7280]BEGIN_NOTES:[/]\n"
-                f"[#94a3b8]   {cred.notes}[/]\n"
-                f"[#22c55e]>_[/] [dim #6b7280]END_OF_FILE[/]"
+                f"[#22c55e]>[/] {cred.notes}"
             )
         else:
-            notes_content = (
-                f"[#22c55e]>_[/] [dim #6b7280]ACCESSING METADATA...[/]\n"
-                f"[#475569]>_ NO_DATA_FOUND[/]"
-            )
+            notes_content = "[#475569]NO_DATA_FOUND[/]"
 
         inspector.mount(Vertical(
-            Static("[dim #6b7280]▸ NOTES_TERMINAL[/]", classes="section-header"),
-            Static(notes_content, classes="notes-content"),
-            classes="notes-terminal",
+            Static("[dim #6b7280]▸ ENCRYPTED_NOTES_BUFFER[/]", classes="section-header"),
+            Vertical(
+                Static(notes_content, classes="notes-content"),
+                classes="notes-terminal",
+            ),
+            classes="notes-wrapper",
         ))
