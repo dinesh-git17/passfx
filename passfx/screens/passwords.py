@@ -396,7 +396,14 @@ class PasswordsScreen(Screen):
         self._update_inspector(key_value)
 
     def _update_inspector(self, row_key: Any) -> None:
-        """Update the inspector panel with credential details."""
+        """Update the inspector panel with credential details.
+
+        Renders a high-fidelity "Identity Analysis Module" with:
+        - Digital ID Card header with avatar
+        - Security Telemetry with 20-char segmented gauge
+        - Metadata Grid with ID and timestamps
+        - Notes Terminal with shell-style output
+        """
         inspector = self.query_one("#inspector-content", Vertical)
         inspector.remove_children()
 
@@ -414,9 +421,10 @@ class PasswordsScreen(Screen):
         if not cred:
             # Empty state
             inspector.mount(Static(
-                "[dim #555555]╔══════════════════╗\n"
-                "║   NO SELECTION   ║\n"
-                "╚══════════════════╝[/]",
+                "[dim #555555]╔══════════════════════════╗\n"
+                "║    SELECT AN ENTRY       ║\n"
+                "║    TO VIEW DETAILS       ║\n"
+                "╚══════════════════════════╝[/]",
                 classes="inspector-empty"
             ))
             return
@@ -425,35 +433,96 @@ class PasswordsScreen(Screen):
         from datetime import datetime
         from passfx.utils.strength import check_strength
 
-        # Title
-        inspector.mount(Label(f"[bold #60a5fa]{cred.label}[/]", classes="inspector-title"))
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 1: Digital ID Card Header
+        # ═══════════════════════════════════════════════════════════════
+        inspector.mount(Vertical(
+            Horizontal(
+                Static("[bold #00d4ff]\\[[/] [bold #3b82f6]◈[/] [bold #00d4ff]\\][/]", classes="id-avatar-icon"),
+                Vertical(
+                    Static(f"[bold #f8fafc]{cred.label}[/]", classes="id-label"),
+                    Static(f"[#00d4ff]{cred.email}[/]", classes="id-email"),
+                    classes="id-info-stack",
+                ),
+                classes="id-card-row",
+            ),
+            Static("[dim #475569]" + "─" * 30 + "[/]", classes="id-separator"),
+            classes="id-card",
+        ))
 
-        # Metadata section
-        inspector.mount(Static(f"[dim]ID:[/] {cred.id}", classes="inspector-field"))
-        inspector.mount(Static(f"[dim]Email:[/] {cred.email}", classes="inspector-field"))
-
-        # Password strength indicator
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 2: Security Telemetry
+        # ═══════════════════════════════════════════════════════════════
         strength = check_strength(cred.password)
-        strength_bar = "█" * strength.score + "░" * (4 - strength.score)
-        strength_colors = {0: "#ef4444", 1: "#ef4444", 2: "#f59e0b", 3: "#60a5fa", 4: "#22c55e"}
+        strength_colors = {
+            0: "#ef4444",  # Red - Very Weak
+            1: "#f87171",  # Light Red - Weak
+            2: "#f59e0b",  # Amber - Fair
+            3: "#60a5fa",  # Blue - Good
+            4: "#22c55e",  # Green - Strong
+        }
         color = strength_colors.get(strength.score, "#94a3b8")
-        inspector.mount(Static(f"[dim]Strength:[/] [{color}]{strength_bar}[/] [{color}]{strength.score}/4[/]", classes="inspector-field"))
 
-        # Dates
+        # Build 20-character segmented gauge
+        # Each score level fills 4 chars (0=4, 1=8, 2=12, 3=16, 4=20)
+        filled_count = (strength.score + 1) * 4
+        empty_count = 20 - filled_count
+        filled_char = "│"
+        empty_char = "·"
+        filled = f"[{color}]" + (filled_char * filled_count) + "[/]" if filled_count > 0 else ""
+        empty = f"[#1e293b]" + (empty_char * empty_count) + "[/]" if empty_count > 0 else ""
+        # Escape literal brackets with \[
+        gauge = f"\\[ {filled}{empty} \\]"
+
+        inspector.mount(Vertical(
+            Static("[dim #6b7280]▸ SECURITY_TELEMETRY[/]", classes="section-header"),
+            Static(f"{gauge}", classes="security-gauge"),
+            Static(f"[{color}]{strength.label.upper()}[/]", classes="strength-label"),
+            Static(f"[dim #6b7280]RESISTANCE:[/] [bold #94a3b8]{strength.crack_time}[/]", classes="tech-readout"),
+            classes="security-section",
+        ))
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 3: Metadata Grid
+        # ═══════════════════════════════════════════════════════════════
         try:
-            created = datetime.fromisoformat(cred.created_at).strftime("%Y-%m-%d %H:%M")
-        except (ValueError, TypeError):
-            created = cred.created_at or "Unknown"
-        try:
-            updated = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d %H:%M")
+            updated = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d")
         except (ValueError, TypeError):
             updated = cred.updated_at or "Unknown"
 
-        inspector.mount(Static(f"[dim]Created:[/] {created}", classes="inspector-field"))
-        inspector.mount(Static(f"[dim]Updated:[/] {updated}", classes="inspector-field"))
+        inspector.mount(Vertical(
+            Static("[dim #6b7280]▸ METADATA[/]", classes="section-header"),
+            Horizontal(
+                Static("[dim #475569]ID[/]", classes="meta-label"),
+                Static(f"[#94a3b8]{cred.id[:8]}[/]", classes="meta-value"),
+                classes="meta-row",
+            ),
+            Horizontal(
+                Static("[dim #475569]UPDATED[/]", classes="meta-label"),
+                Static(f"[#94a3b8]{updated}[/]", classes="meta-value"),
+                classes="meta-row",
+            ),
+            classes="metadata-section",
+        ))
 
-        # Notes section (if present)
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 4: Notes Terminal
+        # ═══════════════════════════════════════════════════════════════
         if cred.notes:
-            inspector.mount(Static("", classes="inspector-spacer"))  # Spacer
-            inspector.mount(Static("[dim]─── NOTES ───[/]", classes="inspector-section"))
-            inspector.mount(Static(cred.notes, classes="inspector-notes"))
+            notes_content = (
+                f"[#22c55e]>_[/] [dim #6b7280]ACCESSING METADATA...[/]\n"
+                f"[#22c55e]>_[/] [dim #6b7280]BEGIN_NOTES:[/]\n"
+                f"[#94a3b8]   {cred.notes}[/]\n"
+                f"[#22c55e]>_[/] [dim #6b7280]END_OF_FILE[/]"
+            )
+        else:
+            notes_content = (
+                f"[#22c55e]>_[/] [dim #6b7280]ACCESSING METADATA...[/]\n"
+                f"[#475569]>_ NO_DATA_FOUND[/]"
+            )
+
+        inspector.mount(Vertical(
+            Static("[dim #6b7280]▸ NOTES_TERMINAL[/]", classes="section-header"),
+            Static(notes_content, classes="notes-content"),
+            classes="notes-terminal",
+        ))
