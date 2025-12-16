@@ -283,7 +283,7 @@ class PasswordsScreen(Screen):
 
         credentials = app.vault.get_emails()
         for i, cred in enumerate(credentials, 1):
-            masked_pwd = "█" * min(len(cred.password), 8)  # Block character U+2588
+            masked_pwd = f"[#475569]{'█' * min(len(cred.password), 8)}[/]"  # Muted blocks
             # Format updated_at timestamp
             try:
                 updated = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d %H:%M")
