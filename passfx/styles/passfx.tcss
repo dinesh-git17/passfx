@@ -86,7 +86,7 @@ Footer {
     color: #94a3b8;
     height: auto;
     dock: bottom;
-    padding: 0 0 1 0;
+    padding: 0;
 }
 
 FooterKey {
@@ -115,6 +115,8 @@ FooterKey > .footer-key--description {
     dock: bottom;
     background: #0f172a;
     align: center middle;
+    padding: 0;
+    margin: 0;
 }
 
 #footer-version {
@@ -311,15 +313,17 @@ FooterKey > .footer-key--description {
     text-style: bold;
 }
 
+/* Dashboard View - Scrollable Container */
 #dashboard-view {
     width: 1fr;
     height: 100%;
     background: #1e293b;
-    padding: 0 2 0 2;
+    padding: 0 2 1 2;
+    scrollbar-gutter: stable;
 }
 
-#dashboard-top-border {
-    display: none;
+#dashboard-view:focus {
+    border: none;
 }
 
 #dashboard-title {
@@ -327,26 +331,40 @@ FooterKey > .footer-key--description {
     padding: 1 0;
     margin-top: 1;
     margin-bottom: 1;
+    height: auto;
 }
 
 /* Stats HUD Strip - Hardware Panel Look */
-#stats-strip {
-    height: auto;
+#stats-strip,
+#stats-strip-2 {
+    width: 100%;
+    height: 10;
     background: #0a0e27;
     padding: 0;
-    margin: 1 0;
 }
 
+#stats-strip {
+    margin: 1 0 0 0;
+}
+
+#stats-strip-2 {
+    margin: 0 0 1 0;
+    border-top: solid #1e293b;
+}
+
+/* Stat Segment - Responsive Card Design */
 .stat-segment {
     width: 1fr;
-    height: auto;
+    min-width: 12;
+    height: 100%;
     align: center middle;
-    padding: 1 1;
+    padding: 0 1;
     border-right: solid #334155;
+    background: transparent;
 }
 
 .stat-segment:hover {
-    background: #1d4ed820;
+    background: #1e3a5f;
 }
 
 .stat-segment:last-child {
@@ -359,14 +377,17 @@ FooterKey > .footer-key--description {
     text-align: center;
     height: 1;
     padding: 0;
+    background: transparent;
 }
 
+/* Digits - Fixed height for consistency */
 .stat-value {
     height: 7;
     text-align: center;
+    background: transparent;
 }
 
-/* Distinct neon colors for each stat category */
+/* Distinct neon colors for each stat category - Row 1 */
 #digits-passwords {
     color: $pfx-primary-light;
 }
@@ -379,15 +400,31 @@ FooterKey > .footer-key--description {
     color: $pfx-success;
 }
 
+/* Distinct neon colors for each stat category - Row 2 */
+#digits-notes {
+    color: #94a3b8;
+}
+
+#digits-envs {
+    color: #fbbf24;
+}
+
+#digits-recovery {
+    color: #fb7185;
+}
+
+/* Panels Row - Responsive Side-by-Side Layout */
 #panels-row {
     width: 100%;
     height: auto;
+    min-height: 12;
     align: center top;
 }
 
 /* CRT-style dashboard panels - deep recessed screen effect */
 .gauge-panel {
     width: 1fr;
+    min-width: 24;
     height: auto;
     min-height: 10;
     background: #02040a;
@@ -402,6 +439,7 @@ FooterKey > .footer-key--description {
 
 .log-panel {
     width: 1fr;
+    min-width: 24;
     height: auto;
     min-height: 10;
     background: #02040a;
@@ -776,6 +814,19 @@ ScrollBar > .scrollbar--bar {
 
 ScrollBar > .scrollbar--bar:hover {
     background: #3b82f6;
+}
+
+/* Dashboard scrollbar - subtle cyberpunk accent */
+#dashboard-view Scrollbar {
+    background: #0f172a;
+}
+
+#dashboard-view ScrollBar > .scrollbar--bar {
+    background: #334155;
+}
+
+#dashboard-view ScrollBar > .scrollbar--bar:hover {
+    background: #60a5fa;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

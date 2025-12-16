@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.events import Click
 from textual.screen import Screen
 from textual.widgets import Digits, Label, OptionList, Static
@@ -111,15 +111,14 @@ class MainMenuScreen(Screen):
                     id="sidebar-menu",
                 )
 
-            # Right pane: Dashboard view
-            with Vertical(id="dashboard-view"):
-                yield Static("", id="dashboard-top-border")
+            # Right pane: Dashboard view (scrollable for smaller screens)
+            with VerticalScroll(id="dashboard-view"):
                 yield Static(
                     "[bold #60a5fa]━━━ VAULT STATUS ━━━[/]",
                     id="dashboard-title",
                 )
 
-                # Stats HUD strip
+                # Stats HUD strip - Row 1: Primary Credentials
                 with Horizontal(id="stats-strip"):
                     # Segment 1: Passwords
                     with Vertical(id="segment-passwords", classes="stat-segment"):
@@ -136,7 +135,24 @@ class MainMenuScreen(Screen):
                         yield Label("CARDS", classes="stat-label")
                         yield Digits("00", id="digits-cards", classes="stat-value")
 
-                # Security gauge and System log - side by side
+                # Stats HUD strip - Row 2: Extended Vault
+                with Horizontal(id="stats-strip-2"):
+                    # Segment 4: Notes
+                    with Vertical(id="segment-notes", classes="stat-segment"):
+                        yield Label("NOTES", classes="stat-label")
+                        yield Digits("00", id="digits-notes", classes="stat-value")
+
+                    # Segment 5: Env Vars
+                    with Vertical(id="segment-envs", classes="stat-segment"):
+                        yield Label("ENV VARS", classes="stat-label")
+                        yield Digits("00", id="digits-envs", classes="stat-value")
+
+                    # Segment 6: Recovery
+                    with Vertical(id="segment-recovery", classes="stat-segment"):
+                        yield Label("RECOVERY", classes="stat-label")
+                        yield Digits("00", id="digits-recovery", classes="stat-value")
+
+                # Security gauge and System log - side by side (responsive)
                 with Horizontal(id="panels-row"):
                     yield Static(id="security-gauge", classes="gauge-panel")
                     yield Static(id="system-log", classes="log-panel")
@@ -148,11 +164,17 @@ class MainMenuScreen(Screen):
             # Right segment: Key hints as mechanical keycaps
             with Horizontal(id="footer-keys"):
                 with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #a78bfa] ↑↓ [/]", classes="keycap")
+                    yield Static("[#64748b]Navigate[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #a78bfa] ⏎ [/]", classes="keycap")
+                    yield Static("[#64748b]Select[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #a78bfa] ? [/]", classes="keycap")
+                    yield Static("[#64748b]Help[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
                     yield Static("[bold #a78bfa] Q [/]", classes="keycap")
                     yield Static("[#64748b]Quit[/]", classes="keycap-label")
-                with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #a78bfa]ESC[/]", classes="keycap")
-                    yield Static("[#64748b]Back[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Initialize dashboard data on mount."""
@@ -196,12 +218,20 @@ class MainMenuScreen(Screen):
         email_count = stats.get("emails", 0)
         phone_count = stats.get("phones", 0)
         card_count = stats.get("cards", 0)
+        notes_count = stats.get("notes", 0)
+        envs_count = stats.get("envs", 0)
+        recovery_count = stats.get("recovery", 0)
         total = stats.get("total", 0)
 
-        # Update stat digits
+        # Update stat digits - Row 1
         self.query_one("#digits-passwords", Digits).update(f"{email_count:02d}")
         self.query_one("#digits-phones", Digits).update(f"{phone_count:02d}")
         self.query_one("#digits-cards", Digits).update(f"{card_count:02d}")
+
+        # Update stat digits - Row 2
+        self.query_one("#digits-notes", Digits).update(f"{notes_count:02d}")
+        self.query_one("#digits-envs", Digits).update(f"{envs_count:02d}")
+        self.query_one("#digits-recovery", Digits).update(f"{recovery_count:02d}")
 
         # Run security analysis
         analysis = self._analyze_security(app)
@@ -443,6 +473,15 @@ class MainMenuScreen(Screen):
                 return
             elif widget.id == "segment-cards":
                 self.action_cards()
+                return
+            elif widget.id == "segment-notes":
+                self.action_notes()
+                return
+            elif widget.id == "segment-envs":
+                self.action_envs()
+                return
+            elif widget.id == "segment-recovery":
+                self.action_recovery()
                 return
             widget = widget.parent
 
