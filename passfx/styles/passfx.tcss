@@ -329,20 +329,27 @@ FooterKey > .footer-key--description {
 .gauge-panel {
     width: 1fr;
     height: auto;
-    background: #0f172a;
-    padding: 1 2;
-    margin: 1;
+    min-height: 8;
+    background: $pfx-bg;
+    border: heavy $pfx-primary;
+    border-title-color: $pfx-primary-light;
+    border-title-style: bold;
+    padding: 2 2 1 2;
+    margin: 1 1 1 0;
     text-align: center;
 }
 
 .log-panel {
     width: 1fr;
     height: auto;
-    background: #0f172a;
+    min-height: 8;
+    background: $pfx-bg;
+    border: heavy $pfx-accent;
+    border-title-color: $pfx-accent;
+    border-title-style: bold;
     padding: 1 2;
-    margin: 1;
+    margin: 1 0 1 1;
     text-align: left;
-    content-align: center top;
 }
 
 .title {

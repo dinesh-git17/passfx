@@ -176,15 +176,18 @@ class MainMenuScreen(Screen):
 
         # Run security analysis
         analysis = self._analyze_security(app)
-        bar_filled = int(analysis.score / 10)
-        bar_empty = 10 - bar_filled
         bar_color = self._get_score_color(analysis.score)
 
-        # Build security gauge with breakdown
+        # Build segmented VFD-style gauge (20 segments)
+        num_segments = 20
+        filled = int((analysis.score / 100) * num_segments)
+        empty = num_segments - filled
+        bar_str = f"[{bar_color}]{'|' * filled}[/][dim #334155]{'·' * empty}[/]"
+
+        # Build security gauge content (title goes in border)
         gauge_lines = [
-            f"[bold #60a5fa]━━━ SECURITY SCORE ━━━[/]\n",
-            f"  [{bar_color}]{'█' * bar_filled}[/][dim]{'░' * bar_empty}[/]  "
-            f"[bold {bar_color}]{analysis.score}%[/]\n",
+            f"{bar_str}  [bold {bar_color}]{analysis.score}%[/]",
+            "",  # Breathing room
         ]
 
         # Add breakdown if there are items
@@ -192,32 +195,36 @@ class MainMenuScreen(Screen):
             if analysis.password_scores:
                 avg = sum(analysis.password_scores) / len(analysis.password_scores)
                 strength_label = ["Very Weak", "Weak", "Fair", "Good", "Strong"][min(4, int(avg))]
-                gauge_lines.append(f"  [dim]Avg Strength:[/] {strength_label}")
+                gauge_lines.append(f"[dim]Avg Strength:[/] {strength_label}")
             if analysis.reused_passwords > 0:
-                gauge_lines.append(f"  [#ef4444]Reused:[/] {analysis.reused_passwords}")
+                gauge_lines.append(f"[#ef4444]Reused:[/] {analysis.reused_passwords}")
             if analysis.weak_pins > 0:
-                gauge_lines.append(f"  [#f59e0b]Weak PINs:[/] {analysis.weak_pins}")
+                gauge_lines.append(f"[#f59e0b]Weak PINs:[/] {analysis.weak_pins}")
             if analysis.old_passwords > 0:
-                gauge_lines.append(f"  [#f59e0b]Stale (>90d):[/] {analysis.old_passwords}")
+                gauge_lines.append(f"[#f59e0b]Stale (>90d):[/] {analysis.old_passwords}")
 
-        self.query_one("#security-gauge", Static).update("\n".join(gauge_lines))
+        gauge_widget = self.query_one("#security-gauge", Static)
+        gauge_widget.border_title = "SECURITY SCORE"
+        gauge_widget.update("\n".join(gauge_lines))
 
-        # System log with issues
+        # System log with timestamps (title goes in border)
+        ts = datetime.now().strftime("%H:%M:%S")
         status_lines = [
-            "[bold #60a5fa]━━━ SYSTEM STATUS ━━━[/]\n",
-            f"  [#22c55e]●[/] Vault Decrypted",
-            f"  [#22c55e]●[/] Session Active",
-            f"  [dim]●[/] Entries: {total}",
+            f"[dim]{ts}[/] [bold #22c55e]➜[/] Vault filesystem mounted (AES-256)",
+            f"[dim]{ts}[/] [bold #22c55e]➜[/] Session active (User: Admin)",
+            f"[dim]{ts}[/] [bold #3b82f6]i[/] Indexing complete: {total} records loaded",
         ]
 
         if analysis.issues:
-            status_lines.append("\n[bold #f59e0b]━━━ ISSUES ━━━[/]\n")
+            status_lines.append("")
             for issue in analysis.issues:
-                status_lines.append(f"  [#ef4444]![/] {issue}")
+                status_lines.append(f"[dim]{ts}[/] [bold #ef4444]![/] ALERT: {issue}")
         else:
-            status_lines.append("\n  [#22c55e]✓[/] No security issues")
+            status_lines.append(f"[dim]{ts}[/] [bold #22c55e]✓[/] No security issues detected")
 
-        self.query_one("#system-log", Static).update("\n".join(status_lines))
+        log_widget = self.query_one("#system-log", Static)
+        log_widget.border_title = "SYSTEM LOG"
+        log_widget.update("\n".join(status_lines))
 
     def _analyze_security(self, app: PassFXApp) -> SecurityAnalysis:
         """Perform comprehensive security analysis of vault contents."""
