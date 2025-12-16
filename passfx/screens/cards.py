@@ -2,13 +2,21 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import re
+from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Center, Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
-from textual.widgets import Button, DataTable, Footer, Header, Input, Label, Static
+from textual.widgets import (
+    Button,
+    DataTable,
+    Input,
+    Label,
+    Static,
+)
 
 from passfx.core.models import CreditCard
 from passfx.utils.clipboard import copy_to_clipboard
@@ -17,38 +25,270 @@ if TYPE_CHECKING:
     from passfx.app import PassFXApp
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# HELPER FUNCTIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _get_relative_time(iso_timestamp: str | None) -> str:
+    """Convert ISO timestamp to relative time string.
+
+    Args:
+        iso_timestamp: ISO format timestamp string.
+
+    Returns:
+        Relative time string like "2m ago", "1d ago", "3w ago".
+    """
+    if not iso_timestamp:
+        return "-"
+
+    try:
+        dt = datetime.fromisoformat(iso_timestamp)
+        now = datetime.now()
+        diff = now - dt
+
+        seconds = int(diff.total_seconds())
+        if seconds < 0:
+            return "just now"
+        if seconds < 60:
+            return f"{seconds}s ago"
+        minutes = seconds // 60
+        if minutes < 60:
+            return f"{minutes}m ago"
+        hours = minutes // 60
+        if hours < 24:
+            return f"{hours}h ago"
+        days = hours // 24
+        if days < 7:
+            return f"{days}d ago"
+        weeks = days // 7
+        if weeks < 4:
+            return f"{weeks}w ago"
+        months = days // 30
+        if months < 12:
+            return f"{months}mo ago"
+        years = days // 365
+        return f"{years}y ago"
+    except (ValueError, TypeError):
+        return "-"
+
+
+def _get_avatar_initials(label: str) -> str:
+    """Generate 2-character avatar initials from label.
+
+    Args:
+        label: Card/bank label.
+
+    Returns:
+        2-character uppercase initials.
+    """
+    if not label:
+        return "??"
+
+    # Clean and split
+    words = label.replace("_", " ").replace("-", " ").split()
+
+    if len(words) >= 2:
+        # First letter of first two words
+        return (words[0][0] + words[1][0]).upper()
+    elif len(label) >= 2:
+        # First two characters
+        return label[:2].upper()
+    else:
+        return (label[0] + label[0]).upper() if label else "??"
+
+
+def _get_avatar_bg_color(label: str) -> str:
+    """Generate a consistent background color for avatar based on label.
+
+    Args:
+        label: Card/bank label.
+
+    Returns:
+        Hex color string.
+    """
+    # Simple hash-based color selection
+    colors = [
+        "#3b82f6",  # Blue
+        "#8b5cf6",  # Purple
+        "#06b6d4",  # Cyan
+        "#10b981",  # Emerald
+        "#f59e0b",  # Amber
+        "#ec4899",  # Pink
+        "#6366f1",  # Indigo
+        "#14b8a6",  # Teal
+    ]
+    if not label:
+        return colors[0]
+    hash_val = sum(ord(c) for c in label)
+    return colors[hash_val % len(colors)]
+
+
+def _get_card_type_icon(card_number: str) -> str:
+    """Get card network icon based on card number prefix.
+
+    Args:
+        card_number: Full or partial card number.
+
+    Returns:
+        Unicode icon representing card network.
+    """
+    digits = "".join(filter(str.isdigit, card_number))
+    if not digits:
+        return "💳"
+
+    # Simple prefix detection
+    if digits.startswith("4"):
+        return "💳"  # Visa
+    elif digits.startswith(("51", "52", "53", "54", "55")):
+        return "💳"  # Mastercard
+    elif digits.startswith(("34", "37")):
+        return "💳"  # Amex
+    elif digits.startswith("6"):
+        return "💳"  # Discover
+    else:
+        return "💳"
+
+
+def _format_card_number(card_number: str) -> str:
+    """Format card number with spaces every 4 digits.
+
+    Args:
+        card_number: Raw card number (may contain spaces/hyphens).
+
+    Returns:
+        Formatted card number like "4242 4242 4242 4242".
+    """
+    digits = "".join(filter(str.isdigit, card_number))
+    # Group into chunks of 4
+    chunks = [digits[i : i + 4] for i in range(0, len(digits), 4)]
+    return " ".join(chunks)
+
+
+def _validate_card_number(number: str) -> tuple[bool, str]:
+    """Validate credit card number format.
+
+    Args:
+        number: Card number string (may contain spaces/hyphens).
+
+    Returns:
+        Tuple of (is_valid, cleaned_number or error_message).
+    """
+    # Strip spaces and hyphens
+    cleaned = re.sub(r"[\s\-]", "", number)
+
+    # Check digits only
+    if not cleaned.isdigit():
+        return False, "Invalid card number format"
+
+    # Check length (13-19 digits for most cards)
+    if not (13 <= len(cleaned) <= 19):
+        return False, "Invalid card number format"
+
+    return True, cleaned
+
+
+def _validate_expiry(expiry: str) -> tuple[bool, str]:
+    """Validate and normalize expiry date format.
+
+    Accepts various formats:
+    - MMYY (e.g., "0125")
+    - MM/YY (e.g., "01/25")
+    - MM-YY (e.g., "01-25")
+
+    Args:
+        expiry: Expiry string in various formats.
+
+    Returns:
+        Tuple of (is_valid, normalized_expiry or error_message).
+        Normalized format is always MM/YY.
+    """
+    # Strip whitespace
+    expiry = expiry.strip()
+
+    # Try to extract digits only
+    digits = re.sub(r"[\s/\-]", "", expiry)
+
+    # Must have exactly 4 digits (MMYY)
+    if not digits.isdigit() or len(digits) != 4:
+        return False, "Expiry must be MM/YY"
+
+    month = int(digits[:2])
+    year = digits[2:4]
+
+    # Validate month range
+    if not (1 <= month <= 12):
+        return False, "Expiry must be MM/YY"
+
+    # Format as MM/YY
+    normalized = f"{month:02d}/{year}"
+    return True, normalized
+
+
+def _validate_cvv(cvv: str) -> tuple[bool, str]:
+    """Validate CVV format.
+
+    Args:
+        cvv: CVV string.
+
+    Returns:
+        Tuple of (is_valid, cvv or error_message).
+    """
+    # Must be 3 or 4 digits
+    if not cvv.isdigit() or len(cvv) not in (3, 4):
+        return False, "Invalid CVV"
+
+    return True, cvv
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODAL SCREENS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
 class AddCardModal(ModalScreen[CreditCard | None]):
     """Modal for adding a new credit card."""
 
-    BINDINGS = [Binding("escape", "cancel", "Cancel")]
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel"),
+    ]
 
     def compose(self) -> ComposeResult:
         """Create the modal layout."""
-        with Vertical(id="modal-container"):
-            yield Static("Add Credit Card", id="modal-title")
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # Header
+            yield Static(":: NEW_ASSET_ENTRY ::", id="modal-title")
 
-            with Vertical(id="modal-content"):
-                yield Label("Label (e.g., Chase Sapphire)")
-                yield Input(placeholder="Label", id="label-input")
+            # Form Body
+            with Vertical(id="pwd-form"):
+                # Row 1: Label (Issuer)
+                yield Label("ISSUER_LABEL", classes="input-label")
+                yield Input(placeholder="e.g. CHASE_SAPPHIRE", id="label-input")
 
-                yield Label("Card Number")
-                yield Input(placeholder="Card Number", id="number-input")
+                # Row 2: Card Number (PAN)
+                yield Label("PAN_NUMBER", classes="input-label")
+                yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
 
-                yield Label("Expiry (MM/YY)")
+                # Row 3: Expiry Date
+                yield Label("EXPIRY_DATE", classes="input-label")
                 yield Input(placeholder="MM/YY", id="expiry-input")
 
-                yield Label("CVV")
-                yield Input(placeholder="CVV", password=True, id="cvv-input")
+                # Row 4: CVV (Security Code)
+                yield Label("SECURITY_CODE", classes="input-label")
+                yield Input(placeholder="•••", password=True, id="cvv-input")
 
-                yield Label("Cardholder Name")
-                yield Input(placeholder="Name", id="name-input")
+                # Row 5: Cardholder Name
+                yield Label("CARDHOLDER", classes="input-label")
+                yield Input(placeholder="NAME ON CARD", id="name-input")
 
-                yield Label("Notes (optional)")
-                yield Input(placeholder="Notes", id="notes-input")
+                # Row 6: Notes
+                yield Label("METADATA", classes="input-label")
+                yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
 
+            # Footer Actions
             with Horizontal(id="modal-buttons"):
-                yield Button("Cancel", id="cancel-button")
-                yield Button("Save", variant="primary", id="save-button")
+                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -62,22 +302,47 @@ class AddCardModal(ModalScreen[CreditCard | None]):
             self._save()
 
     def _save(self) -> None:
-        """Save the card."""
+        """Save the card with strict validation."""
         label = self.query_one("#label-input", Input).value.strip()
-        number = self.query_one("#number-input", Input).value.strip()
+        number_raw = self.query_one("#number-input", Input).value.strip()
         expiry = self.query_one("#expiry-input", Input).value.strip()
         cvv = self.query_one("#cvv-input", Input).value.strip()
         name = self.query_one("#name-input", Input).value.strip()
         notes = self.query_one("#notes-input", Input).value.strip()
 
-        if not all([label, number, expiry, cvv, name]):
-            self.notify("Please fill in all required fields", severity="error")
+        # Check required fields first
+        if not label:
+            self.notify("Label is required", severity="error")
+            return
+        if not name:
+            self.notify("Cardholder name is required", severity="error")
             return
 
+        # Validate card number
+        valid, result = _validate_card_number(number_raw)
+        if not valid:
+            self.notify(result, severity="error")
+            return
+        cleaned_number = result
+
+        # Validate expiry
+        valid, result = _validate_expiry(expiry)
+        if not valid:
+            self.notify(result, severity="error")
+            return
+        normalized_expiry = result
+
+        # Validate CVV
+        valid, result = _validate_cvv(cvv)
+        if not valid:
+            self.notify(result, severity="error")
+            return
+
+        # All validations passed - create card
         card = CreditCard(
             label=label,
-            card_number=number,
-            expiry=expiry,
+            card_number=cleaned_number,
+            expiry=normalized_expiry,
             cvv=cvv,
             cardholder_name=name,
             notes=notes if notes else None,
@@ -89,10 +354,12 @@ class AddCardModal(ModalScreen[CreditCard | None]):
         self.dismiss(None)
 
 
-class ViewCardModal(ModalScreen[None]):
-    """Modal for viewing card details."""
+class EditCardModal(ModalScreen[dict | None]):
+    """Modal for editing a credit card."""
 
-    BINDINGS = [Binding("escape", "close", "Close")]
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel"),
+    ]
 
     def __init__(self, card: CreditCard) -> None:
         super().__init__()
@@ -100,30 +367,223 @@ class ViewCardModal(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         """Create the modal layout."""
-        with Vertical(id="modal-container"):
-            yield Static(f"Card: {self.card.label}", id="modal-title")
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            yield Static(f":: MODIFY_ASSET // {self.card.label.upper()} ::", id="modal-title")
 
-            with Vertical(id="modal-content"):
-                yield Static(f"Number:      {self.card.card_number}")
-                yield Static(f"Expiry:      {self.card.expiry}")
-                yield Static(f"CVV:         {self.card.cvv}")
-                yield Static(f"Cardholder:  {self.card.cardholder_name}")
-                if self.card.notes:
-                    yield Static(f"Notes:       {self.card.notes}")
+            with Vertical(id="pwd-form"):
+                yield Label("ISSUER_LABEL", classes="input-label")
+                yield Input(
+                    value=self.card.label,
+                    placeholder="e.g. CHASE_SAPPHIRE",
+                    id="label-input",
+                )
 
-                yield Static("")
-                yield Static("Press Escape to close", classes="muted")
+                yield Label("PAN_NUMBER [BLANK = KEEP CURRENT]", classes="input-label")
+                yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
+
+                yield Label("EXPIRY_DATE", classes="input-label")
+                yield Input(
+                    value=self.card.expiry,
+                    placeholder="MM/YY",
+                    id="expiry-input",
+                )
+
+                yield Label("SECURITY_CODE [BLANK = KEEP CURRENT]", classes="input-label")
+                yield Input(placeholder="•••", password=True, id="cvv-input")
+
+                yield Label("CARDHOLDER", classes="input-label")
+                yield Input(
+                    value=self.card.cardholder_name,
+                    placeholder="NAME ON CARD",
+                    id="name-input",
+                )
+
+                yield Label("METADATA", classes="input-label")
+                yield Input(
+                    value=self.card.notes or "",
+                    placeholder="OPTIONAL_NOTES",
+                    id="notes-input",
+                )
 
             with Horizontal(id="modal-buttons"):
-                yield Button("Close", id="close-button")
+                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
+        if event.button.id == "cancel-button":
+            self.dismiss(None)
+        elif event.button.id == "save-button":
+            self._save()
+
+    def _save(self) -> None:
+        """Save the changes with validation."""
+        label = self.query_one("#label-input", Input).value.strip()
+        number_raw = self.query_one("#number-input", Input).value.strip()
+        expiry = self.query_one("#expiry-input", Input).value.strip()
+        cvv = self.query_one("#cvv-input", Input).value.strip()
+        name = self.query_one("#name-input", Input).value.strip()
+        notes = self.query_one("#notes-input", Input).value.strip()
+
+        # Check required fields
+        if not label:
+            self.notify("Label is required", severity="error")
+            return
+        if not name:
+            self.notify("Cardholder name is required", severity="error")
+            return
+
+        # Validate expiry (always required)
+        valid, result = _validate_expiry(expiry)
+        if not valid:
+            self.notify(result, severity="error")
+            return
+        normalized_expiry = result
+
+        # Build result dict
+        result_dict: dict[str, Any] = {
+            "label": label,
+            "expiry": normalized_expiry,
+            "cardholder_name": name,
+            "notes": notes if notes else None,
+        }
+
+        # Validate card number only if provided
+        if number_raw:
+            valid, result = _validate_card_number(number_raw)
+            if not valid:
+                self.notify(result, severity="error")
+                return
+            result_dict["card_number"] = result
+
+        # Validate CVV only if provided
+        if cvv:
+            valid, result = _validate_cvv(cvv)
+            if not valid:
+                self.notify(result, severity="error")
+                return
+            result_dict["cvv"] = cvv
+
+        self.dismiss(result_dict)
+
+    def action_cancel(self) -> None:
+        """Cancel the modal."""
         self.dismiss(None)
+
+
+class ViewCardModal(ModalScreen[None]):
+    """Modal displaying a physical credit card visualization."""
+
+    BINDINGS = [
+        Binding("escape", "close", "Close"),
+    ]
+
+    def __init__(self, card: CreditCard) -> None:
+        super().__init__()
+        self.card = card
+
+    def compose(self) -> ComposeResult:
+        """Create the physical card layout."""
+        # Format the card number with spaces
+        formatted_number = _format_card_number(self.card.card_number)
+
+        with Vertical(id="card-modal"):
+            # Physical Card Container
+            with Vertical(id="physical-card"):
+                # Top Row: Bank Name (right-aligned)
+                yield Static(
+                    f"[bold #f8fafc]{self.card.label.upper()}[/]",
+                    id="card-bank-name",
+                )
+
+                # Chip Row
+                yield Static(
+                    "[bold #fbbf24]▄▄▄▄▄▄▄[/]\n[bold #fbbf24]███████[/]\n[bold #fbbf24]▀▀▀▀▀▀▀[/]",
+                    id="card-chip",
+                )
+
+                # Card Number Row (large, bold, gold - styled via CSS)
+                yield Static(
+                    formatted_number,
+                    id="card-number-display",
+                )
+
+                # Details Row: Expiry and CVV
+                with Horizontal(id="card-details-row"):
+                    yield Static(
+                        f"[dim #94a3b8]VALID THRU[/]\n[bold #f8fafc]{self.card.expiry}[/]",
+                        id="card-expiry",
+                    )
+                    yield Static(
+                        f"[dim #94a3b8]CVV[/]\n[bold #f8fafc]{self.card.cvv}[/]",
+                        id="card-cvv",
+                    )
+
+                # Bottom Row: Cardholder Name (embossed look)
+                yield Static(
+                    f"[bold #e2e8f0]{self.card.cardholder_name.upper()}[/]",
+                    id="card-holder-name",
+                )
+
+            # Close Button
+            with Horizontal(id="card-modal-buttons"):
+                yield Button("[ESC] CLOSE", id="close-button")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press."""
+        if event.button.id == "close-button":
+            self.dismiss(None)
 
     def action_close(self) -> None:
         """Close the modal."""
         self.dismiss(None)
+
+
+class ConfirmDeleteModal(ModalScreen[bool]):
+    """Modal for confirming deletion."""
+
+    BINDINGS = [
+        Binding("escape", "cancel", "Cancel"),
+        Binding("y", "confirm", "Yes"),
+        Binding("n", "cancel", "No"),
+    ]
+
+    def __init__(self, item_name: str) -> None:
+        super().__init__()
+        self.item_name = item_name
+
+    def compose(self) -> ComposeResult:
+        """Create the modal layout."""
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            yield Static(":: CONFIRM_DELETE // WARNING ::", id="modal-title")
+
+            with Vertical(id="pwd-form"):
+                yield Static(f"TARGET: '{self.item_name}'", classes="delete-target")
+                yield Static("⚠ THIS ACTION CANNOT BE UNDONE", classes="warning")
+
+            with Horizontal(id="modal-buttons"):
+                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button("[Y] CONFIRM DELETE", variant="error", id="delete-button")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button press."""
+        if event.button.id == "cancel-button":
+            self.dismiss(False)
+        elif event.button.id == "delete-button":
+            self.dismiss(True)
+
+    def action_cancel(self) -> None:
+        """Cancel deletion."""
+        self.dismiss(False)
+
+    def action_confirm(self) -> None:
+        """Confirm deletion."""
+        self.dismiss(True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAIN CARDS SCREEN
+# ═══════════════════════════════════════════════════════════════════════════════
 
 
 class CardsScreen(Screen):
@@ -131,59 +591,183 @@ class CardsScreen(Screen):
 
     BINDINGS = [
         Binding("a", "add", "Add"),
-        Binding("c", "copy", "Copy Number"),
-        Binding("v", "view", "View"),
+        Binding("c", "copy", "Copy"),
+        Binding("e", "edit", "Edit"),
         Binding("d", "delete", "Delete"),
+        Binding("v", "view", "View"),
         Binding("escape", "back", "Back"),
     ]
 
+    def __init__(self) -> None:
+        super().__init__()
+        self._selected_row_key: str | None = None
+        self._pulse_state: bool = True
+
     def compose(self) -> ComposeResult:
         """Create the cards screen layout."""
-        yield Header()
-
-        with Vertical():
+        # 1. Global Header with Breadcrumbs
+        with Horizontal(id="app-header"):
             yield Static(
-                "[bold #00d4ff]╔══════════════════════════════════════╗[/]\n"
-                "[bold #00d4ff]║[/]        [bold #00d4ff]CREDIT CARDS[/]        [bold #00d4ff]║[/]\n"
-                "[bold #00d4ff]╚══════════════════════════════════════╝[/]",
-                classes="title",
+                "[dim #64748b]HOME[/] [#475569]›[/] [dim #64748b]VAULT[/] [#475569]›[/] [bold #00d4ff]CARDS[/]",
+                id="header-branding",
             )
+            yield Static("░░ FINANCIAL VAULT ░░", id="header-status")
+            yield Static("", id="header-lock")  # Will be updated with pulse
 
-            yield DataTable(id="cards-table", cursor_type="row")
+        # 2. Body (Master-Detail Split)
+        with Horizontal(id="vault-body"):
+            # Left Pane: Data Grid (Master) - 65%
+            with Vertical(id="vault-grid-pane"):
+                # Inverted Block Header
+                yield Static(" ≡ FINANCIAL_DATABASE ", classes="pane-header-block")
+                yield DataTable(id="cards-table", cursor_type="row")
+                # Empty state placeholder (hidden by default)
+                with Center(id="empty-state"):
+                    yield Static(
+                        "[dim #475569]╔══════════════════════════════════════╗\n"
+                        "║                                      ║\n"
+                        "║      NO CARDS FOUND                  ║\n"
+                        "║                                      ║\n"
+                        "║      INITIATE SEQUENCE [A]           ║\n"
+                        "║                                      ║\n"
+                        "╚══════════════════════════════════════╝[/]",
+                        id="empty-state-text",
+                    )
+                # Footer with object count
+                yield Static(" └── SYSTEM_READY", classes="pane-footer", id="grid-footer")
 
-            with Horizontal(id="action-bar"):
-                yield Button("Add", id="add-button")
-                yield Button("Copy", id="copy-button")
-                yield Button("View", id="view-button")
-                yield Button("Delete", id="delete-button", classes="-error")
+            # Right Pane: Inspector (Detail) - 35%
+            with Vertical(id="vault-inspector"):
+                # Inverted Block Header
+                yield Static(" ≡ ASSET_INSPECTOR ", classes="pane-header-block")
+                yield Vertical(id="inspector-content")  # Dynamic content here
 
-        yield Footer()
+        # 3. Global Footer
+        with Horizontal(id="app-footer"):
+            yield Static(" VAULT ", id="footer-version")
+            yield Static(
+                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  \\[V] View  \\[ESC] Back",
+                id="footer-keys-static",
+            )
 
     def on_mount(self) -> None:
         """Initialize the data table."""
         self._refresh_table()
+        # Focus table and initialize inspector after layout is complete
+        self.call_after_refresh(self._initialize_selection)
+        # Start pulse animation
+        self._update_pulse()
+        self.set_interval(1.0, self._update_pulse)
+
+    def _update_pulse(self) -> None:
+        """Update the pulse indicator in the header."""
+        self._pulse_state = not self._pulse_state
+        header_lock = self.query_one("#header-lock", Static)
+        if self._pulse_state:
+            header_lock.update("[#22c55e]● [bold]ENCRYPTED[/][/]")
+        else:
+            header_lock.update("[#166534]○ [bold]ENCRYPTED[/][/]")
+
+    def _initialize_selection(self) -> None:
+        """Initialize table selection and inspector after render."""
+        table = self.query_one("#cards-table", DataTable)
+        table.focus()
+        if table.row_count > 0:
+            # Move cursor to first row
+            table.move_cursor(row=0)
+            # Get the key from the first card
+            app: PassFXApp = self.app  # type: ignore
+            cards = app.vault.get_cards()
+            if cards:
+                self._selected_row_key = cards[0].id
+                self._update_inspector(cards[0].id)
+        else:
+            self._update_inspector(None)
 
     def _refresh_table(self) -> None:
-        """Refresh the data table."""
+        """Refresh the data table with cards."""
         app: PassFXApp = self.app  # type: ignore
         table = self.query_one("#cards-table", DataTable)
+        empty_state = self.query_one("#empty-state", Center)
 
         table.clear(columns=True)
-        table.add_columns("#", "Label", "Number", "Expiry", "Name")
+
+        # Column layout: Selection indicator, Label, Masked Number, Expiry, Holder, Updated
+        table.add_column("", width=2)  # Selection indicator column
+        table.add_column("Label", width=18)
+        table.add_column("Number", width=20)
+        table.add_column("Expiry", width=8)
+        table.add_column("Holder", width=18)
+        table.add_column("Updated", width=10)
 
         cards = app.vault.get_cards()
-        for i, card in enumerate(cards, 1):
-            table.add_row(
-                str(i),
-                card.label,
-                card.masked_number,
-                card.expiry,
-                card.cardholder_name,
-                key=card.id,
-            )
 
-        if cards:
-            table.focus()
+        # Toggle visibility based on card count
+        if len(cards) == 0:
+            table.display = False
+            empty_state.display = True
+        else:
+            table.display = True
+            empty_state.display = False
+
+        for card in cards:
+            # Selection indicator - will be updated dynamically
+            is_selected = card.id == self._selected_row_key
+            indicator = "[bold #00d4ff]▍[/]" if is_selected else " "
+
+            # Label (white text)
+            label_text = card.label
+
+            # Masked Number (muted)
+            number_text = f"[#94a3b8]{card.masked_number}[/]"
+
+            # Expiry (cyan)
+            expiry_text = f"[#06b6d4]{card.expiry}[/]"
+
+            # Holder (dimmed)
+            holder_text = f"[dim]{card.cardholder_name}[/]"
+
+            # Relative time (dim)
+            updated = _get_relative_time(card.updated_at)
+            updated_text = f"[dim]{updated}[/]"
+
+            table.add_row(indicator, label_text, number_text, expiry_text, holder_text, updated_text, key=card.id)
+
+        # Update the grid footer with object count
+        footer = self.query_one("#grid-footer", Static)
+        count = len(cards)
+        footer.update(f" └── [{count}] ASSETS LOADED")
+
+    def _update_row_indicators(self, old_key: str | None, new_key: str | None) -> None:
+        """Update only the indicator column for old and new selected rows.
+
+        This avoids rebuilding the entire table on selection change.
+        """
+        table = self.query_one("#cards-table", DataTable)
+        app: PassFXApp = self.app  # type: ignore
+        cards = app.vault.get_cards()
+
+        # Build a map of id -> card for quick lookup
+        card_map = {c.id: c for c in cards}
+
+        # Get column keys (first column is the indicator)
+        if not table.columns:
+            return
+        indicator_col = list(table.columns.keys())[0]
+
+        # Clear old selection indicator
+        if old_key and old_key in card_map:
+            try:
+                table.update_cell(old_key, indicator_col, " ")
+            except Exception:
+                pass  # Row may not exist
+
+        # Set new selection indicator
+        if new_key and new_key in card_map:
+            try:
+                table.update_cell(new_key, indicator_col, "[bold #00d4ff]▍[/]")
+            except Exception:
+                pass  # Row may not exist
 
     def _get_selected_card(self) -> CreditCard | None:
         """Get the currently selected card."""
@@ -193,24 +777,15 @@ class CardsScreen(Screen):
         if table.cursor_row is None:
             return None
 
+        # Get cards and find by cursor row index
         cards = app.vault.get_cards()
         if 0 <= table.cursor_row < len(cards):
             return cards[table.cursor_row]
         return None
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle button press."""
-        if event.button.id == "add-button":
-            self.action_add()
-        elif event.button.id == "copy-button":
-            self.action_copy()
-        elif event.button.id == "view-button":
-            self.action_view()
-        elif event.button.id == "delete-button":
-            self.action_delete()
-
     def action_add(self) -> None:
         """Add a new card."""
+
         def handle_result(card: CreditCard | None) -> None:
             if card:
                 app: PassFXApp = self.app  # type: ignore
@@ -228,12 +803,28 @@ class CardsScreen(Screen):
             return
 
         if copy_to_clipboard(card.card_number, auto_clear=True, clear_after=30):
-            self.notify(f"Card number copied! Clears in 30s", title=card.label)
+            self.notify("Card number copied! Clears in 30s", title=card.label)
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 
+    def action_edit(self) -> None:
+        """Edit selected card."""
+        card = self._get_selected_card()
+        if not card:
+            self.notify("No card selected", severity="warning")
+            return
+
+        def handle_result(changes: dict | None) -> None:
+            if changes:
+                app: PassFXApp = self.app  # type: ignore
+                app.vault.update_card(card.id, **changes)
+                self._refresh_table()
+                self.notify("Card updated", title="Success")
+
+        self.app.push_screen(EditCardModal(card), handle_result)
+
     def action_view(self) -> None:
-        """View card details."""
+        """View selected card in physical card format."""
         card = self._get_selected_card()
         if not card:
             self.notify("No card selected", severity="warning")
@@ -248,11 +839,158 @@ class CardsScreen(Screen):
             self.notify("No card selected", severity="warning")
             return
 
-        app: PassFXApp = self.app  # type: ignore
-        app.vault.delete_card(card.id)
-        self._refresh_table()
-        self.notify(f"Deleted '{card.label}'", title="Deleted")
+        def handle_result(confirmed: bool) -> None:
+            if confirmed:
+                app: PassFXApp = self.app  # type: ignore
+                app.vault.delete_card(card.id)
+                self._refresh_table()
+                self.notify(f"Deleted '{card.label}'", title="Deleted")
+
+        self.app.push_screen(ConfirmDeleteModal(card.label), handle_result)
 
     def action_back(self) -> None:
         """Go back to main menu."""
         self.app.pop_screen()
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        """Update inspector panel when a row is highlighted."""
+        # row_key is a RowKey object, get its value
+        key_value = event.row_key.value if hasattr(event.row_key, "value") else str(event.row_key)
+        old_key = self._selected_row_key
+        self._selected_row_key = key_value
+        self._update_inspector(key_value)
+        # Update only the indicator cells instead of rebuilding entire table
+        self._update_row_indicators(old_key, key_value)
+
+    def _update_inspector(self, row_key: Any) -> None:
+        """Update the inspector panel with card details.
+
+        Renders a modernized "Asset Inspector" with:
+        - Digital ID Card header with 2-char avatar
+        - Payment Details widget (replaces security strength)
+        - Notes terminal with line numbers
+        - Footer metadata (ID, Updated)
+        """
+        inspector = self.query_one("#inspector-content", Vertical)
+        inspector.remove_children()
+
+        # Get the card by row key
+        app: PassFXApp = self.app  # type: ignore
+        cards = app.vault.get_cards()
+
+        # Find card by ID
+        card = None
+        for c in cards:
+            if c.id == str(row_key):
+                card = c
+                break
+
+        if not card:
+            # Empty state
+            inspector.mount(
+                Static(
+                    "[dim #555555]╔══════════════════════════╗\n"
+                    "║    SELECT AN ASSET       ║\n"
+                    "║    TO VIEW DETAILS       ║\n"
+                    "╚══════════════════════════╝[/]",
+                    classes="inspector-empty",
+                )
+            )
+            return
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 1: Digital ID Card Header with Avatar
+        # ═══════════════════════════════════════════════════════════════
+        initials = _get_avatar_initials(card.label)
+        avatar_bg = _get_avatar_bg_color(card.label)
+
+        # Build avatar box (2-line tall for visual weight)
+        avatar_top = f"[on {avatar_bg}][bold #ffffff] {initials} [/][/]"
+        avatar_bot = f"[on {avatar_bg}]     [/]"
+
+        inspector.mount(
+            Vertical(
+                Horizontal(
+                    Vertical(
+                        Static(avatar_top, classes="avatar-char"),
+                        Static(avatar_bot, classes="avatar-char"),
+                        classes="avatar-box",
+                    ),
+                    Vertical(
+                        Static(f"[bold #f8fafc]{card.label}[/]", classes="id-label-text"),
+                        Static(f"[dim #94a3b8]{card.cardholder_name}[/]", classes="id-email-text"),
+                        classes="id-details-stack",
+                    ),
+                    classes="id-card-header",
+                ),
+                classes="id-card-wrapper",
+            )
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 2: Payment Details Widget (replaces Security Strength)
+        # ═══════════════════════════════════════════════════════════════
+        icon = _get_card_type_icon(card.card_number)
+
+        # Build card details display
+        card_number_display = f"[#94a3b8]{card.masked_number}[/]"
+        expiry_display = f"[#06b6d4]{card.expiry}[/]"
+        cvv_display = "[#f59e0b]•••[/]"  # Always hidden
+
+        inspector.mount(
+            Vertical(
+                Static("[dim #6b7280]▸ PAYMENT DETAILS[/]", classes="section-label"),
+                Static(f"{icon} {card_number_display}", classes="strength-bar-widget"),
+                Horizontal(
+                    Static(f"[dim #475569]EXPIRY:[/] {expiry_display}", classes="meta-id"),
+                    Static(f"[dim #475569]CVV:[/] {cvv_display}", classes="meta-updated"),
+                    classes="inspector-footer-bar",
+                ),
+                classes="security-widget",
+            )
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 3: Notes Terminal with Line Numbers
+        # ═══════════════════════════════════════════════════════════════
+        if card.notes:
+            # Split notes into lines and add line numbers
+            lines = card.notes.split("\n")
+            numbered_lines = []
+            for i, line in enumerate(lines[:10], 1):  # Limit to 10 lines
+                line_num = f"[dim #475569]{i:2}[/]"
+                line_content = f"[#22c55e]{line}[/]" if line.strip() else ""
+                numbered_lines.append(f"{line_num} │ {line_content}")
+            notes_content = "\n".join(numbered_lines)
+        else:
+            notes_content = "[dim #475569] 1[/] │ [dim #64748b]// NO NOTES[/]"
+
+        notes_terminal = Vertical(
+            Static(notes_content, classes="notes-code"),
+            classes="notes-editor",
+        )
+        notes_terminal.border_title = "ENCRYPTED_MEMO"
+
+        inspector.mount(
+            Vertical(
+                Static("[dim #6b7280]▸ METADATA[/]", classes="section-label"),
+                notes_terminal,
+                classes="notes-section",
+            )
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 4: Footer Metadata Bar (ID + Updated)
+        # ═══════════════════════════════════════════════════════════════
+        try:
+            updated_full = datetime.fromisoformat(card.updated_at).strftime("%Y-%m-%d %H:%M")
+        except (ValueError, TypeError):
+            updated_full = card.updated_at or "Unknown"
+
+        inspector.mount(
+            Horizontal(
+                Static(f"[dim #475569]ID:[/] [#64748b]{card.id[:8]}[/]", classes="meta-id"),
+                Static(f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]", classes="meta-updated"),
+                classes="inspector-footer-bar",
+            )
+        )
