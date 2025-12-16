@@ -882,3 +882,132 @@ CommandPalette OptionList > .option-list--option-hover {
     background: $pfx-accent-dim;
     color: $pfx-fg;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PASSWORDS SCREEN - MASTER-DETAIL LAYOUT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#vault-body {
+    width: 100%;
+    height: 1fr;
+}
+
+#vault-grid-pane {
+    width: 65%;
+    height: 100%;
+    background: $pfx-surface;
+    border-right: heavy $pfx-primary-dim;
+}
+
+#vault-inspector {
+    width: 35%;
+    height: 100%;
+    background: #0a0e27;
+    padding: 1 2;
+}
+
+.pane-header {
+    width: 100%;
+    height: 3;
+    background: $pfx-surface;
+    color: $pfx-muted;
+    border-bottom: solid $pfx-primary-dim;
+    content-align: left middle;
+    padding: 0 1;
+}
+
+#inspector-content {
+    width: 100%;
+    height: 1fr;
+    padding: 1 0;
+}
+
+#footer-keys-static {
+    width: 1fr;
+    height: 100%;
+    background: $pfx-bg;
+    color: $pfx-muted;
+    content-align: left middle;
+    padding-left: 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PASSWORDS TABLE - MAINFRAME TERMINAL LOOK
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Passwords Table - Mainframe Terminal Look */
+#passwords-table {
+    background: #02040a;
+    border: none;
+    margin: 0;
+    padding: 0;
+    height: 1fr;
+    width: 100%;
+}
+
+#passwords-table:focus {
+    border: none;
+}
+
+/* Scanner-style cursor - heavy left border highlight */
+#passwords-table > .datatable--cursor {
+    background: $pfx-surface-light;
+    color: $pfx-fg;
+    text-style: bold;
+}
+
+#passwords-table > .datatable--cursor:hover {
+    background: $pfx-surface-light;
+}
+
+/* High-contrast header for terminal look */
+#passwords-table > .datatable--header {
+    background: $pfx-primary-dim;
+    color: $pfx-fg;
+    text-style: bold;
+}
+
+/* Alternating rows for readability */
+#passwords-table > .datatable--even-row {
+    background: #02040a;
+}
+
+#passwords-table > .datatable--odd-row {
+    background: #0a0e14;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INSPECTOR PANEL STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.inspector-title {
+    color: $pfx-primary-light;
+    text-style: bold;
+    padding: 0 0 1 0;
+}
+
+.inspector-field {
+    color: $pfx-fg;
+    padding: 0;
+    height: 1;
+}
+
+.inspector-section {
+    color: $pfx-muted;
+    padding: 1 0 0 0;
+}
+
+.inspector-notes {
+    color: $pfx-fg;
+    padding: 0;
+}
+
+.inspector-spacer {
+    height: 1;
+}
+
+.inspector-empty {
+    color: $pfx-muted;
+    text-align: center;
+    padding: 2;
+}

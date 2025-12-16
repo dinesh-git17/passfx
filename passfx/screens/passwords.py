@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -11,8 +11,6 @@ from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
     DataTable,
-    Footer,
-    Header,
     Input,
     Label,
     Static,
@@ -223,30 +221,49 @@ class PasswordsScreen(Screen):
 
     def compose(self) -> ComposeResult:
         """Create the passwords screen layout."""
-        yield Header()
+        # 1. Global Header (matches MainMenuScreen pattern)
+        with Horizontal(id="app-header"):
+            yield Static("[bold #00d4ff]◄ PASSFX ►[/]", id="header-branding")
+            yield Static("░░ SECURE DATA BANK ░░", id="header-status")
+            yield Static("🔒 ENCRYPTED", id="header-lock")
 
-        with Vertical():
-            yield Static(
-                "[bold #00d4ff]╔══════════════════════════════════════╗[/]\n"
-                "[bold #00d4ff]║[/]       [bold #00d4ff]PASSWORD VAULT[/]       [bold #00d4ff]║[/]\n"
-                "[bold #00d4ff]╚══════════════════════════════════════╝[/]",
-                classes="title",
-            )
+        # 2. Body (Master-Detail Split)
+        with Horizontal(id="vault-body"):
+            # Left Pane: Data Grid (Master) - 65%
+            with Vertical(id="vault-grid-pane"):
+                yield Static("[dim #555555]\\[///][/] CREDENTIAL_DATABASE.DB", classes="pane-header")
+                yield DataTable(id="passwords-table", cursor_type="row")
 
-            yield DataTable(id="passwords-table", cursor_type="row")
+            # Right Pane: Inspector (Detail) - 35%
+            with Vertical(id="vault-inspector"):
+                yield Static("[bold #60a5fa]ITEM_PROPERTIES[/]", classes="pane-header")
+                yield Vertical(id="inspector-content")  # Dynamic content here
 
-            with Horizontal(id="action-bar"):
-                yield Button("Add", id="add-button")
-                yield Button("Copy", id="copy-button")
-                yield Button("Edit", id="edit-button")
-                yield Button("Delete", id="delete-button", classes="-error")
-                yield Button("View", id="view-button")
-
-        yield Footer()
+        # 3. Global Footer (matches MainMenuScreen pattern)
+        with Horizontal(id="app-footer"):
+            yield Static(" VAULT ", id="footer-version")
+            yield Static(" \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  \\[V] View  \\[ESC] Back", id="footer-keys-static")
 
     def on_mount(self) -> None:
         """Initialize the data table."""
         self._refresh_table()
+        # Focus table and initialize inspector after layout is complete
+        self.call_after_refresh(self._initialize_selection)
+
+    def _initialize_selection(self) -> None:
+        """Initialize table selection and inspector after render."""
+        table = self.query_one("#passwords-table", DataTable)
+        table.focus()
+        if table.row_count > 0:
+            # Move cursor to first row
+            table.move_cursor(row=0)
+            # Get the key from the first credential
+            app: PassFXApp = self.app  # type: ignore
+            credentials = app.vault.get_emails()
+            if credentials:
+                self._update_inspector(credentials[0].id)
+        else:
+            self._update_inspector(None)
 
     def _refresh_table(self) -> None:
         """Refresh the data table with credentials."""
@@ -254,16 +271,26 @@ class PasswordsScreen(Screen):
         table = self.query_one("#passwords-table", DataTable)
 
         table.clear(columns=True)
-        table.add_columns("#", "Label", "Email", "Password", "Notes")
+        # Add columns - total ~105 to fit 65% pane minus border
+        table.add_column("#", width=5)
+        table.add_column("Label", width=18)
+        table.add_column("Email", width=28)
+        table.add_column("Password", width=12)
+        table.add_column("Updated", width=18)
+        table.add_column("Notes", width=24)
+
+        from datetime import datetime
 
         credentials = app.vault.get_emails()
         for i, cred in enumerate(credentials, 1):
-            masked_pwd = "*" * min(len(cred.password), 8)
+            masked_pwd = "•" * min(len(cred.password), 8)  # Bullet character
+            # Format updated_at timestamp
+            try:
+                updated = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d %H:%M")
+            except (ValueError, TypeError):
+                updated = cred.updated_at or "-"
             notes = (cred.notes[:20] + "...") if cred.notes and len(cred.notes) > 20 else (cred.notes or "-")
-            table.add_row(str(i), cred.label, cred.email, masked_pwd, notes, key=cred.id)
-
-        if credentials:
-            table.focus()
+            table.add_row(str(i), cred.label, cred.email, masked_pwd, updated, notes, key=cred.id)
 
     def _get_selected_credential(self) -> EmailCredential | None:
         """Get the currently selected credential."""
@@ -284,19 +311,6 @@ class PasswordsScreen(Screen):
         if 0 <= table.cursor_row < len(credentials):
             return credentials[table.cursor_row]
         return None
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle button press."""
-        button_actions = {
-            "add-button": self.action_add,
-            "copy-button": self.action_copy,
-            "edit-button": self.action_edit,
-            "delete-button": self.action_delete,
-            "view-button": self.action_view,
-        }
-        action = button_actions.get(event.button.id)
-        if action:
-            action()
 
     def action_add(self) -> None:
         """Add a new credential."""
@@ -369,3 +383,72 @@ class PasswordsScreen(Screen):
     def action_back(self) -> None:
         """Go back to main menu."""
         self.app.pop_screen()
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        """Update inspector panel when a row is highlighted."""
+        # row_key is a RowKey object, get its value
+        key_value = event.row_key.value if hasattr(event.row_key, 'value') else str(event.row_key)
+        self._update_inspector(key_value)
+
+    def _update_inspector(self, row_key: Any) -> None:
+        """Update the inspector panel with credential details."""
+        inspector = self.query_one("#inspector-content", Vertical)
+        inspector.remove_children()
+
+        # Get the credential by row key
+        app: PassFXApp = self.app  # type: ignore
+        credentials = app.vault.get_emails()
+
+        # Find credential by ID
+        cred = None
+        for c in credentials:
+            if c.id == str(row_key):
+                cred = c
+                break
+
+        if not cred:
+            # Empty state
+            inspector.mount(Static(
+                "[dim #555555]╔══════════════════╗\n"
+                "║   NO SELECTION   ║\n"
+                "╚══════════════════╝[/]",
+                classes="inspector-empty"
+            ))
+            return
+
+        # Build detail view
+        from datetime import datetime
+        from passfx.utils.strength import check_strength
+
+        # Title
+        inspector.mount(Label(f"[bold #60a5fa]{cred.label}[/]", classes="inspector-title"))
+
+        # Metadata section
+        inspector.mount(Static(f"[dim]ID:[/] {cred.id}", classes="inspector-field"))
+        inspector.mount(Static(f"[dim]Email:[/] {cred.email}", classes="inspector-field"))
+
+        # Password strength indicator
+        strength = check_strength(cred.password)
+        strength_bar = "█" * strength.score + "░" * (4 - strength.score)
+        strength_colors = {0: "#ef4444", 1: "#ef4444", 2: "#f59e0b", 3: "#60a5fa", 4: "#22c55e"}
+        color = strength_colors.get(strength.score, "#94a3b8")
+        inspector.mount(Static(f"[dim]Strength:[/] [{color}]{strength_bar}[/] [{color}]{strength.score}/4[/]", classes="inspector-field"))
+
+        # Dates
+        try:
+            created = datetime.fromisoformat(cred.created_at).strftime("%Y-%m-%d %H:%M")
+        except (ValueError, TypeError):
+            created = cred.created_at or "Unknown"
+        try:
+            updated = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d %H:%M")
+        except (ValueError, TypeError):
+            updated = cred.updated_at or "Unknown"
+
+        inspector.mount(Static(f"[dim]Created:[/] {created}", classes="inspector-field"))
+        inspector.mount(Static(f"[dim]Updated:[/] {updated}", classes="inspector-field"))
+
+        # Notes section (if present)
+        if cred.notes:
+            inspector.mount(Static("", classes="inspector-spacer"))  # Spacer
+            inspector.mount(Static("[dim]─── NOTES ───[/]", classes="inspector-section"))
+            inspector.mount(Static(cred.notes, classes="inspector-notes"))
