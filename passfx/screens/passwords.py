@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from textual.app import ComposeResult
@@ -18,9 +19,133 @@ from textual.widgets import (
 
 from passfx.core.models import EmailCredential
 from passfx.utils.clipboard import copy_to_clipboard
+from passfx.utils.strength import check_strength
 
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HELPER FUNCTIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _get_relative_time(iso_timestamp: str | None) -> str:
+    """Convert ISO timestamp to relative time string.
+
+    Args:
+        iso_timestamp: ISO format timestamp string.
+
+    Returns:
+        Relative time string like "2m ago", "1d ago", "3w ago".
+    """
+    if not iso_timestamp:
+        return "-"
+
+    try:
+        dt = datetime.fromisoformat(iso_timestamp)
+        now = datetime.now()
+        diff = now - dt
+
+        seconds = int(diff.total_seconds())
+        if seconds < 0:
+            return "just now"
+        if seconds < 60:
+            return f"{seconds}s ago"
+        minutes = seconds // 60
+        if minutes < 60:
+            return f"{minutes}m ago"
+        hours = minutes // 60
+        if hours < 24:
+            return f"{hours}h ago"
+        days = hours // 24
+        if days < 7:
+            return f"{days}d ago"
+        weeks = days // 7
+        if weeks < 4:
+            return f"{weeks}w ago"
+        months = days // 30
+        if months < 12:
+            return f"{months}mo ago"
+        years = days // 365
+        return f"{years}y ago"
+    except (ValueError, TypeError):
+        return "-"
+
+
+def _get_avatar_initials(label: str) -> str:
+    """Generate 2-character avatar initials from label.
+
+    Args:
+        label: Service/site label.
+
+    Returns:
+        2-character uppercase initials.
+    """
+    if not label:
+        return "??"
+
+    # Clean and split
+    words = label.replace("_", " ").replace("-", " ").split()
+
+    if len(words) >= 2:
+        # First letter of first two words
+        return (words[0][0] + words[1][0]).upper()
+    elif len(label) >= 2:
+        # First two characters
+        return label[:2].upper()
+    else:
+        return (label[0] + label[0]).upper() if label else "??"
+
+
+def _get_strength_color(score: int) -> str:
+    """Get hex color for strength score.
+
+    Args:
+        score: Strength score 0-4.
+
+    Returns:
+        Hex color string.
+    """
+    colors = {
+        0: "#ef4444",  # Red - Very Weak
+        1: "#f87171",  # Light Red - Weak
+        2: "#f59e0b",  # Amber - Fair
+        3: "#60a5fa",  # Blue - Good
+        4: "#22c55e",  # Green - Strong
+    }
+    return colors.get(score, "#94a3b8")
+
+
+def _get_avatar_bg_color(label: str) -> str:
+    """Generate a consistent background color for avatar based on label.
+
+    Args:
+        label: Service/site label.
+
+    Returns:
+        Hex color string.
+    """
+    # Simple hash-based color selection
+    colors = [
+        "#3b82f6",  # Blue
+        "#8b5cf6",  # Purple
+        "#06b6d4",  # Cyan
+        "#10b981",  # Emerald
+        "#f59e0b",  # Amber
+        "#ec4899",  # Pink
+        "#6366f1",  # Indigo
+        "#14b8a6",  # Teal
+    ]
+    if not label:
+        return colors[0]
+    hash_val = sum(ord(c) for c in label)
+    return colors[hash_val % len(colors)]
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODAL SCREENS
+# ═══════════════════════════════════════════════════════════════════════════════
 
 
 class AddPasswordModal(ModalScreen[EmailCredential | None]):
@@ -216,6 +341,11 @@ class ConfirmDeleteModal(ModalScreen[bool]):
         self.dismiss(True)
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAIN PASSWORDS SCREEN
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
 class PasswordsScreen(Screen):
     """Screen for managing password credentials."""
 
@@ -228,13 +358,21 @@ class PasswordsScreen(Screen):
         Binding("escape", "back", "Back"),
     ]
 
+    def __init__(self) -> None:
+        super().__init__()
+        self._selected_row_key: str | None = None
+        self._pulse_state: bool = True
+
     def compose(self) -> ComposeResult:
         """Create the passwords screen layout."""
-        # 1. Global Header (matches MainMenuScreen pattern)
+        # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
-            yield Static("[bold #00d4ff]◄ PASSFX ►[/]", id="header-branding")
+            yield Static(
+                "[dim #64748b]HOME[/] [#475569]›[/] [dim #64748b]VAULT[/] [#475569]›[/] [bold #00d4ff]PASSWORDS[/]",
+                id="header-branding",
+            )
             yield Static("░░ SECURE DATA BANK ░░", id="header-status")
-            yield Static("🔒 ENCRYPTED", id="header-lock")
+            yield Static("", id="header-lock")  # Will be updated with pulse
 
         # 2. Body (Master-Detail Split)
         with Horizontal(id="vault-body"):
@@ -261,19 +399,34 @@ class PasswordsScreen(Screen):
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
                 # Inverted Block Header
-                yield Static(" ≡ OBJECT_INSPECTOR ", classes="pane-header-block")
+                yield Static(" ≡ IDENTITY_INSPECTOR ", classes="pane-header-block")
                 yield Vertical(id="inspector-content")  # Dynamic content here
 
-        # 3. Global Footer (matches MainMenuScreen pattern)
+        # 3. Global Footer
         with Horizontal(id="app-footer"):
             yield Static(" VAULT ", id="footer-version")
-            yield Static(" \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  \\[V] View  \\[ESC] Back", id="footer-keys-static")
+            yield Static(
+                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  \\[V] View  \\[ESC] Back",
+                id="footer-keys-static",
+            )
 
     def on_mount(self) -> None:
         """Initialize the data table."""
         self._refresh_table()
         # Focus table and initialize inspector after layout is complete
         self.call_after_refresh(self._initialize_selection)
+        # Start pulse animation
+        self._update_pulse()
+        self.set_interval(1.0, self._update_pulse)
+
+    def _update_pulse(self) -> None:
+        """Update the pulse indicator in the header."""
+        self._pulse_state = not self._pulse_state
+        header_lock = self.query_one("#header-lock", Static)
+        if self._pulse_state:
+            header_lock.update("[#22c55e]● [bold]ENCRYPTED[/][/]")
+        else:
+            header_lock.update("[#166534]○ [bold]ENCRYPTED[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector after render."""
@@ -286,6 +439,7 @@ class PasswordsScreen(Screen):
             app: PassFXApp = self.app  # type: ignore
             credentials = app.vault.get_emails()
             if credentials:
+                self._selected_row_key = credentials[0].id
                 self._update_inspector(credentials[0].id)
         else:
             self._update_inspector(None)
@@ -297,15 +451,14 @@ class PasswordsScreen(Screen):
         empty_state = self.query_one("#empty-state", Center)
 
         table.clear(columns=True)
-        # Add columns - total ~105 to fit 65% pane minus border
-        table.add_column("#", width=5)
-        table.add_column("Label", width=18)
-        table.add_column("Email", width=28)
-        table.add_column("Password", width=12)
-        table.add_column("Updated", width=18)
-        table.add_column("Notes", width=24)
 
-        from datetime import datetime
+        # New column layout without # index, with Status instead of Password
+        table.add_column("", width=2)  # Selection indicator column
+        table.add_column("Label", width=18)
+        table.add_column("Email", width=30)
+        table.add_column("Status", width=8)
+        table.add_column("Updated", width=10)
+        table.add_column("Notes", width=20)
 
         credentials = app.vault.get_emails()
 
@@ -317,20 +470,67 @@ class PasswordsScreen(Screen):
             table.display = True
             empty_state.display = False
 
-        for i, cred in enumerate(credentials, 1):
-            masked_pwd = f"[#475569]{'█' * min(len(cred.password), 8)}[/]"  # Muted blocks
-            # Format updated_at timestamp
-            try:
-                updated = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d %H:%M")
-            except (ValueError, TypeError):
-                updated = cred.updated_at or "-"
-            notes = (cred.notes[:20] + "...") if cred.notes and len(cred.notes) > 20 else (cred.notes or "-")
-            table.add_row(str(i), cred.label, cred.email, masked_pwd, updated, notes, key=cred.id)
+        for cred in credentials:
+            # Selection indicator - will be updated dynamically
+            is_selected = cred.id == self._selected_row_key
+            indicator = "[bold #00d4ff]▍[/]" if is_selected else " "
+
+            # Label (white text)
+            label_text = cred.label
+
+            # Email (muted)
+            email_text = f"[#94a3b8]{cred.email}[/]"
+
+            # Status column with colored lock icon based on strength
+            strength = check_strength(cred.password)
+            color = _get_strength_color(strength.score)
+            status = f"[{color}]🔒[/]"
+
+            # Relative time (dim)
+            updated = _get_relative_time(cred.updated_at)
+            updated_text = f"[dim]{updated}[/]"
+
+            # Notes preview (dim)
+            notes = (cred.notes[:16] + "…") if cred.notes and len(cred.notes) > 16 else (cred.notes or "-")
+            notes_text = f"[dim #64748b]{notes}[/]"
+
+            table.add_row(indicator, label_text, email_text, status, updated_text, notes_text, key=cred.id)
 
         # Update the grid footer with object count
         footer = self.query_one("#grid-footer", Static)
         count = len(credentials)
         footer.update(f" └── [{count}] OBJECTS LOADED")
+
+    def _update_row_indicators(self, old_key: str | None, new_key: str | None) -> None:
+        """Update only the indicator column for old and new selected rows.
+
+        This avoids rebuilding the entire table on selection change.
+        """
+        table = self.query_one("#passwords-table", DataTable)
+        app: PassFXApp = self.app  # type: ignore
+        credentials = app.vault.get_emails()
+
+        # Build a map of id -> credential for quick lookup
+        cred_map = {c.id: c for c in credentials}
+
+        # Get column keys (first column is the indicator)
+        if not table.columns:
+            return
+        indicator_col = list(table.columns.keys())[0]
+
+        # Clear old selection indicator
+        if old_key and old_key in cred_map:
+            try:
+                table.update_cell(old_key, indicator_col, " ")
+            except Exception:
+                pass  # Row may not exist
+
+        # Set new selection indicator
+        if new_key and new_key in cred_map:
+            try:
+                table.update_cell(new_key, indicator_col, "[bold #00d4ff]▍[/]")
+            except Exception:
+                pass  # Row may not exist
 
     def _get_selected_credential(self) -> EmailCredential | None:
         """Get the currently selected credential."""
@@ -348,6 +548,7 @@ class PasswordsScreen(Screen):
 
     def action_add(self) -> None:
         """Add a new credential."""
+
         def handle_result(credential: EmailCredential | None) -> None:
             if credential:
                 app: PassFXApp = self.app  # type: ignore
@@ -365,7 +566,7 @@ class PasswordsScreen(Screen):
             return
 
         if copy_to_clipboard(cred.password, auto_clear=True, clear_after=30):
-            self.notify(f"Password copied! Clears in 30s", title=cred.label)
+            self.notify("Password copied! Clears in 30s", title=cred.label)
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 
@@ -421,17 +622,21 @@ class PasswordsScreen(Screen):
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update inspector panel when a row is highlighted."""
         # row_key is a RowKey object, get its value
-        key_value = event.row_key.value if hasattr(event.row_key, 'value') else str(event.row_key)
+        key_value = event.row_key.value if hasattr(event.row_key, "value") else str(event.row_key)
+        old_key = self._selected_row_key
+        self._selected_row_key = key_value
         self._update_inspector(key_value)
+        # Update only the indicator cells instead of rebuilding entire table
+        self._update_row_indicators(old_key, key_value)
 
     def _update_inspector(self, row_key: Any) -> None:
         """Update the inspector panel with credential details.
 
-        Renders a high-fidelity "Identity Analysis Module" with:
-        - Digital ID Card header with avatar
-        - Security Telemetry with 20-char segmented gauge
-        - Metadata Grid with ID and timestamps
-        - Notes Terminal with shell-style output
+        Renders a modernized "Identity Inspector" with:
+        - Digital ID Card header with 2-char avatar
+        - Block-based strength progress bar
+        - Notes terminal with line numbers
+        - Footer metadata (ID, Updated)
         """
         inspector = self.query_one("#inspector-content", Vertical)
         inspector.remove_children()
@@ -449,107 +654,116 @@ class PasswordsScreen(Screen):
 
         if not cred:
             # Empty state
-            inspector.mount(Static(
-                "[dim #555555]╔══════════════════════════╗\n"
-                "║    SELECT AN ENTRY       ║\n"
-                "║    TO VIEW DETAILS       ║\n"
-                "╚══════════════════════════╝[/]",
-                classes="inspector-empty"
-            ))
+            inspector.mount(
+                Static(
+                    "[dim #555555]╔══════════════════════════╗\n"
+                    "║    SELECT AN ENTRY       ║\n"
+                    "║    TO VIEW DETAILS       ║\n"
+                    "╚══════════════════════════╝[/]",
+                    classes="inspector-empty",
+                )
+            )
             return
 
-        # Build detail view
-        from datetime import datetime
-        from passfx.utils.strength import check_strength
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 1: Digital ID Card Header with Avatar
+        # ═══════════════════════════════════════════════════════════════
+        initials = _get_avatar_initials(cred.label)
+        avatar_bg = _get_avatar_bg_color(cred.label)
 
-        # ═══════════════════════════════════════════════════════════════
-        # SECTION 1: Digital ID Card Header
-        # ═══════════════════════════════════════════════════════════════
-        inspector.mount(Vertical(
-            Horizontal(
-                Static("[bold #00d4ff]\\[[/] [bold #3b82f6]◈[/] [bold #00d4ff]\\][/]", classes="id-avatar-icon"),
-                Vertical(
-                    Static(f"[bold #f8fafc]{cred.label}[/]", classes="id-label"),
-                    Static(f"[#00d4ff]{cred.email}[/]", classes="id-email"),
-                    classes="id-info-stack",
+        # Build avatar box (2-line tall for visual weight)
+        avatar_top = f"[on {avatar_bg}][bold #ffffff] {initials} [/][/]"
+        avatar_bot = f"[on {avatar_bg}]     [/]"
+
+        inspector.mount(
+            Vertical(
+                Horizontal(
+                    Vertical(
+                        Static(avatar_top, classes="avatar-char"),
+                        Static(avatar_bot, classes="avatar-char"),
+                        classes="avatar-box",
+                    ),
+                    Vertical(
+                        Static(f"[bold #f8fafc]{cred.label}[/]", classes="id-label-text"),
+                        Static(f"[dim #94a3b8]{cred.email}[/]", classes="id-email-text"),
+                        classes="id-details-stack",
+                    ),
+                    classes="id-card-header",
                 ),
-                classes="id-card-row",
-            ),
-            Static("[dim #475569]" + "─" * 30 + "[/]", classes="id-separator"),
-            classes="id-card",
-        ))
+                classes="id-card-wrapper",
+            )
+        )
 
         # ═══════════════════════════════════════════════════════════════
-        # SECTION 2: Security Telemetry
+        # SECTION 2: Security Strength Widget with Block Progress Bar
         # ═══════════════════════════════════════════════════════════════
         strength = check_strength(cred.password)
-        strength_colors = {
-            0: "#ef4444",  # Red - Very Weak
-            1: "#f87171",  # Light Red - Weak
-            2: "#f59e0b",  # Amber - Fair
-            3: "#60a5fa",  # Blue - Good
-            4: "#22c55e",  # Green - Strong
-        }
-        color = strength_colors.get(strength.score, "#94a3b8")
+        color = _get_strength_color(strength.score)
 
-        # Build 20-character segmented gauge
-        # Each score level fills 4 chars (0=4, 1=8, 2=12, 3=16, 4=20)
-        filled_count = (strength.score + 1) * 4
-        empty_count = 20 - filled_count
-        filled_char = "│"
-        empty_char = "·"
-        filled = f"[{color}]" + (filled_char * filled_count) + "[/]" if filled_count > 0 else ""
-        empty = f"[#1e293b]" + (empty_char * empty_count) + "[/]" if empty_count > 0 else ""
-        # Escape literal brackets with \[
-        gauge = f"\\[ {filled}{empty} \\]"
+        # Build smooth block progress bar (20 chars wide)
+        filled_blocks = (strength.score + 1) * 4  # 0=4, 1=8, 2=12, 3=16, 4=20
+        empty_blocks = 20 - filled_blocks
 
-        inspector.mount(Vertical(
-            Static("[dim #6b7280]▸ SECURITY_TELEMETRY[/]", classes="section-header"),
-            Static(f"{gauge}", classes="security-gauge"),
-            Static(f"[{color}]{strength.label.upper()}[/]", classes="strength-label"),
-            Static(f"[dim #6b7280]RESISTANCE:[/] [bold #94a3b8]{strength.crack_time}[/]", classes="tech-readout"),
-            classes="security-section",
-        ))
+        filled = f"[{color}]" + ("█" * filled_blocks) + "[/]"
+        empty = "[#1e293b]" + ("░" * empty_blocks) + "[/]"
+        progress_bar = f"{filled}{empty}"
+
+        # Strength label inline with bar
+        strength_display = f"{progress_bar} [{color}]{strength.label.upper()}[/]"
+
+        inspector.mount(
+            Vertical(
+                Static("[dim #6b7280]▸ SECURITY ANALYSIS[/]", classes="section-label"),
+                Static(strength_display, classes="strength-bar-widget"),
+                Static(
+                    f"[dim #475569]Crack time:[/] [#94a3b8]{strength.crack_time}[/]",
+                    classes="crack-time-label",
+                ),
+                classes="security-widget",
+            )
+        )
 
         # ═══════════════════════════════════════════════════════════════
-        # SECTION 3: Metadata Grid
-        # ═══════════════════════════════════════════════════════════════
-        try:
-            updated = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d")
-        except (ValueError, TypeError):
-            updated = cred.updated_at or "Unknown"
-
-        inspector.mount(Vertical(
-            Static("[dim #6b7280]▸ METADATA[/]", classes="section-header"),
-            Horizontal(
-                Static("[dim #475569]ID[/]", classes="meta-label"),
-                Static(f"[#94a3b8]{cred.id[:8]}[/]", classes="meta-value"),
-                classes="meta-row",
-            ),
-            Horizontal(
-                Static("[dim #475569]UPDATED[/]", classes="meta-label"),
-                Static(f"[#94a3b8]{updated}[/]", classes="meta-value"),
-                classes="meta-row",
-            ),
-            classes="metadata-section",
-        ))
-
-        # ═══════════════════════════════════════════════════════════════
-        # SECTION 4: Notes Terminal (Fills remaining vertical space)
+        # SECTION 3: Notes Terminal with Line Numbers
         # ═══════════════════════════════════════════════════════════════
         if cred.notes:
-            notes_content = f"[#22c55e]>[/] {cred.notes}"
+            # Split notes into lines and add line numbers
+            lines = cred.notes.split("\n")
+            numbered_lines = []
+            for i, line in enumerate(lines[:10], 1):  # Limit to 10 lines
+                line_num = f"[dim #475569]{i:2}[/]"
+                line_content = f"[#22c55e]{line}[/]" if line.strip() else ""
+                numbered_lines.append(f"{line_num} │ {line_content}")
+            notes_content = "\n".join(numbered_lines)
         else:
-            notes_content = "[#475569]NO_DATA_FOUND[/]"
+            notes_content = "[dim #475569] 1[/] │ [dim #64748b]// NO NOTES[/]"
 
-        # Create the notes terminal with border-title as self-contained sub-window
         notes_terminal = Vertical(
-            Static(notes_content, classes="notes-content"),
-            classes="notes-terminal",
+            Static(notes_content, classes="notes-code"),
+            classes="notes-editor",
         )
-        notes_terminal.border_title = "[ ENCRYPTED_PAYLOAD ]"
+        notes_terminal.border_title = "ENCRYPTED_NOTES"
 
-        inspector.mount(Vertical(
-            notes_terminal,
-            classes="notes-wrapper",
-        ))
+        inspector.mount(
+            Vertical(
+                Static("[dim #6b7280]▸ METADATA[/]", classes="section-label"),
+                notes_terminal,
+                classes="notes-section",
+            )
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 4: Footer Metadata Bar (ID + Updated)
+        # ═══════════════════════════════════════════════════════════════
+        try:
+            updated_full = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d %H:%M")
+        except (ValueError, TypeError):
+            updated_full = cred.updated_at or "Unknown"
+
+        inspector.mount(
+            Horizontal(
+                Static(f"[dim #475569]ID:[/] [#64748b]{cred.id[:8]}[/]", classes="meta-id"),
+                Static(f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]", classes="meta-updated"),
+                classes="inspector-footer-bar",
+            )
+        )

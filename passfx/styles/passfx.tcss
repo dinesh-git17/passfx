@@ -42,12 +42,14 @@ Screen {
 }
 
 #header-branding {
-    width: 28;
+    width: auto;
+    min-width: 28;
     height: 100%;
     background: #0f172a;
     color: #00d4ff;
     text-style: bold;
-    content-align: center middle;
+    content-align: left middle;
+    padding-left: 1;
 }
 
 #header-status {
@@ -986,15 +988,15 @@ CommandPalette OptionList > .option-list--option-hover {
     border: none;
 }
 
-/* Active line highlighting - inverted block cursor for high visibility */
+/* Modern Selection: Subtle background highlight + indicator bar in first column */
 #passwords-table > .datatable--cursor {
-    background: $pfx-primary;
-    color: #000000;
-    text-style: bold;
+    background: #1e293b;
+    color: $pfx-fg;
+    text-style: none;
 }
 
 #passwords-table > .datatable--cursor:hover {
-    background: $pfx-primary;
+    background: #1e293b;
 }
 
 /* High-contrast header for terminal look */
@@ -1004,19 +1006,19 @@ CommandPalette OptionList > .option-list--option-hover {
     text-style: bold;
 }
 
-/* Row styling with separators */
+/* Row styling with separators - subtle alternating */
 #passwords-table > .datatable--even-row {
     background: #02040a;
-    border-bottom: solid $pfx-surface-light;
+    border-bottom: solid #1e293b;
 }
 
 #passwords-table > .datatable--odd-row {
-    background: #0a0e14;
-    border-bottom: solid $pfx-surface-light;
+    background: #060a12;
+    border-bottom: solid #1e293b;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   INSPECTOR PANEL STYLES - IDENTITY ANALYSIS MODULE
+   INSPECTOR PANEL STYLES - MODERNIZED IDENTITY INSPECTOR
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .inspector-empty {
@@ -1026,50 +1028,118 @@ CommandPalette OptionList > .option-list--option-hover {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   SECTION 1: Digital ID Card Header
+   SECTION 1: Digital ID Card with Avatar
    ───────────────────────────────────────────────────────────────────────────── */
-.id-card {
+.id-card-wrapper {
     background: $pfx-surface;
-    border-bottom: heavy $pfx-primary-dim;
     padding: 1;
     margin-bottom: 1;
 }
 
-.id-card-row {
+.id-card-header {
     width: 100%;
     height: auto;
-    align: left middle;
+    align: left top;
 }
 
-.id-avatar-icon {
+.avatar-box {
     width: auto;
     height: auto;
-    padding: 0 1 0 0;
-    text-style: bold;
+    margin-right: 1;
 }
 
-.id-info-stack {
+.avatar-char {
+    height: 1;
+    width: auto;
+}
+
+.id-details-stack {
     width: 1fr;
     height: auto;
+    padding-top: 0;
 }
 
-.id-label {
+.id-label-text {
     height: 1;
     text-style: bold;
 }
 
-.id-email {
+.id-email-text {
     height: 1;
-}
-
-.id-separator {
-    height: 1;
-    padding: 1 0 0 0;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   SECTION 2: Security Telemetry
+   SECTION 2: Security Strength Widget
    ───────────────────────────────────────────────────────────────────────────── */
+.section-label {
+    height: 1;
+    padding: 0 0 0 0;
+    margin-top: 1;
+}
+
+.security-widget {
+    padding: 0 0 1 0;
+}
+
+.strength-bar-widget {
+    height: 1;
+    padding: 0;
+}
+
+.crack-time-label {
+    height: 1;
+    padding: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SECTION 3: Notes Editor (Code Style)
+   ───────────────────────────────────────────────────────────────────────────── */
+.notes-section {
+    width: 100%;
+    height: 1fr;
+}
+
+.notes-editor {
+    background: #000000;
+    border: solid $pfx-surface-light;
+    width: 100%;
+    height: 1fr;
+    min-height: 5;
+    padding: 1;
+    overflow-y: auto;
+    border-title-align: center;
+    border-title-color: $pfx-surface-lighter;
+}
+
+.notes-code {
+    color: $pfx-success;
+    height: auto;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SECTION 4: Footer Metadata Bar
+   ───────────────────────────────────────────────────────────────────────────── */
+.inspector-footer-bar {
+    width: 100%;
+    height: 1;
+    dock: bottom;
+    background: $pfx-surface;
+    padding: 0 1;
+    align: left middle;
+}
+
+.meta-id {
+    width: auto;
+    height: 1;
+    margin-right: 2;
+}
+
+.meta-updated {
+    width: auto;
+    height: 1;
+}
+
+/* Legacy compatibility styles */
 .section-header {
     height: 1;
     padding: 1 0 0 0;
@@ -1097,9 +1167,6 @@ CommandPalette OptionList > .option-list--option-hover {
     padding: 0 0 1 0;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   SECTION 3: Metadata Grid
-   ───────────────────────────────────────────────────────────────────────────── */
 .metadata-section {
     padding: 0 0 1 0;
 }
@@ -1120,18 +1187,12 @@ CommandPalette OptionList > .option-list--option-hover {
     height: 1;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   SECTION 4: Notes Terminal (Fills remaining vertical space)
-   ───────────────────────────────────────────────────────────────────────────── */
-
-/* Wrapper for notes section - takes remaining vertical space */
 .notes-wrapper {
     width: 100%;
     height: 1fr;
     margin-top: 1;
 }
 
-/* The actual black box - secure sub-window with border-title */
 .notes-terminal {
     background: #000000;
     border: solid $pfx-surface-lighter;
