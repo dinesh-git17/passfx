@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Center, Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
 from textual.widgets import (
     Button,
@@ -243,6 +243,18 @@ class PasswordsScreen(Screen):
                 # Inverted Block Header
                 yield Static(" ≡ CREDENTIAL_DATABASE ", classes="pane-header-block")
                 yield DataTable(id="passwords-table", cursor_type="row")
+                # Empty state placeholder (hidden by default)
+                with Center(id="empty-state"):
+                    yield Static(
+                        "[dim #475569]╔══════════════════════════════════════╗\n"
+                        "║                                      ║\n"
+                        "║      NO ENTRIES FOUND                ║\n"
+                        "║                                      ║\n"
+                        "║      INITIATE SEQUENCE [A]           ║\n"
+                        "║                                      ║\n"
+                        "╚══════════════════════════════════════╝[/]",
+                        id="empty-state-text",
+                    )
                 # Footer with object count
                 yield Static(" └── SYSTEM_READY", classes="pane-footer", id="grid-footer")
 
@@ -282,6 +294,7 @@ class PasswordsScreen(Screen):
         """Refresh the data table with credentials."""
         app: PassFXApp = self.app  # type: ignore
         table = self.query_one("#passwords-table", DataTable)
+        empty_state = self.query_one("#empty-state", Center)
 
         table.clear(columns=True)
         # Add columns - total ~105 to fit 65% pane minus border
@@ -295,6 +308,15 @@ class PasswordsScreen(Screen):
         from datetime import datetime
 
         credentials = app.vault.get_emails()
+
+        # Toggle visibility based on credential count
+        if len(credentials) == 0:
+            table.display = False
+            empty_state.display = True
+        else:
+            table.display = True
+            empty_state.display = False
+
         for i, cred in enumerate(credentials, 1):
             masked_pwd = f"[#475569]{'█' * min(len(cred.password), 8)}[/]"  # Muted blocks
             # Format updated_at timestamp
@@ -516,17 +538,18 @@ class PasswordsScreen(Screen):
         # SECTION 4: Notes Terminal (Fills remaining vertical space)
         # ═══════════════════════════════════════════════════════════════
         if cred.notes:
-            notes_content = (
-                f"[#22c55e]>[/] {cred.notes}"
-            )
+            notes_content = f"[#22c55e]>[/] {cred.notes}"
         else:
             notes_content = "[#475569]NO_DATA_FOUND[/]"
 
+        # Create the notes terminal with border-title as self-contained sub-window
+        notes_terminal = Vertical(
+            Static(notes_content, classes="notes-content"),
+            classes="notes-terminal",
+        )
+        notes_terminal.border_title = "[ ENCRYPTED_PAYLOAD ]"
+
         inspector.mount(Vertical(
-            Static("[dim #6b7280]▸ ENCRYPTED_NOTES_BUFFER[/]", classes="section-header"),
-            Vertical(
-                Static(notes_content, classes="notes-content"),
-                classes="notes-terminal",
-            ),
+            notes_terminal,
             classes="notes-wrapper",
         ))

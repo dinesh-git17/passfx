@@ -480,7 +480,6 @@ DataTable {
     padding: 0;
     margin: 1 0;
     height: auto;
-    max-height: 15;
 }
 
 DataTable:focus {
@@ -890,27 +889,24 @@ CommandPalette OptionList > .option-list--option-hover {
 #vault-body {
     width: 100%;
     height: 1fr;
-    min-height: 100%;
 }
 
 #vault-grid-pane {
     width: 65%;
-    height: 1fr;
-    min-height: 100%;
+    height: 100%;
     background: $pfx-bg;
-    border-right: heavy $pfx-primary;
+    border-right: solid $pfx-surface-light;
 }
 
 #vault-inspector {
     width: 35%;
-    height: 1fr;
-    min-height: 100%;
+    height: 100%;
     background: #0a0e27;
     padding: 0;
     overflow-y: hidden;
 }
 
-/* Inverted Block Header - Cyan background, black text */
+/* Inverted Block Header - HUD style window bar */
 .pane-header-block {
     width: 100%;
     height: 1;
@@ -918,6 +914,8 @@ CommandPalette OptionList > .option-list--option-hover {
     color: #000000;
     text-style: bold;
     text-align: center;
+    content-align: center middle;
+    padding: 0;
 }
 
 /* Legacy pane header (keep for compatibility) */
@@ -940,11 +938,24 @@ CommandPalette OptionList > .option-list--option-hover {
     dock: bottom;
 }
 
+/* Empty State - Centered message when no credentials exist */
+#empty-state {
+    width: 100%;
+    height: 1fr;
+    display: none;
+    align: center middle;
+}
+
+#empty-state-text {
+    text-align: center;
+}
+
 #inspector-content {
     width: 100%;
     height: 1fr;
-    padding: 1 2;
+    padding: 1;
     overflow-y: auto;
+    scrollbar-gutter: stable;
 }
 
 #footer-keys-static {
@@ -966,24 +977,24 @@ CommandPalette OptionList > .option-list--option-hover {
     border: none;
     margin: 0;
     padding: 0;
-    height: 1fr;
     width: 100%;
+    /* Key fix for vertical fill */
+    height: 1fr;
 }
 
 #passwords-table:focus {
     border: none;
 }
 
-/* Scanner-style cursor - heavy left border highlight */
+/* Active line highlighting - inverted block cursor for high visibility */
 #passwords-table > .datatable--cursor {
-    background: $pfx-surface;
-    color: $pfx-fg;
+    background: $pfx-primary;
+    color: #000000;
     text-style: bold;
-    border-left: thick $pfx-primary;
 }
 
 #passwords-table > .datatable--cursor:hover {
-    background: $pfx-surface;
+    background: $pfx-primary;
 }
 
 /* High-contrast header for terminal look */
@@ -1115,21 +1126,25 @@ CommandPalette OptionList > .option-list--option-hover {
 
 /* Wrapper for notes section - takes remaining vertical space */
 .notes-wrapper {
+    width: 100%;
     height: 1fr;
     margin-top: 1;
 }
 
+/* The actual black box - secure sub-window with border-title */
 .notes-terminal {
     background: #000000;
-    border: solid #334155;
+    border: solid $pfx-surface-lighter;
+    width: 100%;
+    height: 1fr;
     padding: 1;
-    margin: 0;
-    height: 100%;
+    overflow-y: auto;
+    border-title-align: center;
+    border-title-color: $pfx-surface-lighter;
 }
 
 .notes-content {
     color: $pfx-success;
-    padding: 0;
     height: auto;
 }
 
