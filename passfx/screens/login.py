@@ -14,7 +14,7 @@ from textual.widgets import Button, Input, Label, Static
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
 
-# Single-line ASCII Logo for split-view layout
+# ASCII Logo (ANSI Shadow)
 LOGO = """[bold #00d4ff]
 ██████╗  █████╗ ███████╗███████╗███████╗██╗  ██╗
 ██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝╚██╗██╔╝
@@ -37,6 +37,8 @@ TAGLINES = [
     "Ctrl+S for your credentials.",
 ]
 
+VERSION = "v1.0.0"
+
 
 class LoginScreen(Screen):
     """Login screen with split-view: logo on left, form on right."""
@@ -52,48 +54,81 @@ class LoginScreen(Screen):
         self.max_attempts = 3
 
     def compose(self) -> ComposeResult:
-        """Create the split-view login screen layout."""
+        """Create the full-screen login layout matching main menu grid."""
         app: PassFXApp = self.app  # type: ignore
 
-        with Center():
-            with Horizontal(id="login-container"):
-                # Left pane: Logo and tagline
-                with Vertical(id="login-sidebar"):
-                    yield Static(LOGO, id="logo")
-                    yield Static(
-                        f'[italic #ff006e]"{random.choice(TAGLINES)}"[/]',
-                        id="tagline",
-                    )
+        # Header - System Status Bar
+        with Horizontal(id="app-header"):
+            yield Static("[bold #00d4ff]◄ PASSFX ►[/]", id="header-branding")
+            yield Static("░░ SYSTEM LOCKED ░░", id="header-status")
+            yield Static("[#ef4444]🔒 RESTRICTED[/]", id="header-lock")
 
-                # Right pane: Form
+        # Body - Centered content
+        with Center(id="login-form-pane"):
+            with Vertical(id="login-content"):
+                yield Static(LOGO, id="logo")
+                yield Static(
+                    f'[italic #8b5cf6]"{random.choice(TAGLINES)}"[/]',
+                    id="tagline",
+                )
+
+                # Form container for centered inputs
                 with Vertical(id="login-form"):
                     if app.vault.exists and not self.new_vault:
-                        yield Static("[bold #60a5fa]Welcome Back[/]", id="form-title")
-                        yield Label("Enter your master password", classes="muted")
-                        yield Input(
-                            placeholder="Master Password",
-                            password=True,
-                            id="password-input",
+                        yield Static(
+                            "[bold #60a5fa]━━━ IDENTITY VERIFICATION ━━━[/]",
+                            id="form-title",
                         )
-                        yield Button("Unlock", variant="primary", id="unlock-button")
+                        with Center():
+                            yield Label("ENTER MASTER PASSWORD", classes="muted terminal-label")
+                        with Center():
+                            yield Input(
+                                placeholder="••••••••",
+                                password=True,
+                                id="password-input",
+                            )
+                        with Center():
+                            yield Button("▶ UNLOCK VAULT", variant="primary", id="unlock-button")
                     else:
-                        yield Static("[bold #60a5fa]Create Vault[/]", id="form-title")
-                        yield Label("Choose a strong master password", classes="muted")
-                        yield Input(
-                            placeholder="Master Password",
-                            password=True,
-                            id="password-input",
+                        yield Static(
+                            "[bold #60a5fa]━━━ VAULT INITIALIZATION ━━━[/]",
+                            id="form-title",
                         )
-                        yield Input(
-                            placeholder="Confirm Password",
-                            password=True,
-                            id="confirm-input",
-                        )
-                        yield Button(
-                            "Create Vault", variant="primary", id="create-button"
-                        )
+                        with Center():
+                            yield Label(
+                                "CREATE MASTER PASSWORD", classes="muted terminal-label"
+                            )
+                        with Center():
+                            yield Input(
+                                placeholder="••••••••",
+                                password=True,
+                                id="password-input",
+                            )
+                        with Center():
+                            yield Label("CONFIRM PASSWORD", classes="muted terminal-label")
+                        with Center():
+                            yield Input(
+                                placeholder="••••••••",
+                                password=True,
+                                id="confirm-input",
+                            )
+                        with Center():
+                            yield Button(
+                                "▶ INITIALIZE VAULT", variant="primary", id="create-button"
+                            )
 
                     yield Static("", id="error-message")
+
+        # Footer - Command Strip
+        with Horizontal(id="app-footer"):
+            yield Static(f" {VERSION} ", id="footer-version")
+            with Horizontal(id="footer-keys"):
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #a78bfa]ENTER[/]", classes="keycap")
+                    yield Static("[#64748b]Confirm[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #a78bfa] Q [/]", classes="keycap")
+                    yield Static("[#64748b]Abort[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Focus the password input on mount."""

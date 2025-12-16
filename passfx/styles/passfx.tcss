@@ -154,83 +154,109 @@ FooterKey > .footer-key--description {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LOGIN SCREEN
+   LOGIN SCREEN - FULL-SCREEN GRID LAYOUT
    ═══════════════════════════════════════════════════════════════════════════ */
 
-#login-container {
-    width: auto;
-    height: auto;
+/* Login body matches main-container layout */
+#login-body {
+    width: 100%;
+    height: 1fr;
+    align: left top;
+}
+
+/* Main content area - centered */
+#login-form-pane {
+    width: 1fr;
+    height: 100%;
     background: #1e293b;
-    border: double #3b82f6;
-    padding: 2 4;
-    margin: 2;
-    align: center middle;
 }
 
-#login-sidebar {
-    width: 55;
+/* Content wrapper inside Center */
+#login-content {
+    width: 52;
     height: auto;
-    padding: 1 2;
 }
 
-#login-form {
-    width: 40;
-    height: auto;
-    padding: 1 2;
+/* Logo in main pane - full width */
+#login-content #logo {
+    color: #60a5fa;
+    text-align: center;
+    padding: 1 0;
+    width: auto;
+    min-width: 52;
+}
+
+/* Tagline in main pane */
+#login-content #tagline {
+    color: #8b5cf6;
+    text-align: center;
+    text-style: italic;
+    padding: 0 0 2 0;
+    width: 100%;
 }
 
 #form-title {
-    text-align: left;
-    padding: 1 0;
-}
-
-#logo {
-    color: #60a5fa;
-    text-align: left;
-    padding: 1 0;
-}
-
-#tagline {
-    color: #8b5cf6;
-    text-align: left;
-    text-style: italic;
-    padding: 0 0 2 0;
-}
-
-#password-input {
-    margin: 1 2;
-    background: #334155;
-    color: #f8fafc;
-    border: tall #1d4ed8;
-}
-
-#password-input:focus {
-    border: tall #3b82f6;
-}
-
-#confirm-input {
-    margin: 1 2;
-    background: #334155;
-    color: #f8fafc;
-    border: tall #1d4ed8;
-}
-
-#confirm-input:focus {
-    border: tall #3b82f6;
-}
-
-#unlock-button, #create-button {
-    margin: 2 2 1 2;
+    text-align: center;
+    padding: 0 0 1 0;
     width: 100%;
-    background: #3b82f6;
+}
+
+/* Form container - full width, centers children */
+#login-form {
+    width: 100%;
+    height: auto;
+    align: center top;
+}
+
+/* Terminal-style label */
+.terminal-label {
+    color: #60a5fa;
+    text-style: bold;
+    text-align: left;
+    padding: 0;
+    width: 38;
+}
+
+/* Terminal Prompt Input Styling - underline only */
+#login-form Input {
+    background: transparent;
+    border: none;
+    border-bottom: heavy $pfx-primary;
+    padding: 0 1 0 1;
+    margin: 0;
+    color: $pfx-fg;
+    width: 38;
+    height: 2;
+}
+
+#login-form Input:focus {
+    border-bottom: heavy #00d4ff;
+}
+
+#login-form Input.-invalid {
+    border-bottom: heavy $pfx-error;
+}
+
+/* Pill-shaped high-contrast button */
+#unlock-button, #create-button {
+    margin: 1 0 0 0;
+    width: 38;
+    background: $pfx-primary;
     color: #0f172a;
     text-style: bold;
-    border: none;
-    padding: 1 2;
+    border: tall $pfx-primary;
+    padding: 0 4;
+    height: 3;
 }
 
 #unlock-button:hover, #create-button:hover {
-    background: #8b5cf6;
+    background: #00d4ff;
+    border: tall #00d4ff;
+}
+
+#unlock-button:focus, #create-button:focus {
+    background: $pfx-accent;
+    border: tall $pfx-accent;
 }
 
 #error-message {
@@ -238,7 +264,8 @@ FooterKey > .footer-key--description {
     text-align: center;
     text-style: bold;
     padding: 1;
-    margin: 1;
+    margin: 1 0;
+    width: 100%;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
