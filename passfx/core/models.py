@@ -346,8 +346,70 @@ class RecoveryEntry:
         return count
 
 
+@dataclass
+class NoteEntry:
+    """Secure note storage for miscellaneous secrets.
+
+    Attributes:
+        title: Human-readable name (e.g., 'Office Wi-Fi').
+        content: Free text content of the note.
+        notes: Optional additional notes.
+        id: Unique identifier.
+        created_at: ISO timestamp of creation.
+        updated_at: ISO timestamp of last update.
+    """
+
+    title: str
+    content: str
+    notes: str | None = None
+    id: str = field(default_factory=_generate_id)
+    created_at: str = field(default_factory=_now_iso)
+    updated_at: str = field(default_factory=_now_iso)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "type": "note",
+            "id": self.id,
+            "title": self.title,
+            "content": self.content,
+            "notes": self.notes,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> NoteEntry:
+        """Create an instance from a dictionary."""
+        return cls(
+            id=data.get("id", _generate_id()),
+            title=data["title"],
+            content=data["content"],
+            notes=data.get("notes"),
+            created_at=data.get("created_at", _now_iso()),
+            updated_at=data.get("updated_at", _now_iso()),
+        )
+
+    def update(self, **kwargs: Any) -> None:
+        """Update fields and refresh updated_at timestamp."""
+        for key, value in kwargs.items():
+            if hasattr(self, key) and key not in ("id", "created_at"):
+                setattr(self, key, value)
+        self.updated_at = _now_iso()
+
+    @property
+    def line_count(self) -> int:
+        """Return the number of lines in the content."""
+        return len(self.content.split("\n")) if self.content else 0
+
+    @property
+    def char_count(self) -> int:
+        """Return the character count of the content."""
+        return len(self.content) if self.content else 0
+
+
 # Type alias for any credential type
-Credential = EmailCredential | PhoneCredential | CreditCard | EnvEntry | RecoveryEntry
+Credential = EmailCredential | PhoneCredential | CreditCard | EnvEntry | RecoveryEntry | NoteEntry
 
 
 def credential_from_dict(data: dict[str, Any]) -> Credential:
@@ -374,5 +436,7 @@ def credential_from_dict(data: dict[str, Any]) -> Credential:
         return EnvEntry.from_dict(data)
     elif cred_type == "recovery":
         return RecoveryEntry.from_dict(data)
+    elif cred_type == "note":
+        return NoteEntry.from_dict(data)
     else:
         raise ValueError(f"Unknown credential type: {cred_type}")

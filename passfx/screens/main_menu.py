@@ -101,6 +101,7 @@ class MainMenuScreen(Screen):
                     Option(_make_menu_item("KEY", "Passwords"), id="passwords"),
                     Option(_make_menu_item("PIN", "Phones"), id="phones"),
                     Option(_make_menu_item("CRD", "Cards"), id="cards"),
+                    Option(_make_menu_item("MEM", "Notes"), id="notes"),
                     Option(_make_menu_item("ENV", "Env Vars"), id="envs"),
                     Option(_make_menu_item("SOS", "Recovery"), id="recovery"),
                     Option(_make_menu_item("GEN", "Generator"), id="generator"),
@@ -455,6 +456,8 @@ class MainMenuScreen(Screen):
             self.action_phones()
         elif option_id == "cards":
             self.action_cards()
+        elif option_id == "notes":
+            self.action_notes()
         elif option_id == "envs":
             self.action_envs()
         elif option_id == "recovery":
@@ -485,6 +488,12 @@ class MainMenuScreen(Screen):
         from passfx.screens.cards import CardsScreen
 
         self.app.push_screen(CardsScreen())
+
+    def action_notes(self) -> None:
+        """Go to secure notes screen."""
+        from passfx.screens.notes import NotesScreen
+
+        self.app.push_screen(NotesScreen())
 
     def action_envs(self) -> None:
         """Go to env vars screen."""

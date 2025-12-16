@@ -2579,3 +2579,301 @@ Button.recovery-delete-btn:focus {
     text-align: center;
     padding: 0 0 1 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SECURE NOTES SCREEN - ENCRYPTED DATA SHARDS THEME
+   Theme: Slate/Silver (#94a3b8) for Archived/Static Data
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Slate accent color */
+$pfx-slate: #94a3b8;
+$pfx-slate-dim: #64748b;
+$pfx-slate-light: #cbd5e1;
+
+/* Note Header Block - Slate variant */
+.note-header {
+    background: #94a3b8;
+    color: #000000;
+}
+
+/* Note Card wrapper with slate accent */
+.note-card {
+    border-left: heavy #94a3b8;
+}
+
+/* Note Preview with slate border */
+.note-preview {
+    border: solid #94a3b8 50%;
+    border-title-color: #94a3b8;
+}
+
+/* Notes Table - Mainframe Terminal Look with Slate accents */
+#notes-table {
+    background: $pfx-bg;
+    border: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 1fr;
+}
+
+#notes-table:focus {
+    border: none;
+}
+
+#notes-table > .datatable--cursor {
+    background: #1e293b;
+    color: $pfx-fg;
+    text-style: none;
+}
+
+#notes-table > .datatable--cursor:hover {
+    background: #1e293b;
+}
+
+#notes-table > .datatable--header {
+    background: #475569;
+    color: #e2e8f0;
+    text-style: bold;
+}
+
+#notes-table > .datatable--even-row {
+    background: #02040a;
+    border-bottom: solid #1e293b;
+}
+
+#notes-table > .datatable--odd-row {
+    background: #060a12;
+    border-bottom: solid #1e293b;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SECURE NOTE CODE EDITOR / TEXTAREA STYLING
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Code Editor TextArea - Dark terminal look with Slate accent */
+.note-code-editor {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: solid #94a3b8 50%;
+    padding: 1;
+    margin: 0 0 1 0;
+    height: 12;
+    max-height: 12;
+}
+
+.note-code-editor:focus {
+    border: solid #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SECURE NOTE MODAL SCREENS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* View Note Modal */
+#note-view-modal {
+    width: 70;
+    height: auto;
+    max-height: 40;
+    background: $pfx-bg;
+    border: heavy #94a3b8;
+    padding: 1 2;
+}
+
+#note-view-title {
+    text-align: center;
+    text-style: bold;
+    color: #94a3b8;
+    padding: 0 0 1 0;
+    border-bottom: solid #94a3b8 50%;
+}
+
+#note-view-info {
+    padding: 1 0;
+}
+
+.note-view-name {
+    text-style: bold;
+}
+
+.note-view-stats {
+    height: auto;
+}
+
+.note-view-stats Static {
+    margin-right: 3;
+}
+
+/* Read-only code editor for viewing - Slate theme */
+.note-code-editor-view {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: solid #94a3b8 50%;
+    padding: 1;
+    height: 16;
+    max-height: 16;
+}
+
+#note-view-footer {
+    text-align: center;
+    padding: 1 0;
+}
+
+#note-view-modal #modal-buttons {
+    width: 100%;
+    height: auto;
+    padding: 1 0 0 0;
+    align: center middle;
+}
+
+#note-view-modal #modal-buttons Button {
+    width: 16;
+    margin: 0 2;
+}
+
+/* Add/Edit Note Modal */
+#note-edit-modal {
+    width: 70;
+    height: auto;
+    max-height: 45;
+    background: $pfx-bg;
+    border: heavy #94a3b8;
+    padding: 2 3;
+}
+
+#note-edit-title {
+    text-style: bold;
+    color: #94a3b8;
+    text-align: center;
+    padding: 0 0 1 0;
+    margin-bottom: 1;
+}
+
+#note-form {
+    padding: 1 0;
+    height: auto;
+    max-height: 35;
+    overflow-y: auto;
+}
+
+.note-input-label {
+    color: #94a3b8;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+}
+
+#note-form Input {
+    background: transparent;
+    border: none;
+    border-bottom: solid #64748b;
+    padding: 0 1 0 1;
+    margin: 0 0 1 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 2;
+}
+
+#note-form Input:focus {
+    border-bottom: heavy #94a3b8;
+}
+
+/* Note Modal Buttons Container */
+#note-edit-modal #modal-buttons {
+    width: 100%;
+    height: auto;
+    padding: 2 0 0 0;
+    align: center middle;
+}
+
+#note-edit-modal #modal-buttons Button {
+    width: 16;
+    margin: 0 1;
+}
+
+#note-edit-modal #cancel-button {
+    background: $pfx-surface;
+    color: $pfx-muted;
+    border: solid $pfx-surface-light;
+}
+
+#note-edit-modal #cancel-button:hover {
+    background: $pfx-surface-light;
+    color: $pfx-fg;
+}
+
+/* Import button - Slate distinctive style */
+Button.note-import-btn {
+    background: #334155;
+    color: #cbd5e1;
+    border: solid #94a3b8;
+    text-style: bold;
+    content-align: center middle;
+}
+
+Button.note-import-btn:hover {
+    background: #94a3b8;
+    color: #000000;
+}
+
+Button.note-import-btn:focus {
+    background: #64748b;
+    color: #cbd5e1;
+    border: solid #94a3b8;
+}
+
+/* Note Modal Save Button - Slate styling */
+Button.note-save-btn {
+    background: #94a3b8;
+    color: #000000;
+    border: solid #94a3b8;
+    text-style: bold;
+    content-align: center middle;
+}
+
+Button.note-save-btn:hover {
+    background: #cbd5e1;
+    color: #000000;
+}
+
+Button.note-save-btn:focus {
+    background: #cbd5e1;
+    color: #000000;
+    border: solid #cbd5e1;
+}
+
+/* Note Modal Delete Button - Red styling */
+Button.note-delete-btn {
+    background: #ef4444;
+    color: #ffffff;
+    border: solid #ef4444;
+    text-style: bold;
+    content-align: center middle;
+}
+
+Button.note-delete-btn:hover {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+Button.note-delete-btn:focus {
+    background: #dc2626;
+    color: #ffffff;
+    border: solid #dc2626;
+}
+
+/* Delete Note Modal */
+#note-delete-modal {
+    width: 50;
+    height: auto;
+    background: $pfx-bg;
+    border: heavy #94a3b8;
+    padding: 2 3;
+}
+
+#note-delete-title {
+    text-style: bold;
+    color: #94a3b8;
+    text-align: center;
+    padding: 0 0 1 0;
+}
