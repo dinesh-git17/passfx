@@ -60,11 +60,6 @@ class MainMenuScreen(Screen):
     """Security Command Center - main dashboard with navigation sidebar."""
 
     BINDINGS = [
-        Binding("1", "passwords", "Passwords", show=False),
-        Binding("2", "phones", "Phones", show=False),
-        Binding("3", "cards", "Cards", show=False),
-        Binding("4", "generator", "Generator", show=False),
-        Binding("5", "settings", "Settings", show=False),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -89,7 +84,6 @@ class MainMenuScreen(Screen):
                     Option("  [ EXIT ] Quit       ", id="exit"),
                     id="sidebar-menu",
                 )
-                yield Static(f"[dim]{VERSION}[/]", id="sidebar-version")
 
             # Right pane: Dashboard view
             with Vertical(id="dashboard-view"):
@@ -110,13 +104,13 @@ class MainMenuScreen(Screen):
                     yield Static(id="security-gauge", classes="gauge-panel")
                     yield Static(id="system-log", classes="log-panel")
 
-        # Horizontal divider above footer
-        yield Static("", id="footer-divider")
-
         # Custom footer - Grid-aligned command strip
         with Horizontal(id="app-footer"):
+            # Left segment: Version (aligns with sidebar)
+            yield Static(f" {VERSION} ", id="footer-version")
+            # Right segment: Key hints (aligns with dashboard)
             yield Static(
-                "  [#8b5cf6]Q[/] Quit   [#8b5cf6]1-5[/] Navigate   [#8b5cf6]ESC[/] Back",
+                "[#8b5cf6]Q[/] Quit   [#8b5cf6]ESC[/] Back",
                 id="footer-keys",
             )
 

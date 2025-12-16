@@ -41,37 +41,28 @@ Screen {
     align: center middle;
 }
 
-#app-header > Static {
-    height: 1;
-}
-
-#header-divider {
-    width: 100%;
-    height: 0;
-    dock: top;
-}
-
 #header-branding {
-    background: transparent;
     width: 28;
-    height: 1;
+    height: 100%;
+    background: #0f172a;
+    color: #00d4ff;
+    text-style: bold;
     content-align: center middle;
 }
 
 #header-status {
     width: 1fr;
-    height: 1;
+    height: 100%;
     color: #475569;
-    text-align: center;
     content-align: center middle;
 }
 
 #header-lock {
-    color: #22c55e;
-    padding: 0 2;
-    text-style: bold;
     width: auto;
-    height: 1;
+    height: 100%;
+    color: #22c55e;
+    text-style: bold;
+    padding-right: 1;
     content-align: center middle;
 }
 
@@ -107,13 +98,6 @@ FooterKey > .footer-key--description {
    CUSTOM FOOTER - GRID-ALIGNED COMMAND STRIP
    ═══════════════════════════════════════════════════════════════════════════ */
 
-#footer-divider {
-    width: 100%;
-    height: 1;
-    dock: bottom;
-    background: #1d4ed8;
-}
-
 #app-footer {
     width: 100%;
     height: 3;
@@ -124,7 +108,7 @@ FooterKey > .footer-key--description {
 
 #footer-version {
     width: 28;
-    height: 1;
+    height: 100%;
     background: #0f172a;
     color: #475569;
     content-align: center middle;
@@ -132,11 +116,11 @@ FooterKey > .footer-key--description {
 
 #footer-keys {
     width: 1fr;
-    height: 1;
+    height: 100%;
     background: #0f172a;
     color: #94a3b8;
     content-align: left middle;
-    padding: 0 2;
+    padding-left: 2;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -235,16 +219,13 @@ FooterKey > .footer-key--description {
     width: 100%;
     height: 100%;
     align: left top;
-    margin-top: 2;
-    border-top: solid #1d4ed8;
 }
 
 #sidebar {
     width: 28;
     height: 100%;
     background: #0f172a;
-    border-right: solid #1d4ed8;
-    padding: 0;
+    padding: 1 0;
 }
 
 #sidebar-logo {
@@ -269,13 +250,6 @@ FooterKey > .footer-key--description {
     background: #3b82f6;
     color: #0f172a;
     text-style: bold;
-}
-
-#sidebar-version {
-    dock: bottom;
-    text-align: center;
-    padding: 1 0;
-    color: #475569;
 }
 
 #dashboard-view {
@@ -305,32 +279,25 @@ FooterKey > .footer-key--description {
 .stat-card {
     width: 16;
     height: 4;
-    background: #0f172a;
-    border: tall #3b82f6;
+    background: #1e293b;
+    border: none;
     text-align: center;
     content-align: center middle;
     padding: 0;
     margin: 0 1;
     color: #22c55e;
     text-style: bold;
-    /* Remove default button styling */
-    border-top: tall #3b82f6;
-    border-bottom: tall #3b82f6;
 }
 
 .stat-card:hover {
-    background: #1e293b;
-    border: tall #60a5fa;
-    border-top: tall #60a5fa;
-    border-bottom: tall #60a5fa;
+    background: #334155;
+    border: none;
 }
 
 .stat-card:focus {
-    background: #334155;
-    border: tall #60a5fa;
-    border-top: tall #60a5fa;
-    border-bottom: tall #60a5fa;
-    color: #22c55e;
+    background: #3b82f6;
+    color: #0f172a;
+    border: none;
 }
 
 #panels-row {
@@ -343,18 +310,19 @@ FooterKey > .footer-key--description {
     width: 1fr;
     height: auto;
     background: #0f172a;
-    border: solid #3b82f6;
     padding: 1 2;
-    margin: 1 1 1 0;
+    margin: 1;
+    text-align: center;
 }
 
 .log-panel {
     width: 1fr;
     height: auto;
     background: #0f172a;
-    border: solid #1d4ed8;
     padding: 1 2;
-    margin: 1 0 1 1;
+    margin: 1;
+    text-align: left;
+    content-align: center top;
 }
 
 .title {
