@@ -474,8 +474,28 @@ class EditCardModal(ModalScreen[dict | None]):
 class ViewCardModal(ModalScreen[None]):
     """Modal displaying a physical credit card visualization."""
 
+    # Color configuration for the card modal (Emerald Green theme)
+    COLORS = {
+        "border": "#10b981",
+        "card_bg": "#0a0e27",
+        "section_border": "#475569",
+        "title_bg": "#4ade80",
+        "title_fg": "#000000",
+        "label_dim": "#64748b",
+        "value_fg": "#f8fafc",
+        "accent": "#34d399",
+        "accent_dim": "#064e3b",
+        "muted": "#94a3b8",
+        "chip": "#fbbf24",
+        "btn_primary_bg": "#064e3b",
+        "btn_primary_fg": "#34d399",
+        "btn_secondary_bg": "#1e293b",
+        "btn_secondary_fg": "#94a3b8",
+    }
+
     BINDINGS = [
         Binding("escape", "close", "Close"),
+        Binding("c", "copy_number", "Copy"),
     ]
 
     def __init__(self, card: CreditCard) -> None:
@@ -483,60 +503,107 @@ class ViewCardModal(ModalScreen[None]):
         self.card = card
 
     def compose(self) -> ComposeResult:
-        """Create the physical card layout."""
+        """Create the physical card layout with ASCII borders."""
+        c = self.COLORS
+
         # Format the card number with spaces
         formatted_number = _format_card_number(self.card.card_number)
 
+        # Card dimensions
+        width = 96
+        inner = width - 2
+        section_inner = width - 6
+        content_width = section_inner - 5
+
         with Vertical(id="card-modal"):
-            # Physical Card Container
-            with Vertical(id="physical-card"):
-                # Top Row: Bank Name (right-aligned)
-                yield Static(
-                    f"[bold #f8fafc]{self.card.label.upper()}[/]",
-                    id="card-bank-name",
-                )
+            with Vertical(id="physical-credit-card"):
+                # Top border
+                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
 
-                # Chip Row
-                yield Static(
-                    "[bold #fbbf24]▄▄▄▄▄▄▄[/]\n[bold #fbbf24]███████[/]\n[bold #fbbf24]▀▀▀▀▀▀▀[/]",
-                    id="card-chip",
-                )
+                # Title row
+                title = " FINANCIAL ASSET TOKEN "
+                title_pad = inner - len(title) - 2
+                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
 
-                # Card Number Row (large, bold, gold - styled via CSS)
-                yield Static(
-                    formatted_number,
-                    id="card-number-display",
-                )
+                # Divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
-                # Details Row: Expiry and CVV
-                with Horizontal(id="card-details-row"):
-                    yield Static(
-                        f"[dim #94a3b8]VALID THRU[/]\n[bold #f8fafc]{self.card.expiry}[/]",
-                        id="card-expiry",
-                    )
-                    yield Static(
-                        f"[dim #94a3b8]CVV[/]\n[bold #f8fafc]{self.card.cvv}[/]",
-                        id="card-cvv",
-                    )
+                # Card label
+                label_val = self.card.label.upper()
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]ISSUER:[/] [bold {c['value_fg']}]{label_val:<{inner - 12}}[/] [bold {c['border']}]║[/]")
 
-                # Bottom Row: Cardholder Name (embossed look)
-                yield Static(
-                    f"[bold #e2e8f0]{self.card.cardholder_name.upper()}[/]",
-                    id="card-holder-name",
-                )
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
-            # Close Button
+                # Chip visualization
+                yield Static(f"[bold {c['border']}]║[/]  [bold {c['chip']}]▄▄▄▄▄▄▄[/]{' ' * (inner - 11)}[bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [bold {c['chip']}]███████[/]{' ' * (inner - 11)}[bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [bold {c['chip']}]▀▀▀▀▀▀▀[/]{' ' * (inner - 11)}[bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Card Number section
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ CARD NUMBER {'─' * (section_inner - 16)}┐[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [bold {c['accent']}]{formatted_number:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Expiry and CVV section
+                expiry_cvv = f"VALID THRU: [bold {c['value_fg']}]{self.card.expiry}[/]     CVV: [bold {c['value_fg']}]{self.card.cvv}[/]"
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ SECURITY INFO {'─' * (section_inner - 18)}┐[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [dim {c['label_dim']}]{expiry_cvv}{' ' * (content_width - 32)}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Cardholder section
+                holder_name = self.card.cardholder_name.upper()
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ CARDHOLDER {'─' * (section_inner - 15)}┐[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [bold {c['value_fg']}]{holder_name:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+
+                # Footer divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Footer row with ID
+                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.card.id[:8]}[/]"
+                footer_right = f"[dim {c['section_border']}]STATUS:[/] [{c['accent']}]ACTIVE[/]"
+                footer_pad = inner - 32
+                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+
+                # Bottom border
+                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
+
+            # Action Buttons
             with Horizontal(id="card-modal-buttons"):
-                yield Button("[ESC] CLOSE", id="close-button")
+                yield Button("COPY NUMBER", id="copy-button")
+                yield Button("CLOSE", id="close-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
         if event.button.id == "close-button":
             self.dismiss(None)
+        elif event.button.id == "copy-button":
+            self._copy_number()
+
+    def _copy_number(self) -> None:
+        """Copy card number to clipboard."""
+        if copy_to_clipboard(self.card.card_number, auto_clear=True, clear_after=30):
+            self.notify("Card number copied! Clears in 30s", title="Copied")
+        else:
+            self.notify("Failed to copy to clipboard", severity="error")
 
     def action_close(self) -> None:
         """Close the modal."""
         self.dismiss(None)
+
+    def action_copy_number(self) -> None:
+        """Copy card number via keybinding."""
+        self._copy_number()
 
 
 class ConfirmDeleteModal(ModalScreen[bool]):
@@ -608,7 +675,7 @@ class CardsScreen(Screen):
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]›[/] [dim #64748b]VAULT[/] [#475569]›[/] [bold #00d4ff]CARDS[/]",
+                "[dim #64748b]HOME[/] [#475569]›[/] [dim #64748b]VAULT[/] [#475569]›[/] [bold #10b981]CARDS[/]",
                 id="header-branding",
             )
             yield Static("░░ FINANCIAL VAULT ░░", id="header-status")
@@ -619,7 +686,7 @@ class CardsScreen(Screen):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
                 # Inverted Block Header
-                yield Static(" ≡ FINANCIAL_DATABASE ", classes="pane-header-block")
+                yield Static(" ≡ FINANCIAL_DATABASE ", classes="pane-header-block-green")
                 yield DataTable(id="cards-table", cursor_type="row")
                 # Empty state placeholder (hidden by default)
                 with Center(id="empty-state"):
@@ -639,7 +706,7 @@ class CardsScreen(Screen):
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
                 # Inverted Block Header
-                yield Static(" ≡ ASSET_INSPECTOR ", classes="pane-header-block")
+                yield Static(" ≡ ASSET_INSPECTOR ", classes="pane-header-block-green")
                 yield Vertical(id="inspector-content")  # Dynamic content here
 
         # 3. Global Footer
@@ -664,9 +731,9 @@ class CardsScreen(Screen):
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
         if self._pulse_state:
-            header_lock.update("[#22c55e]● [bold]ENCRYPTED[/][/]")
+            header_lock.update("[#34d399]● [bold]ENCRYPTED[/][/]")
         else:
-            header_lock.update("[#166534]○ [bold]ENCRYPTED[/][/]")
+            header_lock.update("[#059669]○ [bold]ENCRYPTED[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector after render."""
@@ -692,13 +759,13 @@ class CardsScreen(Screen):
 
         table.clear(columns=True)
 
-        # Column layout: Selection indicator, Label, Masked Number, Expiry, Holder, Updated
-        table.add_column("", width=2)  # Selection indicator column
-        table.add_column("Label", width=18)
-        table.add_column("Number", width=20)
-        table.add_column("Expiry", width=8)
-        table.add_column("Holder", width=18)
-        table.add_column("Updated", width=10)
+        # Column layout - sized to fill available space
+        table.add_column("", width=3)  # Selection indicator column
+        table.add_column("Label", width=20)
+        table.add_column("Number", width=24)
+        table.add_column("Expiry", width=10)
+        table.add_column("Holder", width=22)
+        table.add_column("Updated", width=40)  # Wider to fill remaining space
 
         cards = app.vault.get_cards()
 
@@ -713,7 +780,7 @@ class CardsScreen(Screen):
         for card in cards:
             # Selection indicator - will be updated dynamically
             is_selected = card.id == self._selected_row_key
-            indicator = "[bold #00d4ff]▍[/]" if is_selected else " "
+            indicator = "[bold #10b981]▍[/]" if is_selected else " "
 
             # Label (white text)
             label_text = card.label
@@ -765,7 +832,7 @@ class CardsScreen(Screen):
         # Set new selection indicator
         if new_key and new_key in card_map:
             try:
-                table.update_cell(new_key, indicator_col, "[bold #00d4ff]▍[/]")
+                table.update_cell(new_key, indicator_col, "[bold #10b981]▍[/]")
             except Exception:
                 pass  # Row may not exist
 
@@ -959,7 +1026,7 @@ class CardsScreen(Screen):
             numbered_lines = []
             for i, line in enumerate(lines[:10], 1):  # Limit to 10 lines
                 line_num = f"[dim #475569]{i:2}[/]"
-                line_content = f"[#22c55e]{line}[/]" if line.strip() else ""
+                line_content = f"[#34d399]{line}[/]" if line.strip() else ""
                 numbered_lines.append(f"{line_num} │ {line_content}")
             notes_content = "\n".join(numbered_lines)
         else:

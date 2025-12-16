@@ -344,6 +344,23 @@ class ConfirmDeleteModal(ModalScreen[bool]):
 class ViewPasswordModal(ModalScreen[None]):
     """Modal displaying an Identity Access Token visualization."""
 
+    # Color configuration for the password modal (Cyberpunk Cyan/Green theme)
+    COLORS = {
+        "border": "#00d4ff",
+        "card_bg": "#0a0e27",
+        "section_border": "#475569",
+        "title_bg": "#00d4ff",
+        "title_fg": "#000000",
+        "label_dim": "#64748b",
+        "value_fg": "#f8fafc",
+        "accent": "#22c55e",
+        "muted": "#94a3b8",
+        "btn_primary_bg": "#0a2e1a",
+        "btn_primary_fg": "#22c55e",
+        "btn_secondary_bg": "#1e293b",
+        "btn_secondary_fg": "#94a3b8",
+    }
+
     BINDINGS = [
         Binding("escape", "close", "Close"),
         Binding("c", "copy_password", "Copy"),
@@ -355,6 +372,8 @@ class ViewPasswordModal(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         """Create the identity access token layout."""
+        c = self.COLORS
+
         # Get password strength for visual indicator
         strength = check_strength(self.credential.password)
         strength_color = _get_strength_color(strength.score)
@@ -372,99 +391,69 @@ class ViewPasswordModal(ModalScreen[None]):
         except (ValueError, TypeError):
             created = "UNKNOWN"
 
+        # Card dimensions
+        width = 96
+        inner = width - 2
+        section_inner = width - 6
+        content_width = section_inner - 5
+
         with Vertical(id="password-modal"):
-            # Physical ID Card Container
             with Vertical(id="physical-id-card"):
-                # Header Row: Token Type Badge
-                yield Static(
-                    "[bold #00d4ff]╔══════════════════════════════════════════════╗[/]",
-                    id="id-card-border-top",
-                )
-                yield Static(
-                    "[bold #00d4ff]║[/]  [on #00d4ff][bold #000000] IDENTITY ACCESS TOKEN [/]              [bold #00d4ff]║[/]",
-                    id="id-card-header",
-                )
-                yield Static(
-                    "[bold #00d4ff]╠══════════════════════════════════════════════╣[/]",
-                    id="id-card-divider",
-                )
+                # Top border
+                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
 
-                # System Label Row
-                yield Static(
-                    f"[bold #00d4ff]║[/]  [dim #64748b]SYSTEM:[/] [bold #f8fafc]{self.credential.label.upper():<36}[/] [bold #00d4ff]║[/]",
-                    id="id-card-system",
-                )
+                # Title row
+                title = " IDENTITY ACCESS TOKEN "
+                title_pad = inner - len(title) - 2
+                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+
+                # Divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # System label
+                system_val = self.credential.label.upper()
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SYSTEM:[/] [bold {c['value_fg']}]{system_val:<{inner - 12}}[/] [bold {c['border']}]║[/]")
 
                 # Spacer
-                yield Static(
-                    "[bold #00d4ff]║[/]                                              [bold #00d4ff]║[/]",
-                    id="id-card-spacer1",
-                )
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
-                # User Identity Section
-                yield Static(
-                    "[bold #00d4ff]║[/]  [dim #475569]┌─ USER IDENTITY ─────────────────────────┐[/]  [bold #00d4ff]║[/]",
-                    id="id-card-identity-header",
-                )
-                yield Static(
-                    f"[bold #00d4ff]║[/]  [dim #475569]│[/] [#22c55e]►[/] [bold #e2e8f0]{self.credential.email:<38}[/] [dim #475569]│[/]  [bold #00d4ff]║[/]",
-                    id="id-card-email",
-                )
-                yield Static(
-                    "[bold #00d4ff]║[/]  [dim #475569]└─────────────────────────────────────────┘[/]  [bold #00d4ff]║[/]",
-                    id="id-card-identity-footer",
-                )
+                # User Identity section
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ USER IDENTITY {'─' * (section_inner - 17)}┐[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [bold {c['value_fg']}]{self.credential.email:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
 
                 # Spacer
-                yield Static(
-                    "[bold #00d4ff]║[/]                                              [bold #00d4ff]║[/]",
-                    id="id-card-spacer2",
-                )
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
-                # Access Key Section
-                yield Static(
-                    "[bold #00d4ff]║[/]  [dim #475569]┌─ ACCESS KEY ────────────────────────────┐[/]  [bold #00d4ff]║[/]",
-                    id="id-card-key-header",
-                )
-                yield Static(
-                    f"[bold #00d4ff]║[/]  [dim #475569]│[/] [#22c55e]►[/] [bold #22c55e]{self.credential.password:<38}[/] [dim #475569]│[/]  [bold #00d4ff]║[/]",
-                    id="id-card-password",
-                )
-                yield Static(
-                    "[bold #00d4ff]║[/]  [dim #475569]└─────────────────────────────────────────┘[/]  [bold #00d4ff]║[/]",
-                    id="id-card-key-footer",
-                )
+                # Access Key section
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ ACCESS KEY {'─' * (section_inner - 14)}┐[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [bold {c['accent']}]{self.credential.password:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
 
                 # Spacer
-                yield Static(
-                    "[bold #00d4ff]║[/]                                              [bold #00d4ff]║[/]",
-                    id="id-card-spacer3",
-                )
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
-                # Security Level Bar
-                yield Static(
-                    f"[bold #00d4ff]║[/]  [dim #64748b]SECURITY:[/] {security_bars} [{strength_color}]{strength.label.upper():<12}[/]      [bold #00d4ff]║[/]",
-                    id="id-card-security",
-                )
+                # Security bar
+                sec_content = f"  [dim {c['label_dim']}]SECURITY:[/] {security_bars} [{strength_color}]{strength.label.upper():<12}[/]"
+                sec_pad = inner - 35
+                yield Static(f"[bold {c['border']}]║[/]{sec_content}{' ' * sec_pad}[bold {c['border']}]║[/]")
 
-                # Footer with metadata
-                yield Static(
-                    "[bold #00d4ff]╠══════════════════════════════════════════════╣[/]",
-                    id="id-card-footer-divider",
-                )
-                yield Static(
-                    f"[bold #00d4ff]║[/]  [dim #475569]ID:[/] [#64748b]{self.credential.id[:8]}[/]          [dim #475569]ISSUED:[/] [#64748b]{created}[/]     [bold #00d4ff]║[/]",
-                    id="id-card-footer",
-                )
-                yield Static(
-                    "[bold #00d4ff]╚══════════════════════════════════════════════╝[/]",
-                    id="id-card-border-bottom",
-                )
+                # Footer divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Footer row
+                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.credential.id[:8]}[/]"
+                footer_right = f"[dim {c['section_border']}]ISSUED:[/] [{c['muted']}]{created}[/]"
+                footer_pad = inner - 30 - len(created)
+                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+
+                # Bottom border
+                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
 
             # Action Buttons
             with Horizontal(id="password-modal-buttons"):
-                yield Button("[C] COPY KEY", id="copy-button")
-                yield Button("[ESC] CLOSE", id="close-button")
+                yield Button("COPY KEY", id="copy-button")
+                yield Button("CLOSE", id="close-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -601,12 +590,13 @@ class PasswordsScreen(Screen):
         table.clear(columns=True)
 
         # New column layout without # index, with Status instead of Password
-        table.add_column("", width=2)  # Selection indicator column
-        table.add_column("Label", width=18)
-        table.add_column("Email", width=30)
-        table.add_column("Status", width=8)
-        table.add_column("Updated", width=10)
-        table.add_column("Notes", width=20)
+        # Column layout - sized to fill available space
+        table.add_column("", width=3)  # Selection indicator column
+        table.add_column("Label", width=22)
+        table.add_column("Email", width=32)
+        table.add_column("Status", width=10)
+        table.add_column("Updated", width=12)
+        table.add_column("Notes", width=40)  # Wider to fill remaining space
 
         credentials = app.vault.get_emails()
 

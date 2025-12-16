@@ -73,52 +73,128 @@ def _get_relative_time(iso_timestamp: str | None) -> str:
 
 
 class ViewEnvModal(ModalScreen[None]):
-    """Modal displaying environment config in a clean viewer."""
+    """Modal displaying environment config visualization matching password modal style."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
         Binding("c", "copy_content", "Copy"),
     ]
 
+    # Color configuration for the env modal (Indigo theme)
+    COLORS = {
+        "border": "#6366f1",
+        "card_bg": "#0a0e27",
+        "section_border": "#475569",
+        "title_bg": "#818cf8",
+        "title_fg": "#000000",
+        "label_dim": "#64748b",
+        "value_fg": "#f8fafc",
+        "accent": "#a5b4fc",
+        "muted": "#94a3b8",
+    }
+
     def __init__(self, env: EnvEntry) -> None:
         super().__init__()
         self.env = env
 
     def compose(self) -> ComposeResult:
-        """Create the viewer layout."""
+        """Create the config visualization layout."""
+        c = self.COLORS
+
+        # Format timestamp
         try:
-            created = datetime.fromisoformat(self.env.created_at).strftime("%Y-%m-%d")
+            created = datetime.fromisoformat(self.env.created_at).strftime("%Y.%m.%d")
         except (ValueError, TypeError):
-            created = "Unknown"
+            created = "UNKNOWN"
 
-        with Vertical(id="env-view-modal"):
-            # Header
-            yield Static(f"CONFIG VIEWER", id="env-view-title")
+        # Card dimensions (matching password modal)
+        width = 96
+        inner = width - 2
+        section_inner = width - 6
+        content_width = section_inner - 5
 
-            # Info section
-            with Vertical(id="env-view-info"):
-                yield Static(f"[bold #f8fafc]{self.env.title}[/]", classes="env-view-name")
-                yield Static(f"[#f59e0b]{self.env.filename}[/]", classes="env-view-filename")
-                with Horizontal(classes="env-view-stats"):
-                    yield Static(f"[dim]LINES:[/] [#f59e0b]{self.env.line_count}[/]")
-                    yield Static(f"[dim]VARS:[/] [#f59e0b]{self.env.var_count}[/]")
-                    yield Static(f"[dim]ID:[/] [#64748b]{self.env.id[:8]}[/]")
+        # Truncate title if needed
+        title_display = self.env.title[:content_width] if len(self.env.title) > content_width else self.env.title
 
-            # Content area - read-only TextArea
-            yield TextArea(
-                self.env.content,
-                id="env-view-content",
-                read_only=True,
-                language="dotenv",
-                classes="code-editor-view",
-            )
+        # Get content preview (first 5 lines for env files)
+        content_lines = self.env.content.split('\n')[:5] if self.env.content else []
+        preview_lines = []
+        for line in content_lines:
+            # Mask values in env files (show key=***)
+            if '=' in line and not line.strip().startswith('#'):
+                key = line.split('=', 1)[0]
+                preview = f"{key}=***"
+            else:
+                preview = line
+            preview = preview[:content_width] if len(preview) > content_width else preview
+            preview_lines.append(preview)
 
-            # Footer
-            yield Static(f"[dim]Created: {created}[/]", id="env-view-footer")
+        with Vertical(id="env-modal"):
+            with Vertical(id="physical-env-card"):
+                # Top border
+                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
 
-            # Buttons
-            with Horizontal(id="modal-buttons"):
-                yield Button("COPY", id="copy-button", classes="import-btn")
+                # Title row
+                title = " CONFIG INJECTOR "
+                title_pad = inner - len(title) - 2
+                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+
+                # Divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Config label
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]CONFIG:[/] [bold {c['value_fg']}]{title_display:<{inner - 12}}[/] [bold {c['border']}]║[/]")
+
+                # Filename row
+                filename_display = self.env.filename[:content_width] if len(self.env.filename) > content_width else self.env.filename
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]FILE:[/]   [{c['accent']}]{filename_display:<{inner - 12}}[/] [bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Stats section
+                stats = f"[{c['accent']}]{self.env.line_count}[/] lines  [{c['accent']}]{self.env.var_count}[/] vars"
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/]  {stats:<{inner - 12}}[bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Content section
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ CONTENT PREVIEW {'─' * (section_inner - 20)}┐[/]  [bold {c['border']}]║[/]")
+
+                # Show preview lines (masked values)
+                for line in preview_lines:
+                    if '=' in line and not line.strip().startswith('#'):
+                        # Highlight env var keys
+                        key = line.split('=', 1)[0]
+                        yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['accent']}]{key}[/][{c['muted']}]=***{' ' * (content_width - len(key) - 4)}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                    else:
+                        yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['muted']}]{line:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+
+                # If less than 5 lines, pad with empty lines
+                for _ in range(5 - len(preview_lines)):
+                    yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   {' ' * content_width} [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Footer divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Footer row
+                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.env.id[:8]}[/]"
+                footer_right = f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
+                footer_pad = inner - 32 - len(created)
+                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+
+                # Bottom border
+                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
+
+            # Action Buttons
+            with Horizontal(id="env-modal-buttons"):
+                yield Button("COPY", id="copy-button")
                 yield Button("CLOSE", id="close-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -494,7 +570,7 @@ class EnvsScreen(Screen):
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] [#475569]>[/] [bold #f59e0b]ENV VARS[/]",
+                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] [#475569]>[/] [bold #6366f1]ENV VARS[/]",
                 id="header-branding",
             )
             yield Static("░░ CONFIG INJECTOR ░░", id="header-status")
@@ -504,7 +580,7 @@ class EnvsScreen(Screen):
         with Horizontal(id="vault-body"):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
-                yield Static(" ≡ CONFIG_DATABASE ", classes="pane-header-block env-header")
+                yield Static(" ≡ CONFIG_DATABASE ", classes="pane-header-block-indigo")
                 yield DataTable(id="envs-table", cursor_type="row")
                 # Empty state
                 with Center(id="empty-state"):
@@ -522,7 +598,7 @@ class EnvsScreen(Screen):
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
-                yield Static(" ≡ CONFIG_INSPECTOR ", classes="pane-header-block env-header")
+                yield Static(" ≡ CONFIG_INSPECTOR ", classes="pane-header-block-indigo")
                 yield Vertical(id="inspector-content")
 
         # 3. Global Footer
@@ -545,9 +621,9 @@ class EnvsScreen(Screen):
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
         if self._pulse_state:
-            header_lock.update("[#f59e0b]● [bold]INJECTOR[/][/]")
+            header_lock.update("[#a5b4fc]● [bold]INJECTOR[/][/]")
         else:
-            header_lock.update("[#92400e]○ [bold]INJECTOR[/][/]")
+            header_lock.update("[#4f46e5]○ [bold]INJECTOR[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector."""
@@ -571,11 +647,12 @@ class EnvsScreen(Screen):
 
         table.clear(columns=True)
 
-        table.add_column("", width=2)
-        table.add_column("Title", width=22)
-        table.add_column("Filename", width=18)
-        table.add_column("Vars", width=6)
-        table.add_column("Updated", width=10)
+        table.add_column("", width=3)
+        table.add_column("Title", width=25)
+        table.add_column("Filename", width=22)
+        table.add_column("Vars", width=8)
+        table.add_column("Updated", width=12)
+        table.add_column("Notes", width=55)  # Wider to fill remaining space
 
         envs = app.vault.get_envs()
 
@@ -588,14 +665,19 @@ class EnvsScreen(Screen):
 
         for env in envs:
             is_selected = env.id == self._selected_row_key
-            indicator = "[bold #f59e0b]▍[/]" if is_selected else " "
+            indicator = "[bold #6366f1]▍[/]" if is_selected else " "
             title_text = env.title[:20] if len(env.title) > 20 else env.title
             filename_text = f"[#94a3b8]{env.filename}[/]"
             vars_text = f"[#f59e0b]{env.var_count}[/]"
             updated = _get_relative_time(env.updated_at)
             updated_text = f"[dim]{updated}[/]"
+            # Truncate notes to first 50 characters
+            notes_preview = env.notes[:50] if env.notes else ""
+            if env.notes and len(env.notes) > 50:
+                notes_preview = notes_preview + "..."
+            notes_text = f"[dim #64748b]{notes_preview}[/]"
 
-            table.add_row(indicator, title_text, filename_text, vars_text, updated_text, key=env.id)
+            table.add_row(indicator, title_text, filename_text, vars_text, updated_text, notes_text, key=env.id)
 
         footer = self.query_one("#grid-footer", Static)
         count = len(envs)
@@ -620,7 +702,7 @@ class EnvsScreen(Screen):
 
         if new_key and new_key in env_map:
             try:
-                table.update_cell(new_key, indicator_col, "[bold #f59e0b]▍[/]")
+                table.update_cell(new_key, indicator_col, "[bold #6366f1]▍[/]")
             except Exception:
                 pass
 

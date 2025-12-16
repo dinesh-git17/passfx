@@ -402,11 +402,11 @@ FooterKey > .footer-key--description {
 
 /* Distinct neon colors for each stat category - Row 2 */
 #digits-notes {
-    color: #94a3b8;
+    color: #fbbf24;
 }
 
 #digits-envs {
-    color: #fbbf24;
+    color: #a5b4fc;
 }
 
 #digits-recovery {
@@ -966,11 +966,61 @@ CommandPalette OptionList > .option-list--option-hover {
     width: 100%;
     height: 1;
     background: #00d4ff;
+}
+
+/* Pink variant for phones screen */
+.pane-header-block-purple {
+    width: 100%;
+    height: 1;
+    background: #d946ef;
     color: #000000;
     text-style: bold;
-    text-align: center;
-    content-align: center middle;
-    padding: 0;
+    padding: 0 1;
+    margin-bottom: 0;
+}
+
+/* Green variant for cards screen - lime green for contrast */
+.pane-header-block-green {
+    width: 100%;
+    height: 1;
+    background: #84cc16;
+    color: #000000;
+    text-style: bold;
+    padding: 0 1;
+    margin-bottom: 0;
+}
+
+/* Yellow variant for notes screen - brighter yellow for contrast */
+.pane-header-block-amber {
+    width: 100%;
+    height: 1;
+    background: #fde047;
+    color: #000000;
+    text-style: bold;
+    padding: 0 1;
+    margin-bottom: 0;
+}
+
+/* Indigo variant for envs screen */
+.pane-header-block-indigo {
+    width: 100%;
+    height: 1;
+    background: #818cf8;
+    color: #000000;
+    text-style: bold;
+    padding: 0 1;
+    margin-bottom: 0;
+}
+
+/* Rose variant for recovery screen - lighter salmon pink for contrast */
+.pane-header-block-rose {
+    width: 100%;
+    height: 1;
+    background: #fda4af;
+    color: #000000;
+    text-style: bold;
+    padding: 0 1;
+    margin-bottom: 0;
 }
 
 /* Legacy pane header (keep for compatibility) */
@@ -1033,8 +1083,8 @@ CommandPalette OptionList > .option-list--option-hover {
     margin: 0;
     padding: 0;
     width: 100%;
-    /* Key fix for vertical fill */
     height: 1fr;
+    overflow-x: hidden;
 }
 
 #passwords-table:focus {
@@ -1081,6 +1131,7 @@ CommandPalette OptionList > .option-list--option-hover {
     padding: 0;
     width: 100%;
     height: 1fr;
+    overflow-x: hidden;
 }
 
 #phones-table:focus {
@@ -1088,19 +1139,20 @@ CommandPalette OptionList > .option-list--option-hover {
 }
 
 #phones-table > .datatable--cursor {
-    background: #1e293b;
+    background: #2d1f4a;
     color: $pfx-fg;
     text-style: none;
 }
 
 #phones-table > .datatable--cursor:hover {
-    background: #1e293b;
+    background: #3b2d5a;
 }
 
 #phones-table > .datatable--header {
-    background: $pfx-primary-dim;
+    background: #8b5cf6;
     color: black;
     text-style: bold;
+    border-right: solid #8b5cf6;
 }
 
 #phones-table > .datatable--even-row {
@@ -1124,6 +1176,7 @@ CommandPalette OptionList > .option-list--option-hover {
     padding: 0;
     width: 100%;
     height: 1fr;
+    overflow-x: hidden;
 }
 
 #cards-table:focus {
@@ -1131,17 +1184,17 @@ CommandPalette OptionList > .option-list--option-hover {
 }
 
 #cards-table > .datatable--cursor {
-    background: #1e293b;
+    background: #064e3b;
     color: $pfx-fg;
     text-style: none;
 }
 
 #cards-table > .datatable--cursor:hover {
-    background: #1e293b;
+    background: #065f46;
 }
 
 #cards-table > .datatable--header {
-    background: $pfx-primary-dim;
+    background: #10b981;
     color: black;
     text-style: bold;
 }
@@ -1634,91 +1687,82 @@ CommandPalette OptionList > .option-list--option-hover {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   VIEW CARD MODAL - PHYSICAL CARD VISUALIZATION
+   VIEW CARD MODAL - FINANCIAL ASSET TOKEN VISUALIZATION
+   Theme: Emerald Green (#10b981) & Light Green (#34d399)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 #card-modal {
-    width: 60;
+    width: 100;
     height: auto;
     align: center middle;
 }
 
-#physical-card {
-    width: 56;
+#physical-credit-card {
+    width: 96;
     height: auto;
-    background: #1e293b;
-    border: double #3b82f6;
-    padding: 2 3;
+    background: #0a0e27;
+    padding: 0;
     margin: 0;
+    border: none;
 }
 
-#card-bank-name {
-    width: 100%;
+#physical-credit-card Static {
+    width: 96;
     height: 1;
-    text-align: right;
-    padding: 0 0 1 0;
+    background: #0a0e27;
+    padding: 0;
 }
 
-#card-chip {
-    width: auto;
-    height: 3;
-    padding: 0 0 1 0;
-}
-
-#card-number-display {
-    width: 100%;
-    height: auto;
-    min-height: 3;
-    text-align: center;
-    text-style: bold;
-    padding: 1 0;
-    color: #fbbf24;
-}
-
-#card-details-row {
-    width: 100%;
-    height: auto;
-    align: left middle;
-    padding: 1 0;
-}
-
-#card-expiry {
-    width: 1fr;
-    height: auto;
-    text-align: left;
-}
-
-#card-cvv {
-    width: auto;
-    height: auto;
-    text-align: right;
-    padding-left: 4;
-}
-
-#card-holder-name {
-    width: 100%;
-    height: 1;
-    text-align: left;
-    padding: 1 0 0 0;
-    text-style: bold;
-}
-
+/* Button container - styled with matching borders */
 #card-modal-buttons {
-    width: 100%;
-    height: auto;
+    width: 96;
+    height: 3;
+    background: #0a0e27;
     align: center middle;
-    padding: 2 0 0 0;
+    padding: 0;
+    border-left: outer #10b981;
+    border-right: outer #10b981;
+    border-bottom: outer #10b981;
+}
+
+#card-modal-buttons Button {
+    width: auto;
+    min-width: 12;
+    height: 1;
+    margin: 0 1;
+    padding: 0 2;
+    border: none;
+    text-style: bold;
+}
+
+#card-modal-buttons #copy-button {
+    background: #064e3b;
+    color: #34d399;
+}
+
+#card-modal-buttons #copy-button:hover {
+    background: #34d399;
+    color: #0f172a;
+}
+
+#card-modal-buttons #copy-button:focus {
+    background: #065f46;
+    color: #34d399;
 }
 
 #card-modal-buttons #close-button {
-    background: $pfx-surface;
-    color: $pfx-muted;
-    border: solid $pfx-surface-light;
+    background: #1e293b;
+    color: #94a3b8;
 }
 
 #card-modal-buttons #close-button:hover {
-    background: $pfx-surface-light;
-    color: $pfx-fg;
+    background: #94a3b8;
+    color: #0f172a;
+}
+
+#card-modal-buttons #close-button:focus {
+    background: #334155;
+    color: #94a3b8;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1727,53 +1771,77 @@ CommandPalette OptionList > .option-list--option-hover {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 #password-modal {
-    width: 60;
+    width: 100;
     height: auto;
     align: center middle;
 }
 
 #physical-id-card {
-    width: 56;
+    width: 96;
     height: auto;
     background: #0a0e27;
     padding: 0;
     margin: 0;
+    border: none;
 }
 
 #physical-id-card Static {
-    width: 100%;
+    width: 96;
     height: 1;
-    background: transparent;
+    background: #0a0e27;
     padding: 0;
 }
 
+/* Button container - styled with matching borders */
 #password-modal-buttons {
-    width: 100%;
-    height: auto;
+    width: 96;
+    height: 3;
+    background: #0a0e27;
     align: center middle;
-    padding: 2 0 0 0;
+    padding: 0;
+    border-left: outer #00d4ff;
+    border-right: outer #00d4ff;
+    border-bottom: outer #00d4ff;
+}
+
+#password-modal-buttons Button {
+    width: auto;
+    min-width: 12;
+    height: 1;
+    margin: 0 1;
+    padding: 0 2;
+    border: none;
+    text-style: bold;
 }
 
 #password-modal-buttons #copy-button {
     background: #0a2e1a;
     color: #22c55e;
-    border: solid #22c55e;
 }
 
 #password-modal-buttons #copy-button:hover {
     background: #22c55e;
-    color: #000000;
+    color: #0f172a;
+}
+
+#password-modal-buttons #copy-button:focus {
+    background: #166534;
+    color: #22c55e;
 }
 
 #password-modal-buttons #close-button {
-    background: $pfx-surface;
-    color: $pfx-muted;
-    border: solid $pfx-surface-light;
+    background: #1e293b;
+    color: #94a3b8;
 }
 
 #password-modal-buttons #close-button:hover {
-    background: $pfx-surface-light;
-    color: $pfx-fg;
+    background: #94a3b8;
+    color: #0f172a;
+}
+
+#password-modal-buttons #close-button:focus {
+    background: #334155;
+    color: #94a3b8;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1782,53 +1850,77 @@ CommandPalette OptionList > .option-list--option-hover {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 #phone-modal {
-    width: 60;
+    width: 100;
     height: auto;
     align: center middle;
 }
 
 #physical-sim-card {
-    width: 56;
+    width: 96;
     height: auto;
-    background: #0f0a1a;
+    background: #0a0e27;
     padding: 0;
     margin: 0;
+    border: none;
 }
 
 #physical-sim-card Static {
-    width: 100%;
+    width: 96;
     height: 1;
-    background: transparent;
+    background: #0a0e27;
     padding: 0;
 }
 
+/* Button container - styled with matching borders */
 #phone-modal-buttons {
-    width: 100%;
-    height: auto;
+    width: 96;
+    height: 3;
+    background: #0a0e27;
     align: center middle;
-    padding: 2 0 0 0;
+    padding: 0;
+    border-left: outer #8b5cf6;
+    border-right: outer #8b5cf6;
+    border-bottom: outer #8b5cf6;
+}
+
+#phone-modal-buttons Button {
+    width: auto;
+    min-width: 12;
+    height: 1;
+    margin: 0 1;
+    padding: 0 2;
+    border: none;
+    text-style: bold;
 }
 
 #phone-modal-buttons #copy-button {
-    background: #1a0f2e;
+    background: #2d1f4a;
     color: #d946ef;
-    border: solid #d946ef;
 }
 
 #phone-modal-buttons #copy-button:hover {
     background: #d946ef;
-    color: #000000;
+    color: #0f172a;
+}
+
+#phone-modal-buttons #copy-button:focus {
+    background: #4c1d95;
+    color: #d946ef;
 }
 
 #phone-modal-buttons #close-button {
-    background: $pfx-surface;
-    color: $pfx-muted;
-    border: solid $pfx-surface-light;
+    background: #1e293b;
+    color: #94a3b8;
 }
 
 #phone-modal-buttons #close-button:hover {
-    background: $pfx-surface-light;
-    color: $pfx-fg;
+    background: #94a3b8;
+    color: #0f172a;
+}
+
+#phone-modal-buttons #close-button:focus {
+    background: #334155;
+    color: #94a3b8;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1992,7 +2084,7 @@ $pfx-amber-light: #fbbf24;
     border-title-color: #f59e0b;
 }
 
-/* ENV Table - Mainframe Terminal Look with Amber accents */
+/* ENV Table - Mainframe Terminal Look with Indigo accents */
 #envs-table {
     background: $pfx-bg;
     border: none;
@@ -2000,6 +2092,7 @@ $pfx-amber-light: #fbbf24;
     padding: 0;
     width: 100%;
     height: 1fr;
+    overflow-x: hidden;
 }
 
 #envs-table:focus {
@@ -2007,18 +2100,18 @@ $pfx-amber-light: #fbbf24;
 }
 
 #envs-table > .datatable--cursor {
-    background: #1e293b;
+    background: #3730a3;
     color: $pfx-fg;
     text-style: none;
 }
 
 #envs-table > .datatable--cursor:hover {
-    background: #1e293b;
+    background: #4338ca;
 }
 
 #envs-table > .datatable--header {
-    background: #92400e;
-    color: #fef3c7;
+    background: #6366f1;
+    color: black;
     text-style: bold;
 }
 
@@ -2315,6 +2408,85 @@ Button.env-delete-btn:focus {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+   VIEW ENV MODAL - CONFIG INJECTOR VISUALIZATION
+   Theme: Indigo (#6366f1) for System Config Display
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+#env-modal {
+    width: 100;
+    height: auto;
+    align: center middle;
+}
+
+#physical-env-card {
+    width: 96;
+    height: auto;
+    background: #0a0e27;
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+#physical-env-card Static {
+    width: 96;
+    height: 1;
+    background: #0a0e27;
+    padding: 0;
+}
+
+/* Button container - styled with matching indigo borders */
+#env-modal-buttons {
+    width: 96;
+    height: 3;
+    background: #0a0e27;
+    align: center middle;
+    padding: 0;
+    border-left: outer #6366f1;
+    border-right: outer #6366f1;
+    border-bottom: outer #6366f1;
+}
+
+#env-modal-buttons Button {
+    width: auto;
+    min-width: 12;
+    height: 1;
+    margin: 0 1;
+    padding: 0 2;
+    border: none;
+    text-style: bold;
+}
+
+#env-modal-buttons #copy-button {
+    background: #3730a3;
+    color: #818cf8;
+}
+
+#env-modal-buttons #copy-button:hover {
+    background: #818cf8;
+    color: #0f172a;
+}
+
+#env-modal-buttons #copy-button:focus {
+    background: #4338ca;
+    color: #818cf8;
+}
+
+#env-modal-buttons #close-button {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+#env-modal-buttons #close-button:hover {
+    background: #94a3b8;
+    color: #0f172a;
+}
+
+#env-modal-buttons #close-button:focus {
+    background: #334155;
+    color: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
    RECOVERY CODES SCREEN - FAIL-SAFE PROTOCOL THEME
    Theme: Rose/Red (#f43f5e) for Emergency Use Only
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -2349,6 +2521,7 @@ $pfx-rose-light: #fb7185;
     padding: 0;
     width: 100%;
     height: 1fr;
+    overflow-x: hidden;
 }
 
 #recovery-table:focus {
@@ -2356,18 +2529,18 @@ $pfx-rose-light: #fb7185;
 }
 
 #recovery-table > .datatable--cursor {
-    background: #1e293b;
+    background: #9f1239;
     color: $pfx-fg;
     text-style: none;
 }
 
 #recovery-table > .datatable--cursor:hover {
-    background: #1e293b;
+    background: #be123c;
 }
 
 #recovery-table > .datatable--header {
-    background: #881337;
-    color: #fecdd3;
+    background: #f43f5e;
+    color: black;
     text-style: bold;
 }
 
@@ -2634,6 +2807,85 @@ Button.recovery-delete-btn:focus {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+   VIEW RECOVERY MODAL - FAIL-SAFE PROTOCOL VISUALIZATION
+   Theme: Rose (#f43f5e) for Emergency Recovery Display
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+#recovery-modal {
+    width: 100;
+    height: auto;
+    align: center middle;
+}
+
+#physical-recovery-card {
+    width: 96;
+    height: auto;
+    background: #0a0e27;
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+#physical-recovery-card Static {
+    width: 96;
+    height: 1;
+    background: #0a0e27;
+    padding: 0;
+}
+
+/* Button container - styled with matching rose borders */
+#recovery-modal-buttons {
+    width: 96;
+    height: 3;
+    background: #0a0e27;
+    align: center middle;
+    padding: 0;
+    border-left: outer #f43f5e;
+    border-right: outer #f43f5e;
+    border-bottom: outer #f43f5e;
+}
+
+#recovery-modal-buttons Button {
+    width: auto;
+    min-width: 12;
+    height: 1;
+    margin: 0 1;
+    padding: 0 2;
+    border: none;
+    text-style: bold;
+}
+
+#recovery-modal-buttons #copy-button {
+    background: #9f1239;
+    color: #fb7185;
+}
+
+#recovery-modal-buttons #copy-button:hover {
+    background: #fb7185;
+    color: #0f172a;
+}
+
+#recovery-modal-buttons #copy-button:focus {
+    background: #be123c;
+    color: #fb7185;
+}
+
+#recovery-modal-buttons #close-button {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+#recovery-modal-buttons #close-button:hover {
+    background: #94a3b8;
+    color: #0f172a;
+}
+
+#recovery-modal-buttons #close-button:focus {
+    background: #334155;
+    color: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
    SECURE NOTES SCREEN - ENCRYPTED DATA SHARDS THEME
    Theme: Slate/Silver (#94a3b8) for Archived/Static Data
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -2660,7 +2912,7 @@ $pfx-slate-light: #cbd5e1;
     border-title-color: #94a3b8;
 }
 
-/* Notes Table - Mainframe Terminal Look with Slate accents */
+/* Notes Table - Mainframe Terminal Look with Amber accents */
 #notes-table {
     background: $pfx-bg;
     border: none;
@@ -2668,6 +2920,7 @@ $pfx-slate-light: #cbd5e1;
     padding: 0;
     width: 100%;
     height: 1fr;
+    overflow-x: hidden;
 }
 
 #notes-table:focus {
@@ -2675,18 +2928,18 @@ $pfx-slate-light: #cbd5e1;
 }
 
 #notes-table > .datatable--cursor {
-    background: #1e293b;
+    background: #78350f;
     color: $pfx-fg;
     text-style: none;
 }
 
 #notes-table > .datatable--cursor:hover {
-    background: #1e293b;
+    background: #92400e;
 }
 
 #notes-table > .datatable--header {
-    background: #475569;
-    color: #e2e8f0;
+    background: #f59e0b;
+    color: black;
     text-style: bold;
 }
 
@@ -2929,6 +3182,85 @@ Button.note-delete-btn:focus {
     color: #94a3b8;
     text-align: center;
     padding: 0 0 1 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   VIEW NOTE MODAL - ENCRYPTED DATA SHARD VISUALIZATION
+   Theme: Amber (#f59e0b) for Archived Data Display
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+#note-modal {
+    width: 100;
+    height: auto;
+    align: center middle;
+}
+
+#physical-note-card {
+    width: 96;
+    height: auto;
+    background: #0a0e27;
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+#physical-note-card Static {
+    width: 96;
+    height: 1;
+    background: #0a0e27;
+    padding: 0;
+}
+
+/* Button container - styled with matching amber borders */
+#note-modal-buttons {
+    width: 96;
+    height: 3;
+    background: #0a0e27;
+    align: center middle;
+    padding: 0;
+    border-left: outer #f59e0b;
+    border-right: outer #f59e0b;
+    border-bottom: outer #f59e0b;
+}
+
+#note-modal-buttons Button {
+    width: auto;
+    min-width: 12;
+    height: 1;
+    margin: 0 1;
+    padding: 0 2;
+    border: none;
+    text-style: bold;
+}
+
+#note-modal-buttons #copy-button {
+    background: #78350f;
+    color: #fbbf24;
+}
+
+#note-modal-buttons #copy-button:hover {
+    background: #fbbf24;
+    color: #0f172a;
+}
+
+#note-modal-buttons #copy-button:focus {
+    background: #92400e;
+    color: #fbbf24;
+}
+
+#note-modal-buttons #close-button {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+#note-modal-buttons #close-button:hover {
+    background: #94a3b8;
+    color: #0f172a;
+}
+
+#note-modal-buttons #close-button:focus {
+    background: #334155;
+    color: #94a3b8;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════

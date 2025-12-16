@@ -73,7 +73,20 @@ def _get_relative_time(iso_timestamp: str | None) -> str:
 
 
 class ViewRecoveryModal(ModalScreen[None]):
-    """Modal displaying recovery codes in a clean viewer."""
+    """Modal displaying recovery codes visualization matching password modal style."""
+
+    # Color configuration for the recovery modal (Rose theme)
+    COLORS = {
+        "border": "#f43f5e",
+        "card_bg": "#0a0e27",
+        "section_border": "#475569",
+        "title_bg": "#fb7185",
+        "title_fg": "#000000",
+        "label_dim": "#64748b",
+        "value_fg": "#f8fafc",
+        "accent": "#fda4af",
+        "muted": "#94a3b8",
+    }
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -85,38 +98,101 @@ class ViewRecoveryModal(ModalScreen[None]):
         self.recovery = recovery
 
     def compose(self) -> ComposeResult:
-        """Create the viewer layout."""
+        """Create the recovery codes visualization layout."""
+        c = self.COLORS
+
+        # Format timestamp
         try:
-            created = datetime.fromisoformat(self.recovery.created_at).strftime("%Y-%m-%d")
+            created = datetime.fromisoformat(self.recovery.created_at).strftime("%Y.%m.%d")
         except (ValueError, TypeError):
-            created = "Unknown"
+            created = "UNKNOWN"
 
-        with Vertical(id="recovery-view-modal"):
-            # Header
-            yield Static("FAIL-SAFE CODES :: DO NOT SHARE", id="recovery-view-title")
+        # Card dimensions (matching password modal)
+        width = 96
+        inner = width - 2
+        section_inner = width - 6
+        content_width = section_inner - 5
 
-            # Info section
-            with Vertical(id="recovery-view-info"):
-                yield Static(f"[bold #f8fafc]{self.recovery.title}[/]", classes="recovery-view-name")
-                with Horizontal(classes="recovery-view-stats"):
-                    yield Static(f"[dim]LINES:[/] [#f43f5e]{self.recovery.line_count}[/]")
-                    yield Static(f"[dim]CODES:[/] [#f43f5e]{self.recovery.code_count}[/]")
-                    yield Static(f"[dim]ID:[/] [#64748b]{self.recovery.id[:8]}[/]")
+        # Truncate title if needed
+        title_display = self.recovery.title[:content_width] if len(self.recovery.title) > content_width else self.recovery.title
 
-            # Content area - read-only TextArea
-            yield TextArea(
-                self.recovery.content,
-                id="recovery-view-content",
-                read_only=True,
-                classes="recovery-code-editor-view",
-            )
+        # Get content preview (first 5 lines for recovery codes)
+        content_lines = self.recovery.content.split('\n')[:5] if self.recovery.content else []
+        preview_lines = []
+        for line in content_lines:
+            # Mask recovery codes for security (show first 4 and last 4 chars)
+            line = line.strip()
+            if line and not line.startswith('#'):
+                if len(line) > 8:
+                    masked = line[:4] + '•' * (len(line) - 8) + line[-4:]
+                else:
+                    masked = line
+                preview_lines.append(masked[:content_width])
+            else:
+                preview_lines.append(line[:content_width] if len(line) > content_width else line)
 
-            # Footer
-            yield Static(f"[dim]Created: {created}[/]", id="recovery-view-footer")
+        with Vertical(id="recovery-modal"):
+            with Vertical(id="physical-recovery-card"):
+                # Top border
+                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
 
-            # Buttons
-            with Horizontal(id="modal-buttons"):
-                yield Button("COPY", id="copy-button", classes="recovery-import-btn")
+                # Title row
+                title = " FAIL-SAFE PROTOCOL "
+                title_pad = inner - len(title) - 2
+                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+
+                # Divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Service label
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SERVICE:[/] [bold {c['value_fg']}]{title_display:<{inner - 13}}[/] [bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Stats section
+                stats = f"[{c['accent']}]{self.recovery.line_count}[/] lines  [{c['accent']}]{self.recovery.code_count}[/] codes"
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/]   {stats:<{inner - 13}}[bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Content section
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ RECOVERY CODES {'─' * (section_inner - 19)}┐[/]  [bold {c['border']}]║[/]")
+
+                # Show preview lines (masked codes)
+                for line in preview_lines:
+                    if line and not line.startswith('#'):
+                        # Recovery code - show masked
+                        yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['accent']}]{line:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                    else:
+                        # Comment or empty
+                        yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['muted']}]{line:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+
+                # If less than 5 lines, pad with empty lines
+                for _ in range(5 - len(preview_lines)):
+                    yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   {' ' * content_width} [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Footer divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Footer row
+                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.recovery.id[:8]}[/]"
+                footer_right = f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
+                footer_pad = inner - 32 - len(created)
+                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+
+                # Bottom border
+                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
+
+            # Action Buttons
+            with Horizontal(id="recovery-modal-buttons"):
+                yield Button("COPY", id="copy-button")
                 yield Button("CLOSE", id="close-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -463,7 +539,7 @@ class RecoveryScreen(Screen):
         with Horizontal(id="vault-body"):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
-                yield Static(" ≡ EMERGENCY_DATABASE ", classes="pane-header-block recovery-header")
+                yield Static(" ≡ EMERGENCY_DATABASE ", classes="pane-header-block-rose")
                 yield DataTable(id="recovery-table", cursor_type="row")
                 # Empty state
                 with Center(id="empty-state"):
@@ -481,7 +557,7 @@ class RecoveryScreen(Screen):
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
-                yield Static(" ≡ FAIL-SAFE_INSPECTOR ", classes="pane-header-block recovery-header")
+                yield Static(" ≡ FAIL-SAFE_INSPECTOR ", classes="pane-header-block-rose")
                 yield Vertical(id="inspector-content")
 
         # 3. Global Footer
@@ -504,9 +580,9 @@ class RecoveryScreen(Screen):
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
         if self._pulse_state:
-            header_lock.update("[#f43f5e]● [bold]EMERGENCY[/][/]")
+            header_lock.update("[#fda4af]● [bold]EMERGENCY[/][/]")
         else:
-            header_lock.update("[#881337]○ [bold]EMERGENCY[/][/]")
+            header_lock.update("[#e11d48]○ [bold]EMERGENCY[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector."""
@@ -530,10 +606,11 @@ class RecoveryScreen(Screen):
 
         table.clear(columns=True)
 
-        table.add_column("", width=2)
-        table.add_column("Title", width=28)
+        table.add_column("", width=3)
+        table.add_column("Title", width=32)
         table.add_column("Codes", width=8)
-        table.add_column("Updated", width=10)
+        table.add_column("Updated", width=12)
+        table.add_column("Notes", width=65)  # Wider to fill remaining space
 
         entries = app.vault.get_recovery_entries()
 
@@ -551,8 +628,14 @@ class RecoveryScreen(Screen):
             codes_text = f"[#f43f5e]{entry.code_count}[/]"
             updated = _get_relative_time(entry.updated_at)
             updated_text = f"[dim]{updated}[/]"
+            notes_preview = ""
+            if entry.notes:
+                notes_preview = entry.notes[:50] + ("..." if len(entry.notes) > 50 else "")
+                notes_text = f"[dim]{notes_preview}[/]"
+            else:
+                notes_text = "[dim #555555]-[/]"
 
-            table.add_row(indicator, title_text, codes_text, updated_text, key=entry.id)
+            table.add_row(indicator, title_text, codes_text, updated_text, notes_text, key=entry.id)
 
         footer = self.query_one("#grid-footer", Static)
         count = len(entries)

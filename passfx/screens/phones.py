@@ -344,6 +344,24 @@ class ConfirmDeleteModal(ModalScreen[bool]):
 class ViewPhoneModal(ModalScreen[None]):
     """Modal displaying a Secure Comms Uplink visualization."""
 
+    # Color configuration for the phone modal (Synthwave Purple/Pink theme)
+    COLORS = {
+        "border": "#8b5cf6",
+        "card_bg": "#0a0e27",
+        "section_border": "#475569",
+        "title_bg": "#8b5cf6",
+        "title_fg": "#000000",
+        "label_dim": "#64748b",
+        "value_fg": "#f8fafc",
+        "accent": "#d946ef",
+        "accent_dim": "#2d1f3d",
+        "muted": "#94a3b8",
+        "btn_primary_bg": "#2d1f4a",
+        "btn_primary_fg": "#d946ef",
+        "btn_secondary_bg": "#1e293b",
+        "btn_secondary_fg": "#94a3b8",
+    }
+
     BINDINGS = [
         Binding("escape", "close", "Close"),
         Binding("c", "copy_pin", "Copy"),
@@ -355,6 +373,8 @@ class ViewPhoneModal(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         """Create the secure comms uplink layout."""
+        c = self.COLORS
+
         # Get PIN strength for visual indicator
         strength = check_strength(self.credential.password)
         strength_color = _get_strength_color(strength.score)
@@ -363,12 +383,9 @@ class ViewPhoneModal(ModalScreen[None]):
         signal_bars = ""
         for i in range(5):
             if i < strength.score + 1:
-                signal_bars += f"[#d946ef]▓[/]"
+                signal_bars += f"[{c['accent']}]▓[/]"
             else:
-                signal_bars += "[#2d1f3d]░[/]"
-
-        # Format phone number with styling
-        phone_display = self.credential.phone
+                signal_bars += f"[{c['accent_dim']}]░[/]"
 
         # Format timestamp
         try:
@@ -377,113 +394,79 @@ class ViewPhoneModal(ModalScreen[None]):
             created = "UNKNOWN"
 
         # Build encryption lock visual
-        lock_icon = "[#d946ef]◈[/]" if strength.score >= 2 else "[#8b5cf6]◇[/]"
+        lock_icon = f"[{c['accent']}]◈[/]" if strength.score >= 2 else f"[{c['border']}]◇[/]"
+
+        # Card dimensions
+        width = 96
+        inner = width - 2
+        section_inner = width - 6
+        content_width = section_inner - 5
 
         with Vertical(id="phone-modal"):
-            # Physical SIM Card Container
             with Vertical(id="physical-sim-card"):
-                # Header Row
-                yield Static(
-                    "[bold #8b5cf6]╔══════════════════════════════════════════════╗[/]",
-                    id="sim-card-border-top",
-                )
-                yield Static(
-                    "[bold #8b5cf6]║[/]  [on #8b5cf6][bold #000000] SECURE COMMS UPLINK [/]                [bold #8b5cf6]║[/]",
-                    id="sim-card-header",
-                )
-                yield Static(
-                    "[bold #8b5cf6]╠══════════════════════════════════════════════╣[/]",
-                    id="sim-card-divider",
-                )
+                # Top border
+                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
 
-                # Device Label Row
-                yield Static(
-                    f"[bold #8b5cf6]║[/]  [dim #64748b]DEVICE:[/] [bold #f8fafc]{self.credential.label.upper():<36}[/] [bold #8b5cf6]║[/]",
-                    id="sim-card-device",
-                )
+                # Title row
+                title = " SECURE COMMS UPLINK "
+                title_pad = inner - len(title) - 2
+                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+
+                # Divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Device label
+                device_val = self.credential.label.upper()
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]DEVICE:[/] [bold {c['value_fg']}]{device_val:<{inner - 11}}[/] [bold {c['border']}]║[/]")
 
                 # Spacer
-                yield Static(
-                    "[bold #8b5cf6]║[/]                                              [bold #8b5cf6]║[/]",
-                    id="sim-card-spacer1",
-                )
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
-                # Signal Strength Visual
-                yield Static(
-                    f"[bold #8b5cf6]║[/]  [dim #475569]SIGNAL:[/] {signal_bars}  {lock_icon} [#d946ef]ENCRYPTED[/]             [bold #8b5cf6]║[/]",
-                    id="sim-card-signal",
-                )
+                # Signal strength row
+                signal_content = f"  [dim {c['section_border']}]SIGNAL:[/] {signal_bars}  {lock_icon} [{c['accent']}]ENCRYPTED[/]"
+                signal_pad = inner - 40
+                yield Static(f"[bold {c['border']}]║[/]{signal_content}{' ' * signal_pad}[bold {c['border']}]║[/]")
 
                 # Spacer
-                yield Static(
-                    "[bold #8b5cf6]║[/]                                              [bold #8b5cf6]║[/]",
-                    id="sim-card-spacer2",
-                )
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
-                # Phone Number Section
-                yield Static(
-                    "[bold #8b5cf6]║[/]  [dim #475569]┌─ UPLINK NUMBER ─────────────────────────┐[/]  [bold #8b5cf6]║[/]",
-                    id="sim-card-number-header",
-                )
-                yield Static(
-                    f"[bold #8b5cf6]║[/]  [dim #475569]│[/] [#d946ef]☎[/] [bold #e2e8f0]{phone_display:<38}[/] [dim #475569]│[/]  [bold #8b5cf6]║[/]",
-                    id="sim-card-number",
-                )
-                yield Static(
-                    "[bold #8b5cf6]║[/]  [dim #475569]└─────────────────────────────────────────┘[/]  [bold #8b5cf6]║[/]",
-                    id="sim-card-number-footer",
-                )
+                # Uplink Number section
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ UPLINK NUMBER {'─' * (section_inner - 17)}┐[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]☎[/] [bold {c['value_fg']}]{self.credential.phone:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
 
                 # Spacer
-                yield Static(
-                    "[bold #8b5cf6]║[/]                                              [bold #8b5cf6]║[/]",
-                    id="sim-card-spacer3",
-                )
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
-                # Access PIN Section
-                yield Static(
-                    "[bold #8b5cf6]║[/]  [dim #475569]┌─ ACCESS PIN ────────────────────────────┐[/]  [bold #8b5cf6]║[/]",
-                    id="sim-card-pin-header",
-                )
-                yield Static(
-                    f"[bold #8b5cf6]║[/]  [dim #475569]│[/] [#d946ef]►[/] [bold #d946ef]{self.credential.password:<38}[/] [dim #475569]│[/]  [bold #8b5cf6]║[/]",
-                    id="sim-card-pin",
-                )
-                yield Static(
-                    "[bold #8b5cf6]║[/]  [dim #475569]└─────────────────────────────────────────┘[/]  [bold #8b5cf6]║[/]",
-                    id="sim-card-pin-footer",
-                )
+                # Access PIN section
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ ACCESS PIN {'─' * (section_inner - 14)}┐[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [bold {c['accent']}]{self.credential.password:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
 
                 # Spacer
-                yield Static(
-                    "[bold #8b5cf6]║[/]                                              [bold #8b5cf6]║[/]",
-                    id="sim-card-spacer4",
-                )
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
-                # Security Level
-                yield Static(
-                    f"[bold #8b5cf6]║[/]  [dim #64748b]COMPLEXITY:[/] [{strength_color}]{strength.label.upper():<16}[/]             [bold #8b5cf6]║[/]",
-                    id="sim-card-security",
-                )
+                # Complexity row
+                complexity_content = f"  [dim {c['label_dim']}]COMPLEXITY:[/] [{strength_color}]{strength.label.upper():<16}[/]"
+                complexity_pad = inner - 32
+                yield Static(f"[bold {c['border']}]║[/]{complexity_content}{' ' * complexity_pad}[bold {c['border']}]║[/]")
 
-                # Footer with metadata
-                yield Static(
-                    "[bold #8b5cf6]╠══════════════════════════════════════════════╣[/]",
-                    id="sim-card-footer-divider",
-                )
-                yield Static(
-                    f"[bold #8b5cf6]║[/]  [dim #475569]ID:[/] [#64748b]{self.credential.id[:8]}[/]          [dim #475569]LINKED:[/] [#64748b]{created}[/]     [bold #8b5cf6]║[/]",
-                    id="sim-card-footer",
-                )
-                yield Static(
-                    "[bold #8b5cf6]╚══════════════════════════════════════════════╝[/]",
-                    id="sim-card-border-bottom",
-                )
+                # Footer divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Footer row
+                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.credential.id[:8]}[/]"
+                footer_right = f"[dim {c['section_border']}]LINKED:[/] [{c['muted']}]{created}[/]"
+                footer_pad = inner - 30 - len(created)
+                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+
+                # Bottom border
+                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
 
             # Action Buttons
             with Horizontal(id="phone-modal-buttons"):
-                yield Button("[C] COPY PIN", id="copy-button")
-                yield Button("[ESC] CLOSE", id="close-button")
+                yield Button("COPY PIN", id="copy-button")
+                yield Button("CLOSE", id="close-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -535,7 +518,7 @@ class PhonesScreen(Screen):
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]›[/] [dim #64748b]VAULT[/] [#475569]›[/] [bold #00d4ff]PHONES[/]",
+                "[dim #64748b]HOME[/] [#475569]›[/] [dim #64748b]VAULT[/] [#475569]›[/] [bold #8b5cf6]PHONES[/]",
                 id="header-branding",
             )
             yield Static("░░ SECURE COMMS BANK ░░", id="header-status")
@@ -546,7 +529,7 @@ class PhonesScreen(Screen):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
                 # Inverted Block Header
-                yield Static(" ≡ SECURE_COMMS_DB ", classes="pane-header-block")
+                yield Static(" ≡ SECURE_COMMS_DB ", classes="pane-header-block-purple")
                 yield DataTable(id="phones-table", cursor_type="row")
                 # Empty state placeholder (hidden by default)
                 with Center(id="empty-state"):
@@ -566,7 +549,7 @@ class PhonesScreen(Screen):
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
                 # Inverted Block Header
-                yield Static(" ≡ DEVICE_INSPECTOR ", classes="pane-header-block")
+                yield Static(" ≡ DEVICE_INSPECTOR ", classes="pane-header-block-purple")
                 yield Vertical(id="inspector-content")  # Dynamic content here
 
         # 3. Global Footer
@@ -591,9 +574,9 @@ class PhonesScreen(Screen):
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
         if self._pulse_state:
-            header_lock.update("[#22c55e]● [bold]ENCRYPTED[/][/]")
+            header_lock.update("[#d946ef]● [bold]ENCRYPTED[/][/]")
         else:
-            header_lock.update("[#166534]○ [bold]ENCRYPTED[/][/]")
+            header_lock.update("[#6b21a8]○ [bold]ENCRYPTED[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector after render."""
@@ -619,13 +602,13 @@ class PhonesScreen(Screen):
 
         table.clear(columns=True)
 
-        # Column layout matching passwords screen style
-        table.add_column("", width=2)  # Selection indicator column
-        table.add_column("Label", width=18)
-        table.add_column("Phone", width=20)
-        table.add_column("Status", width=8)
-        table.add_column("Updated", width=10)
-        table.add_column("Notes", width=20)
+        # Column layout - sized to fill available space
+        table.add_column("", width=3)  # Selection indicator column
+        table.add_column("Label", width=22)
+        table.add_column("Phone", width=22)
+        table.add_column("Status", width=10)
+        table.add_column("Updated", width=12)
+        table.add_column("Notes", width=40)  # Wider to fill remaining space
 
         credentials = app.vault.get_phones()
 
@@ -640,7 +623,7 @@ class PhonesScreen(Screen):
         for cred in credentials:
             # Selection indicator - will be updated dynamically
             is_selected = cred.id == self._selected_row_key
-            indicator = "[bold #00d4ff]▍[/]" if is_selected else " "
+            indicator = "[bold #8b5cf6]▍[/]" if is_selected else " "
 
             # Label (white text)
             label_text = cred.label
@@ -695,7 +678,7 @@ class PhonesScreen(Screen):
         # Set new selection indicator
         if new_key and new_key in cred_map:
             try:
-                table.update_cell(new_key, indicator_col, "[bold #00d4ff]▍[/]")
+                table.update_cell(new_key, indicator_col, "[bold #8b5cf6]▍[/]")
             except Exception:
                 pass  # Row may not exist
 
@@ -895,7 +878,7 @@ class PhonesScreen(Screen):
             numbered_lines = []
             for i, line in enumerate(lines[:10], 1):  # Limit to 10 lines
                 line_num = f"[dim #475569]{i:2}[/]"
-                line_content = f"[#22c55e]{line}[/]" if line.strip() else ""
+                line_content = f"[#d946ef]{line}[/]" if line.strip() else ""
                 numbered_lines.append(f"{line_num} │ {line_content}")
             notes_content = "\n".join(numbered_lines)
         else:

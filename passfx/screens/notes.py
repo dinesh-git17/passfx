@@ -72,7 +72,20 @@ def _get_relative_time(iso_timestamp: str | None) -> str:
 
 
 class ViewNoteModal(ModalScreen[None]):
-    """Modal displaying secure note in a clean viewer."""
+    """Modal displaying secure note visualization matching password modal style."""
+
+    # Color configuration for the note modal (Amber/Yellow theme)
+    COLORS = {
+        "border": "#f59e0b",
+        "card_bg": "#0a0e27",
+        "section_border": "#475569",
+        "title_bg": "#fbbf24",
+        "title_fg": "#000000",
+        "label_dim": "#64748b",
+        "value_fg": "#f8fafc",
+        "accent": "#fcd34d",
+        "muted": "#94a3b8",
+    }
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -84,38 +97,88 @@ class ViewNoteModal(ModalScreen[None]):
         self.note = note
 
     def compose(self) -> ComposeResult:
-        """Create the viewer layout."""
+        """Create the secure note visualization layout."""
+        c = self.COLORS
+
+        # Format timestamp
         try:
-            created = datetime.fromisoformat(self.note.created_at).strftime("%Y-%m-%d")
+            created = datetime.fromisoformat(self.note.created_at).strftime("%Y.%m.%d")
         except (ValueError, TypeError):
-            created = "Unknown"
+            created = "UNKNOWN"
 
-        with Vertical(id="note-view-modal"):
-            # Header
-            yield Static("MEMO :: CLASSIFIED", id="note-view-title")
+        # Card dimensions (matching password modal)
+        width = 96
+        inner = width - 2
+        section_inner = width - 6
+        content_width = section_inner - 5
 
-            # Info section
-            with Vertical(id="note-view-info"):
-                yield Static(f"[bold #f8fafc]{self.note.title}[/]", classes="note-view-name")
-                with Horizontal(classes="note-view-stats"):
-                    yield Static(f"[dim]LINES:[/] [#94a3b8]{self.note.line_count}[/]")
-                    yield Static(f"[dim]CHARS:[/] [#94a3b8]{self.note.char_count}[/]")
-                    yield Static(f"[dim]ID:[/] [#64748b]{self.note.id[:8]}[/]")
+        # Truncate title if needed
+        title_display = self.note.title[:content_width] if len(self.note.title) > content_width else self.note.title
 
-            # Content area - read-only TextArea
-            yield TextArea(
-                self.note.content,
-                id="note-view-content",
-                read_only=True,
-                classes="note-code-editor-view",
-            )
+        # Get content preview (first 80 chars per line, max 3 lines)
+        content_lines = self.note.content.split('\n')[:3]
+        preview_lines = []
+        for line in content_lines:
+            preview = line[:content_width] if len(line) > content_width else line
+            preview_lines.append(preview)
 
-            # Footer
-            yield Static(f"[dim]Created: {created}[/]", id="note-view-footer")
+        with Vertical(id="note-modal"):
+            with Vertical(id="physical-note-card"):
+                # Top border
+                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
 
-            # Buttons
-            with Horizontal(id="modal-buttons"):
-                yield Button("COPY", id="copy-button", classes="note-import-btn")
+                # Title row
+                title = " ENCRYPTED DATA SHARD "
+                title_pad = inner - len(title) - 2
+                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+
+                # Divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Shard label
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SHARD:[/] [bold {c['value_fg']}]{title_display:<{inner - 11}}[/] [bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Stats section
+                stats = f"[{c['accent']}]{self.note.line_count}[/] lines  [{c['accent']}]{self.note.char_count}[/] chars"
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/] {stats:<{inner - 11}}[bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Content section
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ CONTENT PREVIEW {'─' * (section_inner - 20)}┐[/]  [bold {c['border']}]║[/]")
+
+                # Show preview lines
+                for line in preview_lines:
+                    yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['value_fg']}]{line:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+
+                # If less than 3 lines, pad with empty lines
+                for _ in range(3 - len(preview_lines)):
+                    yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   {' ' * content_width} [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+
+                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+
+                # Spacer
+                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+
+                # Footer divider
+                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
+
+                # Footer row
+                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.note.id[:8]}[/]"
+                footer_right = f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
+                footer_pad = inner - 32 - len(created)
+                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+
+                # Bottom border
+                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
+
+            # Action Buttons
+            with Horizontal(id="note-modal-buttons"):
+                yield Button("COPY", id="copy-button")
                 yield Button("CLOSE", id="close-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -341,7 +404,7 @@ class NotesScreen(Screen):
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] [#475569]>[/] [bold #94a3b8]NOTES[/]",
+                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] [#475569]>[/] [bold #f59e0b]NOTES[/]",
                 id="header-branding",
             )
             yield Static("░░ ENCRYPTED DATA SHARDS ░░", id="header-status")
@@ -351,7 +414,7 @@ class NotesScreen(Screen):
         with Horizontal(id="vault-body"):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
-                yield Static(" ≡ SHARD_DATABASE ", classes="pane-header-block note-header")
+                yield Static(" ≡ SHARD_DATABASE ", classes="pane-header-block-amber")
                 yield DataTable(id="notes-table", cursor_type="row")
                 # Empty state
                 with Center(id="empty-state"):
@@ -369,7 +432,7 @@ class NotesScreen(Screen):
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
-                yield Static(" ≡ SHARD_INSPECTOR ", classes="pane-header-block note-header")
+                yield Static(" ≡ SHARD_INSPECTOR ", classes="pane-header-block-amber")
                 yield Vertical(id="inspector-content")
 
         # 3. Global Footer
@@ -392,9 +455,9 @@ class NotesScreen(Screen):
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
         if self._pulse_state:
-            header_lock.update("[#94a3b8]● [bold]ARCHIVED[/][/]")
+            header_lock.update("[#fcd34d]● [bold]ARCHIVED[/][/]")
         else:
-            header_lock.update("[#64748b]○ [bold]ARCHIVED[/][/]")
+            header_lock.update("[#b45309]○ [bold]ARCHIVED[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector."""
@@ -418,10 +481,12 @@ class NotesScreen(Screen):
 
         table.clear(columns=True)
 
-        table.add_column("", width=2)
-        table.add_column("Title", width=28)
-        table.add_column("Lines", width=8)
-        table.add_column("Updated", width=10)
+        table.add_column("", width=3)  # Indicator
+        table.add_column("Title", width=30)  # Title
+        table.add_column("Lines", width=8)  # Lines
+        table.add_column("Chars", width=10)  # Chars
+        table.add_column("Updated", width=12)  # Updated - fixed width
+        table.add_column("Preview", width=60)  # Content preview to fill remaining space
 
         entries = app.vault.get_notes()
 
@@ -434,13 +499,19 @@ class NotesScreen(Screen):
 
         for entry in entries:
             is_selected = entry.id == self._selected_row_key
-            indicator = "[bold #94a3b8]▍[/]" if is_selected else " "
-            title_text = entry.title[:26] if len(entry.title) > 26 else entry.title
+            indicator = "[bold #f59e0b]▍[/]" if is_selected else " "
+            title_text = entry.title[:23] if len(entry.title) > 23 else entry.title
             lines_text = f"[#94a3b8]{entry.line_count}[/]"
+            chars_text = f"[#94a3b8]{entry.char_count}[/]"
             updated = _get_relative_time(entry.updated_at)
             updated_text = f"[dim]{updated}[/]"
+            # Truncate content preview to first 50 characters
+            notes_preview = entry.content[:50] if len(entry.content) > 50 else entry.content
+            if len(entry.content) > 50:
+                notes_preview += "…"
+            notes_text = f"[dim #94a3b8]{notes_preview}[/]" if notes_preview else "[dim #555555]// EMPTY[/]"
 
-            table.add_row(indicator, title_text, lines_text, updated_text, key=entry.id)
+            table.add_row(indicator, title_text, lines_text, chars_text, updated_text, notes_text, key=entry.id)
 
         footer = self.query_one("#grid-footer", Static)
         count = len(entries)
@@ -465,7 +536,7 @@ class NotesScreen(Screen):
 
         if new_key and new_key in entry_map:
             try:
-                table.update_cell(new_key, indicator_col, "[bold #94a3b8]▍[/]")
+                table.update_cell(new_key, indicator_col, "[bold #f59e0b]▍[/]")
             except Exception:
                 pass
 
