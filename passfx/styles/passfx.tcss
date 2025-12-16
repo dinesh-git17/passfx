@@ -35,38 +35,44 @@ Screen {
 
 #app-header {
     width: 100%;
-    height: auto;
+    height: 3;
     dock: top;
     background: #0f172a;
-    padding: 1 0 0 0;
+    align: center middle;
 }
 
 #app-header > Static {
-    height: auto;
+    height: 1;
+}
+
+#header-divider {
+    width: 100%;
+    height: 0;
+    dock: top;
 }
 
 #header-branding {
-    background: #3b82f6;
-    color: #0f172a;
-    text-style: bold;
+    background: transparent;
     width: 28;
+    height: 1;
     content-align: center middle;
-    border-right: heavy #1d4ed8;
 }
 
 #header-status {
     width: 1fr;
+    height: 1;
     color: #475569;
     text-align: center;
     content-align: center middle;
-    padding-left: 28;
 }
 
 #header-lock {
     color: #22c55e;
-    padding: 0 1;
+    padding: 0 2;
     text-style: bold;
     width: auto;
+    height: 1;
+    content-align: center middle;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -95,6 +101,42 @@ FooterKey > .footer-key--key {
 
 FooterKey > .footer-key--description {
     color: #64748b;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CUSTOM FOOTER - GRID-ALIGNED COMMAND STRIP
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#footer-divider {
+    width: 100%;
+    height: 1;
+    dock: bottom;
+    background: #1d4ed8;
+}
+
+#app-footer {
+    width: 100%;
+    height: 3;
+    dock: bottom;
+    background: #0f172a;
+    align: center middle;
+}
+
+#footer-version {
+    width: 28;
+    height: 1;
+    background: #0f172a;
+    color: #475569;
+    content-align: center middle;
+}
+
+#footer-keys {
+    width: 1fr;
+    height: 1;
+    background: #0f172a;
+    color: #94a3b8;
+    content-align: left middle;
+    padding: 0 2;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -192,14 +234,17 @@ FooterKey > .footer-key--description {
 #main-container {
     width: 100%;
     height: 100%;
+    align: left top;
+    margin-top: 2;
+    border-top: solid #1d4ed8;
 }
 
 #sidebar {
     width: 28;
     height: 100%;
     background: #0f172a;
-    border-right: heavy #1d4ed8;
-    padding: 1 1;
+    border-right: solid #1d4ed8;
+    padding: 0;
 }
 
 #sidebar-logo {
@@ -238,8 +283,10 @@ FooterKey > .footer-key--description {
     height: 100%;
     background: #1e293b;
     padding: 0 2 0 2;
-    border-top: solid #1d4ed8;
-    border-bottom: solid #1d4ed8;
+}
+
+#dashboard-top-border {
+    display: none;
 }
 
 #dashboard-title {
@@ -286,21 +333,28 @@ FooterKey > .footer-key--description {
     color: #22c55e;
 }
 
+#panels-row {
+    width: 100%;
+    height: auto;
+    align: center top;
+}
+
 .gauge-panel {
+    width: 1fr;
     height: auto;
     background: #0f172a;
-    border: heavy #3b82f6;
+    border: solid #3b82f6;
     padding: 1 2;
-    margin: 1 0;
-    text-align: center;
+    margin: 1 1 1 0;
 }
 
 .log-panel {
+    width: 1fr;
     height: auto;
     background: #0f172a;
-    border: heavy #1d4ed8;
+    border: solid #1d4ed8;
     padding: 1 2;
-    margin: 1 0;
+    margin: 1 0 1 1;
 }
 
 .title {

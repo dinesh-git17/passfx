@@ -11,7 +11,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Footer, OptionList, Static
+from textual.widgets import Button, OptionList, Static
 from textual.widgets.option_list import Option
 
 from passfx.utils.strength import check_strength
@@ -72,7 +72,7 @@ class MainMenuScreen(Screen):
         """Create the command center layout."""
         # Custom header - System Status Bar
         with Horizontal(id="app-header"):
-            yield Static(" PASSFX ", id="header-branding")
+            yield Static("[bold #00d4ff]◄ PASSFX ►[/]", id="header-branding")
             yield Static("░░ SECURITY COMMAND CENTER ░░", id="header-status")
             yield Static("🔓 DECRYPTED", id="header-lock")
 
@@ -81,18 +81,19 @@ class MainMenuScreen(Screen):
             with Vertical(id="sidebar"):
                 yield Static(SIDEBAR_LOGO, id="sidebar-logo")
                 yield OptionList(
-                    Option("[ KEY ]  Passwords", id="passwords"),
-                    Option("[ PIN ]  Phones", id="phones"),
-                    Option("[ CRD ]  Cards", id="cards"),
-                    Option("[ GEN ]  Generator", id="generator"),
-                    Option("[ SET ]  Settings", id="settings"),
-                    Option("[ EXIT ] Quit", id="exit"),
+                    Option("  [ KEY ]  Passwords  ", id="passwords"),
+                    Option("  [ PIN ]  Phones     ", id="phones"),
+                    Option("  [ CRD ]  Cards      ", id="cards"),
+                    Option("  [ GEN ]  Generator  ", id="generator"),
+                    Option("  [ SET ]  Settings   ", id="settings"),
+                    Option("  [ EXIT ] Quit       ", id="exit"),
                     id="sidebar-menu",
                 )
                 yield Static(f"[dim]{VERSION}[/]", id="sidebar-version")
 
             # Right pane: Dashboard view
             with Vertical(id="dashboard-view"):
+                yield Static("", id="dashboard-top-border")
                 yield Static(
                     "[bold #60a5fa]━━━ VAULT STATUS ━━━[/]",
                     id="dashboard-title",
@@ -104,13 +105,20 @@ class MainMenuScreen(Screen):
                     yield Button("PINS\n0", id="stat-phones", classes="stat-card")
                     yield Button("CARDS\n0", id="stat-cards", classes="stat-card")
 
-                # Security gauge
-                yield Static(id="security-gauge", classes="gauge-panel")
+                # Security gauge and System log - side by side
+                with Horizontal(id="panels-row"):
+                    yield Static(id="security-gauge", classes="gauge-panel")
+                    yield Static(id="system-log", classes="log-panel")
 
-                # System log
-                yield Static(id="system-log", classes="log-panel")
+        # Horizontal divider above footer
+        yield Static("", id="footer-divider")
 
-        yield Footer()
+        # Custom footer - Grid-aligned command strip
+        with Horizontal(id="app-footer"):
+            yield Static(
+                "  [#8b5cf6]Q[/] Quit   [#8b5cf6]1-5[/] Navigate   [#8b5cf6]ESC[/] Back",
+                id="footer-keys",
+            )
 
     def on_mount(self) -> None:
         """Initialize dashboard data on mount."""
