@@ -57,6 +57,15 @@ Screen {
     content-align: center middle;
 }
 
+#header-clock {
+    width: auto;
+    height: 100%;
+    color: #60a5fa;
+    text-style: bold;
+    padding: 0 2;
+    content-align: center middle;
+}
+
 #header-lock {
     width: auto;
     height: 100%;
@@ -118,9 +127,30 @@ FooterKey > .footer-key--description {
     width: 1fr;
     height: 100%;
     background: #0f172a;
-    color: #94a3b8;
-    content-align: left middle;
+    align: left middle;
     padding-left: 2;
+}
+
+/* Mechanical Keycap Styling */
+.keycap-group {
+    width: auto;
+    height: 1;
+    margin-right: 2;
+}
+
+.keycap {
+    width: auto;
+    height: 1;
+    min-width: 3;
+    background: #334155;
+    padding: 0 1;
+}
+
+.keycap-label {
+    width: auto;
+    height: 1;
+    background: transparent;
+    margin-left: 1;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

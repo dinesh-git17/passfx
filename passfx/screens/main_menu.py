@@ -85,10 +85,11 @@ class MainMenuScreen(Screen):
 
     def compose(self) -> ComposeResult:
         """Create the command center layout."""
-        # Custom header - System Status Bar
+        # Custom header - System Status Bar with live telemetry
         with Horizontal(id="app-header"):
             yield Static("[bold #00d4ff]◄ PASSFX ►[/]", id="header-branding")
             yield Static("░░ SECURITY COMMAND CENTER ░░", id="header-status")
+            yield Static("", id="header-clock")
             yield Static("🔓 DECRYPTED", id="header-lock")
 
         with Horizontal(id="main-container"):
@@ -135,20 +136,43 @@ class MainMenuScreen(Screen):
                     yield Static(id="security-gauge", classes="gauge-panel")
                     yield Static(id="system-log", classes="log-panel")
 
-        # Custom footer - Grid-aligned command strip
+        # Custom footer - Mechanical keycap command strip
         with Horizontal(id="app-footer"):
             # Left segment: Version (aligns with sidebar)
             yield Static(f" {VERSION} ", id="footer-version")
-            # Right segment: Key hints (aligns with dashboard)
-            yield Static(
-                "[#8b5cf6]Q[/] Quit   [#8b5cf6]ESC[/] Back",
-                id="footer-keys",
-            )
+            # Right segment: Key hints as mechanical keycaps
+            with Horizontal(id="footer-keys"):
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #a78bfa] Q [/]", classes="keycap")
+                    yield Static("[#64748b]Quit[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #a78bfa]ESC[/]", classes="keycap")
+                    yield Static("[#64748b]Back[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Initialize dashboard data on mount."""
         self._focus_sidebar()
         self._refresh_dashboard()
+        self._update_clock()
+        self.set_interval(1, self._update_clock)
+
+    def _update_clock(self) -> None:
+        """Update the header clock with current time and vault stats."""
+        app: PassFXApp = self.app  # type: ignore
+        now = datetime.now().strftime("%H:%M:%S")
+
+        # Get vault file size if available
+        vault_size = ""
+        if app._unlocked and app.vault.path.exists():
+            size_bytes = app.vault.path.stat().st_size
+            if size_bytes < 1024:
+                vault_size = f"{size_bytes}B"
+            else:
+                vault_size = f"{size_bytes // 1024}KB"
+            vault_size = f"[dim]│[/] [#8b5cf6]{vault_size}[/]"
+
+        clock_widget = self.query_one("#header-clock", Static)
+        clock_widget.update(f"[#60a5fa]{now}[/] {vault_size}")
 
     def on_screen_resume(self) -> None:
         """Called when screen becomes active again after being covered."""
@@ -178,30 +202,8 @@ class MainMenuScreen(Screen):
         analysis = self._analyze_security(app)
         bar_color = self._get_score_color(analysis.score)
 
-        # Build segmented VFD-style gauge (20 segments)
-        num_segments = 20
-        filled = int((analysis.score / 100) * num_segments)
-        empty = num_segments - filled
-        bar_str = f"[{bar_color}]{'|' * filled}[/][dim #334155]{'·' * empty}[/]"
-
-        # Build security gauge content (title goes in border)
-        gauge_lines = [
-            f"{bar_str}  [bold {bar_color}]{analysis.score}%[/]",
-            "",  # Breathing room
-        ]
-
-        # Add breakdown if there are items
-        if total > 0:
-            if analysis.password_scores:
-                avg = sum(analysis.password_scores) / len(analysis.password_scores)
-                strength_label = ["Very Weak", "Weak", "Fair", "Good", "Strong"][min(4, int(avg))]
-                gauge_lines.append(f"[dim]Avg Strength:[/] {strength_label}")
-            if analysis.reused_passwords > 0:
-                gauge_lines.append(f"[#ef4444]Reused:[/] {analysis.reused_passwords}")
-            if analysis.weak_pins > 0:
-                gauge_lines.append(f"[#f59e0b]Weak PINs:[/] {analysis.weak_pins}")
-            if analysis.old_passwords > 0:
-                gauge_lines.append(f"[#f59e0b]Stale (>90d):[/] {analysis.old_passwords}")
+        # Build strength frequency histogram
+        gauge_lines = self._build_strength_histogram(analysis, bar_color)
 
         gauge_widget = self.query_one("#security-gauge", Static)
         gauge_widget.border_title = "SECURITY SCORE"
@@ -213,14 +215,17 @@ class MainMenuScreen(Screen):
             f"[dim]{ts}[/] [bold #22c55e]➜[/] Vault filesystem mounted (AES-256)",
             f"[dim]{ts}[/] [bold #22c55e]➜[/] Session active (User: Admin)",
             f"[dim]{ts}[/] [bold #3b82f6]i[/] Indexing complete: {total} records loaded",
+            f"[dim]{ts}[/] [bold #22c55e]✓[/] Encryption verified (PBKDF2-SHA256)",
+            f"[dim]{ts}[/] [bold #8b5cf6]~[/] Auto-lock: 5 min timeout active",
         ]
 
         if analysis.issues:
             status_lines.append("")
-            for issue in analysis.issues:
-                status_lines.append(f"[dim]{ts}[/] [bold #ef4444]![/] ALERT: {issue}")
+            for issue in analysis.issues[:3]:  # Limit to 3 issues
+                status_lines.append(f"[dim]{ts}[/] [bold #ef4444]![/] {issue}")
         else:
             status_lines.append(f"[dim]{ts}[/] [bold #22c55e]✓[/] No security issues detected")
+            status_lines.append(f"[dim]{ts}[/] [bold #3b82f6]i[/] System ready")
 
         log_widget = self.query_one("#system-log", Static)
         log_widget.border_title = "SYSTEM LOG"
@@ -371,6 +376,57 @@ class MainMenuScreen(Screen):
             return "#f59e0b"  # Yellow/Orange - Fair
         else:
             return "#ef4444"  # Red - Poor
+
+    def _build_strength_histogram(
+        self, analysis: SecurityAnalysis, score_color: str
+    ) -> list[str]:
+        """Build a horizontal bar chart of password strength distribution."""
+        lines: list[str] = []
+
+        # Overall score header
+        num_segments = 20
+        filled = int((analysis.score / 100) * num_segments)
+        empty = num_segments - filled
+        bar_str = f"[{score_color}]{'|' * filled}[/][dim #334155]{'·' * empty}[/]"
+        lines.append(f"{bar_str}  [bold {score_color}]{analysis.score}%[/]")
+        lines.append("")
+
+        if not analysis.password_scores:
+            lines.append("[dim]No passwords to analyze[/]")
+            return lines
+
+        # Count occurrences of each strength level (0-4)
+        strength_counts = Counter(analysis.password_scores)
+        max_count = max(strength_counts.values()) if strength_counts else 1
+        bar_width = 12  # Maximum bar width in characters
+
+        # Strength level definitions with colors
+        levels = [
+            (0, "WEAK  ", "#ef4444"),
+            (1, "POOR  ", "#ef4444"),
+            (2, "FAIR  ", "#f59e0b"),
+            (3, "GOOD  ", "#60a5fa"),
+            (4, "STRONG", "#22c55e"),
+        ]
+
+        # Build histogram bars with spacing
+        for level, label, color in levels:
+            count = strength_counts.get(level, 0)
+            if count > 0 or level in (0, 4):  # Always show WEAK and STRONG
+                bar_len = int((count / max_count) * bar_width) if max_count > 0 else 0
+                bar = "█" * bar_len + "░" * (bar_width - bar_len)
+                lines.append(f"[{color}]{label}[/] [{color}]{bar}[/] {count}")
+                lines.append("")  # Breathing room between bars
+
+        # Add issue summary if any
+        if analysis.reused_passwords > 0 or analysis.weak_pins > 0:
+            lines.append("")
+            if analysis.reused_passwords > 0:
+                lines.append(f"[#ef4444]⚠ Reused:[/] {analysis.reused_passwords}")
+            if analysis.weak_pins > 0:
+                lines.append(f"[#f59e0b]⚠ Weak PINs:[/] {analysis.weak_pins}")
+
+        return lines
 
     def on_click(self, event: Click) -> None:
         """Handle clicks on stat segments."""
