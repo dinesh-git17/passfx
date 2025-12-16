@@ -937,7 +937,7 @@ CommandPalette OptionList > .option-list--option-hover {
 
 /* Passwords Table - Mainframe Terminal Look */
 #passwords-table {
-    background: #02040a;
+    background: $pfx-bg;
     border: none;
     margin: 0;
     padding: 0;
@@ -951,19 +951,20 @@ CommandPalette OptionList > .option-list--option-hover {
 
 /* Scanner-style cursor - heavy left border highlight */
 #passwords-table > .datatable--cursor {
-    background: $pfx-surface-light;
+    background: $pfx-surface;
     color: $pfx-fg;
     text-style: bold;
+    border-left: thick $pfx-primary;
 }
 
 #passwords-table > .datatable--cursor:hover {
-    background: $pfx-surface-light;
+    background: $pfx-surface;
 }
 
 /* High-contrast header for terminal look */
 #passwords-table > .datatable--header {
     background: $pfx-primary-dim;
-    color: $pfx-fg;
+    color: black;
     text-style: bold;
 }
 
