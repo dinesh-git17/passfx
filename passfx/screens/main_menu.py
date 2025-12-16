@@ -102,6 +102,7 @@ class MainMenuScreen(Screen):
                     Option(_make_menu_item("PIN", "Phones"), id="phones"),
                     Option(_make_menu_item("CRD", "Cards"), id="cards"),
                     Option(_make_menu_item("ENV", "Env Vars"), id="envs"),
+                    Option(_make_menu_item("SOS", "Recovery"), id="recovery"),
                     Option(_make_menu_item("GEN", "Generator"), id="generator"),
                     Option(_make_menu_item("SET", "Settings"), id="settings"),
                     Option(_make_menu_item("?", "Help"), id="help"),
@@ -456,6 +457,8 @@ class MainMenuScreen(Screen):
             self.action_cards()
         elif option_id == "envs":
             self.action_envs()
+        elif option_id == "recovery":
+            self.action_recovery()
         elif option_id == "generator":
             self.action_generator()
         elif option_id == "settings":
@@ -488,6 +491,12 @@ class MainMenuScreen(Screen):
         from passfx.screens.envs import EnvsScreen
 
         self.app.push_screen(EnvsScreen())
+
+    def action_recovery(self) -> None:
+        """Go to recovery codes screen."""
+        from passfx.screens.recovery import RecoveryScreen
+
+        self.app.push_screen(RecoveryScreen())
 
     def action_generator(self) -> None:
         """Go to password generator screen."""

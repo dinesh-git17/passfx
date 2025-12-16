@@ -2260,3 +2260,322 @@ Button.env-delete-btn:focus {
     text-align: center;
     padding: 1 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RECOVERY CODES SCREEN - FAIL-SAFE PROTOCOL THEME
+   Theme: Rose/Red (#f43f5e) for Emergency Use Only
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Rose accent color */
+$pfx-rose: #f43f5e;
+$pfx-rose-dim: #881337;
+$pfx-rose-light: #fb7185;
+
+/* Recovery Header Block - Rose variant */
+.recovery-header {
+    background: #f43f5e;
+    color: #000000;
+}
+
+/* Recovery Card wrapper with rose accent */
+.recovery-card {
+    border-left: heavy #f43f5e;
+}
+
+/* Recovery Preview with rose border */
+.recovery-preview {
+    border: solid #f43f5e 50%;
+    border-title-color: #f43f5e;
+}
+
+/* Recovery Table - Mainframe Terminal Look with Rose accents */
+#recovery-table {
+    background: $pfx-bg;
+    border: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 1fr;
+}
+
+#recovery-table:focus {
+    border: none;
+}
+
+#recovery-table > .datatable--cursor {
+    background: #1e293b;
+    color: $pfx-fg;
+    text-style: none;
+}
+
+#recovery-table > .datatable--cursor:hover {
+    background: #1e293b;
+}
+
+#recovery-table > .datatable--header {
+    background: #881337;
+    color: #fecdd3;
+    text-style: bold;
+}
+
+#recovery-table > .datatable--even-row {
+    background: #02040a;
+    border-bottom: solid #1e293b;
+}
+
+#recovery-table > .datatable--odd-row {
+    background: #060a12;
+    border-bottom: solid #1e293b;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RECOVERY CODE EDITOR / TEXTAREA STYLING
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Code Editor TextArea - Dark terminal look with Rose accent */
+.recovery-code-editor {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: solid #f43f5e 50%;
+    padding: 1;
+    margin: 0 0 1 0;
+    height: 12;
+    max-height: 12;
+}
+
+.recovery-code-editor:focus {
+    border: solid #f43f5e;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RECOVERY MODAL SCREENS
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* View Recovery Modal */
+#recovery-view-modal {
+    width: 70;
+    height: auto;
+    max-height: 40;
+    background: $pfx-bg;
+    border: heavy #f43f5e;
+    padding: 1 2;
+}
+
+#recovery-view-title {
+    text-align: center;
+    text-style: bold;
+    color: #f43f5e;
+    padding: 0 0 1 0;
+    border-bottom: solid #f43f5e 50%;
+}
+
+#recovery-view-info {
+    padding: 1 0;
+}
+
+.recovery-view-name {
+    text-style: bold;
+}
+
+.recovery-view-stats {
+    height: auto;
+}
+
+.recovery-view-stats Static {
+    margin-right: 3;
+}
+
+/* Read-only code editor for viewing - Rose theme */
+.recovery-code-editor-view {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: solid #f43f5e 50%;
+    padding: 1;
+    height: 16;
+    max-height: 16;
+}
+
+#recovery-view-footer {
+    text-align: center;
+    padding: 1 0;
+}
+
+#recovery-view-modal #modal-buttons {
+    width: 100%;
+    height: auto;
+    padding: 1 0 0 0;
+    align: center middle;
+}
+
+#recovery-view-modal #modal-buttons Button {
+    width: 16;
+    margin: 0 2;
+}
+
+/* Add/Edit Recovery Modal */
+#recovery-edit-modal {
+    width: 70;
+    height: auto;
+    max-height: 45;
+    background: $pfx-bg;
+    border: heavy #f43f5e;
+    padding: 2 3;
+}
+
+#recovery-edit-title {
+    text-style: bold;
+    color: #f43f5e;
+    text-align: center;
+    padding: 0 0 1 0;
+    margin-bottom: 1;
+}
+
+#recovery-form {
+    padding: 1 0;
+    height: auto;
+    max-height: 35;
+    overflow-y: auto;
+}
+
+.recovery-input-label {
+    color: #f43f5e;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+}
+
+#recovery-form Input {
+    background: transparent;
+    border: none;
+    border-bottom: solid #881337;
+    padding: 0 1 0 1;
+    margin: 0 0 1 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 2;
+}
+
+#recovery-form Input:focus {
+    border-bottom: heavy #f43f5e;
+}
+
+/* Recovery Modal Buttons Container */
+#recovery-edit-modal #modal-buttons {
+    width: 100%;
+    height: auto;
+    padding: 2 0 0 0;
+    align: center middle;
+}
+
+#recovery-edit-modal #modal-buttons Button {
+    width: 16;
+    margin: 0 1;
+}
+
+#recovery-edit-modal #cancel-button {
+    background: $pfx-surface;
+    color: $pfx-muted;
+    border: solid $pfx-surface-light;
+}
+
+#recovery-edit-modal #cancel-button:hover {
+    background: $pfx-surface-light;
+    color: $pfx-fg;
+}
+
+/* Import button - Rose distinctive style */
+Button.recovery-import-btn {
+    background: #4c0519;
+    color: #fb7185;
+    border: solid #f43f5e;
+    text-style: bold;
+    content-align: center middle;
+}
+
+Button.recovery-import-btn:hover {
+    background: #f43f5e;
+    color: #000000;
+}
+
+Button.recovery-import-btn:focus {
+    background: #881337;
+    color: #fb7185;
+    border: solid #f43f5e;
+}
+
+/* Recovery Modal Save Button - Rose styling */
+Button.recovery-save-btn {
+    background: #f43f5e;
+    color: #000000;
+    border: solid #f43f5e;
+    text-style: bold;
+    content-align: center middle;
+}
+
+Button.recovery-save-btn:hover {
+    background: #fb7185;
+    color: #000000;
+}
+
+Button.recovery-save-btn:focus {
+    background: #fb7185;
+    color: #000000;
+    border: solid #fb7185;
+}
+
+/* Recovery Modal Delete Button - Red styling */
+Button.recovery-delete-btn {
+    background: #ef4444;
+    color: #ffffff;
+    border: solid #ef4444;
+    text-style: bold;
+    content-align: center middle;
+}
+
+Button.recovery-delete-btn:hover {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+Button.recovery-delete-btn:focus {
+    background: #dc2626;
+    color: #ffffff;
+    border: solid #dc2626;
+}
+
+/* Import Path Modal - Rose theme */
+#recovery-import-modal {
+    width: 50;
+    height: auto;
+    background: $pfx-bg;
+    border: heavy #f43f5e;
+    padding: 2 3;
+}
+
+#recovery-import-title {
+    text-style: bold;
+    color: #f43f5e;
+    text-align: center;
+    padding: 0 0 1 0;
+}
+
+#recovery-import-hint {
+    text-align: center;
+    padding: 1 0;
+}
+
+/* Delete Recovery Modal */
+#recovery-delete-modal {
+    width: 50;
+    height: auto;
+    background: $pfx-bg;
+    border: heavy #f43f5e;
+    padding: 2 3;
+}
+
+#recovery-delete-title {
+    text-style: bold;
+    color: #f43f5e;
+    text-align: center;
+    padding: 0 0 1 0;
+}

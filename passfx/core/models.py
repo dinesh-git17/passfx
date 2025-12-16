@@ -276,8 +276,78 @@ class EnvEntry:
         return count
 
 
+@dataclass
+class RecoveryEntry:
+    """Recovery codes storage for 2FA backup codes.
+
+    Attributes:
+        title: Human-readable name (e.g., 'GitHub 2FA').
+        content: Full text content of the recovery codes.
+        notes: Optional notes.
+        id: Unique identifier.
+        created_at: ISO timestamp of creation.
+        updated_at: ISO timestamp of last update.
+    """
+
+    title: str
+    content: str
+    notes: str | None = None
+    id: str = field(default_factory=_generate_id)
+    created_at: str = field(default_factory=_now_iso)
+    updated_at: str = field(default_factory=_now_iso)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "type": "recovery",
+            "id": self.id,
+            "title": self.title,
+            "content": self.content,
+            "notes": self.notes,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> RecoveryEntry:
+        """Create an instance from a dictionary."""
+        return cls(
+            id=data.get("id", _generate_id()),
+            title=data["title"],
+            content=data["content"],
+            notes=data.get("notes"),
+            created_at=data.get("created_at", _now_iso()),
+            updated_at=data.get("updated_at", _now_iso()),
+        )
+
+    def update(self, **kwargs: Any) -> None:
+        """Update fields and refresh updated_at timestamp."""
+        for key, value in kwargs.items():
+            if hasattr(self, key) and key not in ("id", "created_at"):
+                setattr(self, key, value)
+        self.updated_at = _now_iso()
+
+    @property
+    def line_count(self) -> int:
+        """Return the number of lines in the content."""
+        return len(self.content.split("\n")) if self.content else 0
+
+    @property
+    def code_count(self) -> int:
+        """Return the estimated number of recovery codes."""
+        if not self.content:
+            return 0
+        count = 0
+        for line in self.content.split("\n"):
+            line = line.strip()
+            # Count non-empty lines that aren't comments
+            if line and not line.startswith("#") and not line.startswith("//"):
+                count += 1
+        return count
+
+
 # Type alias for any credential type
-Credential = EmailCredential | PhoneCredential | CreditCard | EnvEntry
+Credential = EmailCredential | PhoneCredential | CreditCard | EnvEntry | RecoveryEntry
 
 
 def credential_from_dict(data: dict[str, Any]) -> Credential:
@@ -302,5 +372,7 @@ def credential_from_dict(data: dict[str, Any]) -> Credential:
         return CreditCard.from_dict(data)
     elif cred_type == "env":
         return EnvEntry.from_dict(data)
+    elif cred_type == "recovery":
+        return RecoveryEntry.from_dict(data)
     else:
         raise ValueError(f"Unknown credential type: {cred_type}")

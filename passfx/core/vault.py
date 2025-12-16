@@ -14,6 +14,7 @@ from passfx.core.models import (
     EmailCredential,
     EnvEntry,
     PhoneCredential,
+    RecoveryEntry,
     credential_from_dict,
 )
 
@@ -66,6 +67,7 @@ class Vault:
             "phones": [],
             "cards": [],
             "envs": [],
+            "recovery": [],
         }
         self._last_activity: float = 0
         self._lock_timeout: int = 300  # 5 minutes default
@@ -122,7 +124,7 @@ class Vault:
         self._crypto = CryptoManager(master_password, salt)
 
         # Initialize empty data
-        self._data = {"emails": [], "phones": [], "cards": [], "envs": []}
+        self._data = {"emails": [], "phones": [], "cards": [], "envs": [], "recovery": []}
 
         # Save empty vault
         self._save()
@@ -155,6 +157,9 @@ class Vault:
             # Migrate older vaults that don't have "envs" key
             if "envs" not in self._data:
                 self._data["envs"] = []
+            # Migrate older vaults that don't have "recovery" key
+            if "recovery" not in self._data:
+                self._data["recovery"] = []
             self._update_activity()
         except DecryptionError:
             self._crypto = None
@@ -168,7 +173,7 @@ class Vault:
         if self._crypto:
             self._crypto.wipe()
             self._crypto = None
-        self._data = {"emails": [], "phones": [], "cards": [], "envs": []}
+        self._data = {"emails": [], "phones": [], "cards": [], "envs": [], "recovery": []}
 
     def _save(self) -> None:
         """Save the vault to disk."""
@@ -383,6 +388,51 @@ class Vault:
                 return True
         return False
 
+    # --- Recovery Codes ---
+
+    def add_recovery(self, recovery: RecoveryEntry) -> None:
+        """Add a recovery entry to the vault."""
+        self._update_activity()
+        if "recovery" not in self._data:
+            self._data["recovery"] = []
+        self._data["recovery"].append(recovery.to_dict())
+        self._save()
+
+    def get_recovery_entries(self) -> list[RecoveryEntry]:
+        """Get all recovery entries."""
+        self._update_activity()
+        return [RecoveryEntry.from_dict(d) for d in self._data.get("recovery", [])]
+
+    def get_recovery_by_id(self, entry_id: str) -> RecoveryEntry | None:
+        """Get a recovery entry by ID."""
+        self._update_activity()
+        for d in self._data.get("recovery", []):
+            if d.get("id") == entry_id:
+                return RecoveryEntry.from_dict(d)
+        return None
+
+    def update_recovery(self, entry_id: str, **kwargs: Any) -> bool:
+        """Update a recovery entry."""
+        self._update_activity()
+        for i, d in enumerate(self._data.get("recovery", [])):
+            if d.get("id") == entry_id:
+                recovery = RecoveryEntry.from_dict(d)
+                recovery.update(**kwargs)
+                self._data["recovery"][i] = recovery.to_dict()
+                self._save()
+                return True
+        return False
+
+    def delete_recovery(self, entry_id: str) -> bool:
+        """Delete a recovery entry."""
+        self._update_activity()
+        for i, d in enumerate(self._data.get("recovery", [])):
+            if d.get("id") == entry_id:
+                del self._data["recovery"][i]
+                self._save()
+                return True
+        return False
+
     # --- Search ---
 
     def search(self, query: str) -> list[Credential]:
@@ -431,6 +481,14 @@ class Vault:
             ):
                 results.append(EnvEntry.from_dict(d))
 
+        for d in self._data.get("recovery", []):
+            if (
+                query_lower in d.get("title", "").lower()
+                or query_lower in d.get("content", "").lower()
+                or query_lower in (d.get("notes") or "").lower()
+            ):
+                results.append(RecoveryEntry.from_dict(d))
+
         return results
 
     # --- Stats ---
@@ -442,11 +500,13 @@ class Vault:
             "phones": len(self._data["phones"]),
             "cards": len(self._data["cards"]),
             "envs": len(self._data.get("envs", [])),
+            "recovery": len(self._data.get("recovery", [])),
             "total": (
                 len(self._data["emails"])
                 + len(self._data["phones"])
                 + len(self._data["cards"])
                 + len(self._data.get("envs", []))
+                + len(self._data.get("recovery", []))
             ),
         }
 
@@ -461,25 +521,25 @@ class Vault:
         """Import data into the vault.
 
         Args:
-            data: Data to import with 'emails', 'phones', 'cards', 'envs' keys.
+            data: Data to import with 'emails', 'phones', 'cards', 'envs', 'recovery' keys.
             merge: If True, merge with existing data. If False, replace.
 
         Returns:
             Count of imported items by type.
         """
         self._update_activity()
-        counts = {"emails": 0, "phones": 0, "cards": 0, "envs": 0}
+        counts = {"emails": 0, "phones": 0, "cards": 0, "envs": 0, "recovery": 0}
 
         if not merge:
-            self._data = {"emails": [], "phones": [], "cards": [], "envs": []}
+            self._data = {"emails": [], "phones": [], "cards": [], "envs": [], "recovery": []}
 
         # Get existing IDs to avoid duplicates
         existing_ids = set()
-        for category in ["emails", "phones", "cards", "envs"]:
+        for category in ["emails", "phones", "cards", "envs", "recovery"]:
             for item in self._data.get(category, []):
                 existing_ids.add(item.get("id"))
 
-        for category in ["emails", "phones", "cards", "envs"]:
+        for category in ["emails", "phones", "cards", "envs", "recovery"]:
             for item in data.get(category, []):
                 if item.get("id") not in existing_ids:
                     if category not in self._data:
