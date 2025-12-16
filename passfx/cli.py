@@ -7,7 +7,7 @@ import sys
 import setproctitle
 
 # Terminal title - shown in terminal tab/window
-TERMINAL_TITLE = "PassFX | Your passwords. Offline. Encrypted. Yours."
+TERMINAL_TITLE = "◀ PASSFX ▶ Your passwords. Offline. Encrypted."
 
 
 def set_terminal_title(title: str) -> None:

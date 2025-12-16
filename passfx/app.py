@@ -12,7 +12,7 @@ class PassFXApp(App):
     """PassFX - Your secure password vault."""
 
     CSS_PATH = "styles/passfx.tcss"
-    TITLE = "PassFX | Your passwords. Offline. Encrypted. Yours."
+    TITLE = "◀ PASSFX ▶ Your passwords. Offline. Encrypted."
 
     BINDINGS = [
         Binding("q", "quit", "Quit", show=True),
