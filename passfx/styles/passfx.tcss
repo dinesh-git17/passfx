@@ -912,7 +912,7 @@ CommandPalette OptionList > .option-list--option-hover {
     background: $pfx-surface;
     color: $pfx-muted;
     border-bottom: solid $pfx-primary-dim;
-    content-align: left middle;
+    align: left middle;
     padding: 0 1;
 }
 
@@ -968,13 +968,15 @@ CommandPalette OptionList > .option-list--option-hover {
     text-style: bold;
 }
 
-/* Alternating rows for readability */
+/* Row styling with separators */
 #passwords-table > .datatable--even-row {
     background: #02040a;
+    border-bottom: solid $pfx-surface-light;
 }
 
 #passwords-table > .datatable--odd-row {
     background: #0a0e14;
+    border-bottom: solid $pfx-surface-light;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1011,4 +1013,117 @@ CommandPalette OptionList > .option-list--option-hover {
     color: $pfx-muted;
     text-align: center;
     padding: 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PASSWORD MODAL - IDENTITY TERMINAL THEME
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Secure Terminal Container */
+#pwd-modal.secure-terminal {
+    width: 60;
+    height: auto;
+    background: $pfx-bg;
+    border: heavy $pfx-primary;
+    padding: 2 3;
+}
+
+/* Terminal title bar */
+#pwd-modal #modal-title {
+    text-style: bold;
+    color: $pfx-primary-light;
+    text-align: center;
+    padding: 0 0 1 0;
+    border-bottom: solid $pfx-primary-dim;
+    margin-bottom: 1;
+}
+
+/* Form container */
+#pwd-form {
+    padding: 1 0;
+}
+
+/* Input labels - terminal style */
+#pwd-modal .input-label {
+    color: $pfx-primary-light;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+}
+
+/* Input row for horizontal layouts */
+#pwd-modal .input-row {
+    width: 100%;
+    height: auto;
+}
+
+/* Terminal-style inputs - underline only */
+#pwd-modal Input {
+    background: transparent;
+    border: none;
+    border-bottom: solid $pfx-primary-dim;
+    padding: 0 1 0 1;
+    margin: 0 0 1 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 2;
+}
+
+#pwd-modal Input:focus {
+    border-bottom: heavy $pfx-primary;
+}
+
+#pwd-modal Input.-invalid {
+    border-bottom: heavy $pfx-error;
+}
+
+/* Delete confirmation styling */
+#pwd-modal .delete-target {
+    color: $pfx-fg;
+    text-align: center;
+    padding: 1 0;
+}
+
+#pwd-modal .warning {
+    color: $pfx-warning;
+    text-style: bold;
+    text-align: center;
+    padding: 1 0;
+}
+
+/* Modal buttons */
+#pwd-modal #modal-buttons {
+    padding: 2 0 0 0;
+    align: center middle;
+}
+
+#pwd-modal #cancel-button {
+    background: transparent;
+    color: $pfx-muted;
+    border: solid $pfx-surface-light;
+}
+
+#pwd-modal #cancel-button:hover {
+    background: $pfx-surface;
+    color: $pfx-fg;
+}
+
+#pwd-modal #save-button {
+    background: $pfx-primary;
+    color: $pfx-bg;
+    border: solid $pfx-primary;
+}
+
+#pwd-modal #save-button:hover {
+    background: $pfx-primary-light;
+}
+
+#pwd-modal #delete-button {
+    background: $pfx-error;
+    color: $pfx-fg;
+    border: solid $pfx-error;
+}
+
+#pwd-modal #delete-button:hover {
+    background: #b91c1c;
 }

@@ -32,25 +32,33 @@ class AddPasswordModal(ModalScreen[EmailCredential | None]):
 
     def compose(self) -> ComposeResult:
         """Create the modal layout."""
-        with Vertical(id="modal-container"):
-            yield Static("Add New Password", id="modal-title")
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # Header
+            yield Static(":: SYSTEM_ENTRY // CREDENTIAL ::", id="modal-title")
 
-            with Vertical(id="modal-content"):
-                yield Label("Label (e.g., GitHub, Gmail)")
-                yield Input(placeholder="Label", id="label-input")
+            # Form Body
+            with Vertical(id="pwd-form"):
+                # Row 1: Label (System)
+                yield Label("TARGET_SYSTEM", classes="input-label")
+                yield Input(placeholder="e.g. GITHUB_MAIN", id="label-input")
 
-                yield Label("Email or Username")
-                yield Input(placeholder="Email", id="email-input")
+                # Row 2: Email (Identity)
+                yield Label("USER_IDENTITY", classes="input-label")
+                yield Input(placeholder="username@host", id="email-input")
 
-                yield Label("Password")
-                yield Input(placeholder="Password", password=True, id="password-input")
+                # Row 3: Password (Secret)
+                yield Label("ACCESS_KEY", classes="input-label")
+                with Horizontal(classes="input-row"):
+                    yield Input(placeholder="••••••••••••", password=True, id="password-input")
 
-                yield Label("Notes (optional)")
-                yield Input(placeholder="Notes", id="notes-input")
+                # Row 4: Notes
+                yield Label("METADATA", classes="input-label")
+                yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
 
+            # Footer Actions
             with Horizontal(id="modal-buttons"):
-                yield Button("Cancel", id="cancel-button")
-                yield Button("Save", variant="primary", id="save-button")
+                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -100,37 +108,38 @@ class EditPasswordModal(ModalScreen[dict | None]):
 
     def compose(self) -> ComposeResult:
         """Create the modal layout."""
-        with Vertical(id="modal-container"):
-            yield Static(f"Edit: {self.credential.label}", id="modal-title")
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            yield Static(f":: MODIFY_ENTRY // {self.credential.label.upper()} ::", id="modal-title")
 
-            with Vertical(id="modal-content"):
-                yield Label("Label")
+            with Vertical(id="pwd-form"):
+                yield Label("TARGET_SYSTEM", classes="input-label")
                 yield Input(
                     value=self.credential.label,
-                    placeholder="Label",
+                    placeholder="e.g. GITHUB_MAIN",
                     id="label-input",
                 )
 
-                yield Label("Email or Username")
+                yield Label("USER_IDENTITY", classes="input-label")
                 yield Input(
                     value=self.credential.email,
-                    placeholder="Email",
+                    placeholder="username@host",
                     id="email-input",
                 )
 
-                yield Label("Password (leave empty to keep current)")
-                yield Input(placeholder="New password", password=True, id="password-input")
+                yield Label("ACCESS_KEY [BLANK = KEEP CURRENT]", classes="input-label")
+                with Horizontal(classes="input-row"):
+                    yield Input(placeholder="••••••••••••", password=True, id="password-input")
 
-                yield Label("Notes")
+                yield Label("METADATA", classes="input-label")
                 yield Input(
                     value=self.credential.notes or "",
-                    placeholder="Notes",
+                    placeholder="OPTIONAL_NOTES",
                     id="notes-input",
                 )
 
             with Horizontal(id="modal-buttons"):
-                yield Button("Cancel", id="cancel-button")
-                yield Button("Save", variant="primary", id="save-button")
+                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -180,16 +189,16 @@ class ConfirmDeleteModal(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         """Create the modal layout."""
-        with Vertical(id="modal-container"):
-            yield Static("Confirm Delete", id="modal-title")
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            yield Static(":: CONFIRM_DELETE // WARNING ::", id="modal-title")
 
-            with Vertical(id="modal-content"):
-                yield Static(f"Delete '{self.item_name}'?")
-                yield Static("This action cannot be undone.", classes="warning")
+            with Vertical(id="pwd-form"):
+                yield Static(f"TARGET: '{self.item_name}'", classes="delete-target")
+                yield Static("⚠ THIS ACTION CANNOT BE UNDONE", classes="warning")
 
             with Horizontal(id="modal-buttons"):
-                yield Button("Cancel", id="cancel-button")
-                yield Button("Delete", variant="error", id="delete-button")
+                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button("[Y] CONFIRM DELETE", variant="error", id="delete-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -231,12 +240,14 @@ class PasswordsScreen(Screen):
         with Horizontal(id="vault-body"):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
-                yield Static("[dim #555555]\\[///][/] CREDENTIAL_DATABASE.DB", classes="pane-header")
+                with Horizontal(classes="pane-header"):
+                    yield Static("[dim #555555]\\[///][/] CREDENTIAL_DATABASE.DB")
                 yield DataTable(id="passwords-table", cursor_type="row")
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
-                yield Static("[bold #60a5fa]ITEM_PROPERTIES[/]", classes="pane-header")
+                with Horizontal(classes="pane-header"):
+                    yield Static("[bold #60a5fa]ITEM_PROPERTIES[/]")
                 yield Vertical(id="inspector-content")  # Dynamic content here
 
         # 3. Global Footer (matches MainMenuScreen pattern)
