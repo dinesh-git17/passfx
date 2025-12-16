@@ -31,6 +31,19 @@ COMMANDS_CONTENT = """\
   [bold #00d4ff]Q[/]          [#94a3b8]Quit application[/]
   [bold #00d4ff]?[/]          [#94a3b8]Open this help screen[/]
   [bold #00d4ff]CTRL+P[/]     [#94a3b8]Open command palette[/]
+
+[bold #8b5cf6]> TERMINAL COMMANDS[/]
+  [bold #8b5cf6]/key[/]       [#94a3b8]Open Passwords screen[/]
+  [bold #8b5cf6]/pin[/]       [#94a3b8]Open Phones/PINs screen[/]
+  [bold #8b5cf6]/crd[/]       [#94a3b8]Open Cards screen[/]
+  [bold #8b5cf6]/mem[/]       [#94a3b8]Open Secure Notes screen[/]
+  [bold #8b5cf6]/env[/]       [#94a3b8]Open Env Variables screen[/]
+  [bold #8b5cf6]/sos[/]       [#94a3b8]Open Recovery Codes screen[/]
+  [bold #8b5cf6]/gen[/]       [#94a3b8]Open Password Generator[/]
+  [bold #8b5cf6]/set[/]       [#94a3b8]Open Settings screen[/]
+  [bold #8b5cf6]/help[/]      [#94a3b8]Open this help screen[/]
+  [bold #8b5cf6]/clear[/]     [#94a3b8]Clear terminal output[/]
+  [bold #8b5cf6]/quit[/]      [#94a3b8]Exit application[/]
 """
 
 LEGEND_CONTENT = """\

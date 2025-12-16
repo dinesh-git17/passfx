@@ -415,47 +415,49 @@ FooterKey > .footer-key--description {
 
 /* Panels Row - Responsive Side-by-Side Layout */
 #panels-row {
-    width: 100%;
-    height: auto;
-    min-height: 12;
-    align: center top;
+    width: auto;
+    height: 16;
+    align: left top;
+    overflow: hidden;
 }
 
 /* CRT-style dashboard panels - deep recessed screen effect */
 .gauge-panel {
-    width: 1fr;
-    min-width: 24;
-    height: auto;
-    min-height: 10;
-    background: #02040a;
+    width: 44;
+    height: 100%;
+    background: #000000;
     border: heavy $pfx-primary-dim;
     border-title-color: $pfx-primary-light;
     border-title-style: bold;
-    border-title-background: #02040a;
+    border-title-background: #000000;
     padding: 1 2;
     margin: 1 1 1 0;
     text-align: center;
 }
 
 .log-panel {
-    width: 1fr;
-    min-width: 24;
-    height: auto;
-    min-height: 10;
-    background: #02040a;
+    width: 44;
+    height: 100%;
+    background: #000000;
     border: heavy $pfx-accent-dim;
     border-title-color: $pfx-accent;
     border-title-style: bold;
-    border-title-background: #02040a;
+    border-title-background: #000000;
     padding: 1 2;
     margin: 1 0 1 1;
     text-align: left;
+    overflow: hidden;
 }
 
 /* High contrast text inside CRT panels */
 .gauge-panel Static,
 .log-panel Static {
     color: $pfx-fg;
+}
+
+/* Security gauge widget - black background to match panel */
+#security-gauge {
+    background: #000000;
 }
 
 .title {
@@ -2927,4 +2929,83 @@ Button.note-delete-btn:focus {
     color: #94a3b8;
     text-align: center;
     padding: 0 0 1 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SYSTEM TERMINAL - INTERACTIVE CLI WIDGET
+   Theme: Purple/Violet (#8b5cf6) for System Commands
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Terminal Container - constrained to fit log-panel */
+#system-terminal {
+    width: 1fr;
+    max-width: 100%;
+    height: 100%;
+    background: transparent;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Terminal Output - RichLog for command history */
+#terminal-output {
+    width: 1fr;
+    max-width: 100%;
+    height: 1fr;
+    background: #000000;
+    color: $pfx-fg;
+    border: none;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#terminal-output:focus {
+    border: none;
+}
+
+/* Terminal Input Row - Command entry line */
+#terminal-input-row {
+    width: 1fr;
+    max-width: 100%;
+    height: 1;
+    background: #000000;
+    align: left middle;
+    padding: 0;
+    dock: bottom;
+}
+
+/* Terminal Prompt - Arrow indicator */
+.terminal-prompt,
+#terminal-prompt {
+    width: auto;
+    height: 1;
+    color: $pfx-success;
+    text-style: bold;
+    background: transparent;
+    padding: 0;
+}
+
+/* Terminal Input - Command text entry (terminal style) */
+#terminal-input {
+    width: 1fr;
+    height: 1;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: $pfx-fg;
+}
+
+#terminal-input:focus {
+    border: none;
+    background: transparent;
+}
+
+#terminal-input > .input--placeholder {
+    color: #475569;
+}
+
+#terminal-input > .input--cursor {
+    background: $pfx-success;
+    color: $pfx-bg;
 }

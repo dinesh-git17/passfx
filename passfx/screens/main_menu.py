@@ -12,10 +12,11 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.events import Click
 from textual.screen import Screen
-from textual.widgets import Digits, Label, OptionList, Static
+from textual.widgets import Digits, Input, Label, OptionList, Static
 from textual.widgets.option_list import Option
 
 from passfx.utils.strength import VaultHealthResult, analyze_vault
+from passfx.widgets.terminal import SystemTerminal
 
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
@@ -147,6 +148,8 @@ class MainMenuScreen(Screen):
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("question_mark", "help", "Help"),
+        Binding("escape", "focus_sidebar", "Back to Menu", show=False),
+        Binding("slash", "focus_terminal", "Terminal", show=False),
     ]
 
     def compose(self) -> ComposeResult:
@@ -217,10 +220,10 @@ class MainMenuScreen(Screen):
                         yield Label("RECOVERY", classes="stat-label")
                         yield Digits("00", id="digits-recovery", classes="stat-value")
 
-                # Security gauge and System log - side by side (responsive)
+                # Security gauge and System terminal - side by side (responsive)
                 with Horizontal(id="panels-row"):
                     yield SecurityScore(id="security-gauge", classes="gauge-panel")
-                    yield Static(id="system-log", classes="log-panel")
+                    yield SystemTerminal(id="system-terminal", classes="log-panel")
 
         # Custom footer - Mechanical keycap command strip
         with Horizontal(id="app-footer"):
@@ -235,6 +238,12 @@ class MainMenuScreen(Screen):
                     yield Static("[bold #a78bfa] ⏎ [/]", classes="keycap")
                     yield Static("[#64748b]Select[/]", classes="keycap-label")
                 with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #a78bfa] / [/]", classes="keycap")
+                    yield Static("[#64748b]Terminal[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #a78bfa] ESC [/]", classes="keycap")
+                    yield Static("[#64748b]Back[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
                     yield Static("[bold #a78bfa] ? [/]", classes="keycap")
                     yield Static("[#64748b]Help[/]", classes="keycap-label")
                 with Horizontal(classes="keycap-group"):
@@ -244,9 +253,27 @@ class MainMenuScreen(Screen):
     def on_mount(self) -> None:
         """Initialize dashboard data on mount."""
         self._focus_sidebar()
+        self._log_startup_sequence()
         self._refresh_dashboard()
         self._update_clock()
         self.set_interval(1, self._update_clock)
+
+    def _log_startup_sequence(self) -> None:
+        """Log welcome message and tips to the terminal."""
+        terminal = self.query_one("#system-terminal", SystemTerminal)
+        terminal.border_title = "SYSTEM TERMINAL"
+
+        # Welcome and explanation
+        terminal.log_raw("[bold #8b5cf6]Quick Navigation Terminal[/]")
+        terminal.log_raw("[dim]Navigate PassFX using commands[/]")
+        terminal.log_raw("")
+        terminal.log_raw("[#64748b]Commands:[/]")
+        terminal.log_raw("  [#60a5fa]/key[/]  [dim]→ Passwords[/]")
+        terminal.log_raw("  [#60a5fa]/gen[/]  [dim]→ Generator[/]")
+        terminal.log_raw("  [#60a5fa]/help[/] [dim]→ All commands[/]")
+        terminal.log_raw("")
+        terminal.log_raw("[dim]Press[/] [#a78bfa]/[/] [dim]to focus terminal[/]")
+        terminal.log_raw("[dim]Press[/] [#a78bfa]ESC[/] [dim]to return to menu[/]")
 
     def _update_clock(self) -> None:
         """Update the header clock with current time and vault stats."""
@@ -275,8 +302,21 @@ class MainMenuScreen(Screen):
         """Focus the sidebar menu."""
         self.query_one("#sidebar-menu", OptionList).focus()
 
+    def action_focus_sidebar(self) -> None:
+        """Action to return focus to the sidebar menu (triggered by ESC)."""
+        self._focus_sidebar()
+
+    def action_focus_terminal(self) -> None:
+        """Action to focus the terminal input (triggered by /)."""
+        terminal = self.query_one("#system-terminal", SystemTerminal)
+        terminal.focus_input()
+
     def _refresh_dashboard(self) -> None:
-        """Refresh all dashboard widgets with current vault data."""
+        """Refresh dashboard stat widgets with current vault data.
+
+        Note: This only updates the stat digits and security gauge.
+        Terminal logs are handled separately in _log_startup_sequence.
+        """
         app: PassFXApp = self.app  # type: ignore
         stats = app.vault.get_stats() if app._unlocked else {}
 
@@ -286,7 +326,6 @@ class MainMenuScreen(Screen):
         notes_count = stats.get("notes", 0)
         envs_count = stats.get("envs", 0)
         recovery_count = stats.get("recovery", 0)
-        total = stats.get("total", 0)
 
         # Update stat digits - Row 1
         self.query_one("#digits-passwords", Digits).update(f"{email_count:02d}")
@@ -310,25 +349,6 @@ class MainMenuScreen(Screen):
         gauge_widget = self.query_one("#security-gauge", SecurityScore)
         gauge_widget.border_title = "VAULT HEALTH"
         gauge_widget.update_health(health)
-
-        # System log with bracketed timestamps (terminal buffer style)
-        ts = datetime.now().strftime("%H:%M:%S")
-        status_lines = [
-            f"[dim #555555][{ts}][/] [bold #22c55e]➜[/] VAULT MOUNTED (AES-256)",
-            f"[dim #555555][{ts}][/] [bold #3b82f6]i[/] INDEXED: {total} ITEMS",
-            f"[dim #555555][{ts}][/] [bold #22c55e]✓[/] ENCRYPTION VERIFIED",
-        ]
-
-        if health.issues:
-            for issue in health.issues[:2]:  # Limit to 2 issues
-                status_lines.append(f"[dim #555555][{ts}][/] [bold #ef4444]![/] {issue.upper()}")
-        else:
-            status_lines.append(f"[dim #555555][{ts}][/] [bold #22c55e]✓[/] SECURITY AUDIT: PASS")
-            status_lines.append(f"[dim #555555][{ts}][/] [bold #3b82f6]i[/] SYSTEM READY")
-
-        log_widget = self.query_one("#system-log", Static)
-        log_widget.border_title = "SYSTEM LOG"
-        log_widget.update("\n".join(status_lines))
 
     def on_click(self, event: Click) -> None:
         """Handle clicks on stat segments."""
@@ -379,6 +399,65 @@ class MainMenuScreen(Screen):
             self.action_help()
         elif option_id == "exit":
             self.action_quit()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle terminal command input submission."""
+        if event.input.id != "terminal-input":
+            return
+
+        terminal = self.query_one("#system-terminal", SystemTerminal)
+        raw_command = event.value.strip()
+
+        # Clear input and keep focus
+        terminal.clear_input()
+        terminal.focus_input()
+
+        if not raw_command:
+            return
+
+        # Echo the command to the log
+        terminal.log(f"[bold #a78bfa]>[/] {raw_command}")
+
+        # Normalize command: remove leading slash, uppercase for matching
+        command = raw_command.lstrip("/").upper()
+
+        # Command mapping
+        commands = {
+            "KEY": self.action_passwords,
+            "PASSWORDS": self.action_passwords,
+            "PIN": self.action_phones,
+            "PHONES": self.action_phones,
+            "CRD": self.action_cards,
+            "CARDS": self.action_cards,
+            "MEM": self.action_notes,
+            "NOTES": self.action_notes,
+            "ENV": self.action_envs,
+            "ENVS": self.action_envs,
+            "SOS": self.action_recovery,
+            "RECOVERY": self.action_recovery,
+            "GEN": self.action_generator,
+            "GENERATOR": self.action_generator,
+            "SET": self.action_settings,
+            "SETTINGS": self.action_settings,
+            "HELP": self.action_help,
+            "?": self.action_help,
+            "QUIT": self.action_quit,
+            "EXIT": self.action_quit,
+            "Q": self.action_quit,
+        }
+
+        # Special commands
+        if command in ("CLEAR", "CLS"):
+            terminal.clear_log()
+            self._log_startup_sequence()
+            return
+
+        # Execute navigation command
+        if command in commands:
+            terminal.log("[bold #8b5cf6]⟩[/] Executing navigation protocol...")
+            commands[command]()
+        else:
+            terminal.log("[bold #ef4444]✗[/] Command not recognized. Try [bold]/help[/]")
 
     def action_passwords(self) -> None:
         """Go to passwords screen."""
