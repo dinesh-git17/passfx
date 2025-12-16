@@ -270,34 +270,54 @@ FooterKey > .footer-key--description {
     margin-bottom: 1;
 }
 
-#stats-row {
+/* Stats HUD Strip - Hardware Panel Look */
+#stats-strip {
+    height: auto;
+    background: #0a0e27;
+    padding: 0;
+    margin: 1 0;
+}
+
+.stat-segment {
+    width: 1fr;
     height: auto;
     align: center middle;
-    padding: 1 0;
+    padding: 1 1;
+    border-right: solid #334155;
 }
 
-.stat-card {
-    width: 16;
-    height: 4;
-    background: #1e293b;
-    border: none;
-    text-align: center;
-    content-align: center middle;
-    padding: 0;
-    margin: 0 1;
-    color: #22c55e;
+.stat-segment:hover {
+    background: #1d4ed820;
+}
+
+.stat-segment:last-child {
+    border-right: none;
+}
+
+.stat-label {
+    color: $pfx-muted;
     text-style: bold;
+    text-align: center;
+    height: 1;
+    padding: 0;
 }
 
-.stat-card:hover {
-    background: #334155;
-    border: none;
+.stat-value {
+    height: 7;
+    text-align: center;
 }
 
-.stat-card:focus {
-    background: #3b82f6;
-    color: #0f172a;
-    border: none;
+/* Distinct neon colors for each stat category */
+#digits-passwords {
+    color: $pfx-primary-light;
+}
+
+#digits-phones {
+    color: $pfx-accent;
+}
+
+#digits-cards {
+    color: $pfx-success;
 }
 
 #panels-row {

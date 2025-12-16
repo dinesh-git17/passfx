@@ -11,8 +11,9 @@ from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.events import Click
 from textual.screen import Screen
-from textual.widgets import Button, OptionList, Static
+from textual.widgets import Digits, Label, OptionList, Static
 from textual.widgets.option_list import Option
 
 from passfx.utils.strength import check_strength
@@ -112,11 +113,22 @@ class MainMenuScreen(Screen):
                     id="dashboard-title",
                 )
 
-                # Stats row - clickable cards
-                with Horizontal(id="stats-row"):
-                    yield Button("PASSWORDS\n0", id="stat-passwords", classes="stat-card")
-                    yield Button("PINS\n0", id="stat-phones", classes="stat-card")
-                    yield Button("CARDS\n0", id="stat-cards", classes="stat-card")
+                # Stats HUD strip
+                with Horizontal(id="stats-strip"):
+                    # Segment 1: Passwords
+                    with Vertical(id="segment-passwords", classes="stat-segment"):
+                        yield Label("PASSWORDS", classes="stat-label")
+                        yield Digits("00", id="digits-passwords", classes="stat-value")
+
+                    # Segment 2: PINs
+                    with Vertical(id="segment-phones", classes="stat-segment"):
+                        yield Label("PINS", classes="stat-label")
+                        yield Digits("00", id="digits-phones", classes="stat-value")
+
+                    # Segment 3: Cards
+                    with Vertical(id="segment-cards", classes="stat-segment"):
+                        yield Label("CARDS", classes="stat-label")
+                        yield Digits("00", id="digits-cards", classes="stat-value")
 
                 # Security gauge and System log - side by side
                 with Horizontal(id="panels-row"):
@@ -157,10 +169,10 @@ class MainMenuScreen(Screen):
         card_count = stats.get("cards", 0)
         total = stats.get("total", 0)
 
-        # Update stat cards (Buttons)
-        self.query_one("#stat-passwords", Button).label = f"PASSWORDS\n{email_count}"
-        self.query_one("#stat-phones", Button).label = f"PINS\n{phone_count}"
-        self.query_one("#stat-cards", Button).label = f"CARDS\n{card_count}"
+        # Update stat digits
+        self.query_one("#digits-passwords", Digits).update(f"{email_count:02d}")
+        self.query_one("#digits-phones", Digits).update(f"{phone_count:02d}")
+        self.query_one("#digits-cards", Digits).update(f"{card_count:02d}")
 
         # Run security analysis
         analysis = self._analyze_security(app)
@@ -353,16 +365,21 @@ class MainMenuScreen(Screen):
         else:
             return "#ef4444"  # Red - Poor
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle stat card button clicks."""
-        button_id = event.button.id
-
-        if button_id == "stat-passwords":
-            self.action_passwords()
-        elif button_id == "stat-phones":
-            self.action_phones()
-        elif button_id == "stat-cards":
-            self.action_cards()
+    def on_click(self, event: Click) -> None:
+        """Handle clicks on stat segments."""
+        # Check if click is within a stat segment
+        widget = event.widget
+        while widget is not None:
+            if widget.id == "segment-passwords":
+                self.action_passwords()
+                return
+            elif widget.id == "segment-phones":
+                self.action_phones()
+                return
+            elif widget.id == "segment-cards":
+                self.action_cards()
+                return
+            widget = widget.parent
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         """Handle menu selection."""
