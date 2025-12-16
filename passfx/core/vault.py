@@ -12,6 +12,7 @@ from passfx.core.models import (
     Credential,
     CreditCard,
     EmailCredential,
+    EnvEntry,
     PhoneCredential,
     credential_from_dict,
 )
@@ -64,6 +65,7 @@ class Vault:
             "emails": [],
             "phones": [],
             "cards": [],
+            "envs": [],
         }
         self._last_activity: float = 0
         self._lock_timeout: int = 300  # 5 minutes default
@@ -120,7 +122,7 @@ class Vault:
         self._crypto = CryptoManager(master_password, salt)
 
         # Initialize empty data
-        self._data = {"emails": [], "phones": [], "cards": []}
+        self._data = {"emails": [], "phones": [], "cards": [], "envs": []}
 
         # Save empty vault
         self._save()
@@ -150,6 +152,9 @@ class Vault:
             encrypted_data = self.path.read_bytes()
             decrypted = self._crypto.decrypt(encrypted_data)
             self._data = json.loads(decrypted.decode("utf-8"))
+            # Migrate older vaults that don't have "envs" key
+            if "envs" not in self._data:
+                self._data["envs"] = []
             self._update_activity()
         except DecryptionError:
             self._crypto = None
@@ -163,7 +168,7 @@ class Vault:
         if self._crypto:
             self._crypto.wipe()
             self._crypto = None
-        self._data = {"emails": [], "phones": [], "cards": []}
+        self._data = {"emails": [], "phones": [], "cards": [], "envs": []}
 
     def _save(self) -> None:
         """Save the vault to disk."""
@@ -333,10 +338,55 @@ class Vault:
                 return True
         return False
 
+    # --- Environment Variables ---
+
+    def add_env(self, env: EnvEntry) -> None:
+        """Add an environment entry to the vault."""
+        self._update_activity()
+        if "envs" not in self._data:
+            self._data["envs"] = []
+        self._data["envs"].append(env.to_dict())
+        self._save()
+
+    def get_envs(self) -> list[EnvEntry]:
+        """Get all environment entries."""
+        self._update_activity()
+        return [EnvEntry.from_dict(d) for d in self._data.get("envs", [])]
+
+    def get_env_by_id(self, entry_id: str) -> EnvEntry | None:
+        """Get an environment entry by ID."""
+        self._update_activity()
+        for d in self._data.get("envs", []):
+            if d.get("id") == entry_id:
+                return EnvEntry.from_dict(d)
+        return None
+
+    def update_env(self, entry_id: str, **kwargs: Any) -> bool:
+        """Update an environment entry."""
+        self._update_activity()
+        for i, d in enumerate(self._data.get("envs", [])):
+            if d.get("id") == entry_id:
+                env = EnvEntry.from_dict(d)
+                env.update(**kwargs)
+                self._data["envs"][i] = env.to_dict()
+                self._save()
+                return True
+        return False
+
+    def delete_env(self, entry_id: str) -> bool:
+        """Delete an environment entry."""
+        self._update_activity()
+        for i, d in enumerate(self._data.get("envs", [])):
+            if d.get("id") == entry_id:
+                del self._data["envs"][i]
+                self._save()
+                return True
+        return False
+
     # --- Search ---
 
     def search(self, query: str) -> list[Credential]:
-        """Search all credentials by label, email, phone, or cardholder name.
+        """Search all credentials by label, email, phone, cardholder name, or env title.
 
         Args:
             query: Search query (case-insensitive).
@@ -372,6 +422,15 @@ class Vault:
             ):
                 results.append(CreditCard.from_dict(d))
 
+        for d in self._data.get("envs", []):
+            if (
+                query_lower in d.get("title", "").lower()
+                or query_lower in d.get("filename", "").lower()
+                or query_lower in d.get("content", "").lower()
+                or query_lower in (d.get("notes") or "").lower()
+            ):
+                results.append(EnvEntry.from_dict(d))
+
         return results
 
     # --- Stats ---
@@ -382,10 +441,12 @@ class Vault:
             "emails": len(self._data["emails"]),
             "phones": len(self._data["phones"]),
             "cards": len(self._data["cards"]),
+            "envs": len(self._data.get("envs", [])),
             "total": (
                 len(self._data["emails"])
                 + len(self._data["phones"])
                 + len(self._data["cards"])
+                + len(self._data.get("envs", []))
             ),
         }
 
@@ -400,27 +461,29 @@ class Vault:
         """Import data into the vault.
 
         Args:
-            data: Data to import with 'emails', 'phones', 'cards' keys.
+            data: Data to import with 'emails', 'phones', 'cards', 'envs' keys.
             merge: If True, merge with existing data. If False, replace.
 
         Returns:
             Count of imported items by type.
         """
         self._update_activity()
-        counts = {"emails": 0, "phones": 0, "cards": 0}
+        counts = {"emails": 0, "phones": 0, "cards": 0, "envs": 0}
 
         if not merge:
-            self._data = {"emails": [], "phones": [], "cards": []}
+            self._data = {"emails": [], "phones": [], "cards": [], "envs": []}
 
         # Get existing IDs to avoid duplicates
         existing_ids = set()
-        for category in ["emails", "phones", "cards"]:
+        for category in ["emails", "phones", "cards", "envs"]:
             for item in self._data.get(category, []):
                 existing_ids.add(item.get("id"))
 
-        for category in ["emails", "phones", "cards"]:
+        for category in ["emails", "phones", "cards", "envs"]:
             for item in data.get(category, []):
                 if item.get("id") not in existing_ids:
+                    if category not in self._data:
+                        self._data[category] = []
                     self._data[category].append(item)
                     counts[category] += 1
 

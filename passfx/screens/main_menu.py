@@ -81,6 +81,7 @@ class MainMenuScreen(Screen):
 
     BINDINGS = [
         Binding("q", "quit", "Quit"),
+        Binding("question_mark", "help", "Help"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -100,8 +101,10 @@ class MainMenuScreen(Screen):
                     Option(_make_menu_item("KEY", "Passwords"), id="passwords"),
                     Option(_make_menu_item("PIN", "Phones"), id="phones"),
                     Option(_make_menu_item("CRD", "Cards"), id="cards"),
+                    Option(_make_menu_item("ENV", "Env Vars"), id="envs"),
                     Option(_make_menu_item("GEN", "Generator"), id="generator"),
                     Option(_make_menu_item("SET", "Settings"), id="settings"),
+                    Option(_make_menu_item("?", "Help"), id="help"),
                     Option(_make_menu_item("EXIT", "Quit"), id="exit"),
                     id="sidebar-menu",
                 )
@@ -451,10 +454,14 @@ class MainMenuScreen(Screen):
             self.action_phones()
         elif option_id == "cards":
             self.action_cards()
+        elif option_id == "envs":
+            self.action_envs()
         elif option_id == "generator":
             self.action_generator()
         elif option_id == "settings":
             self.action_settings()
+        elif option_id == "help":
+            self.action_help()
         elif option_id == "exit":
             self.action_quit()
 
@@ -476,6 +483,12 @@ class MainMenuScreen(Screen):
 
         self.app.push_screen(CardsScreen())
 
+    def action_envs(self) -> None:
+        """Go to env vars screen."""
+        from passfx.screens.envs import EnvsScreen
+
+        self.app.push_screen(EnvsScreen())
+
     def action_generator(self) -> None:
         """Go to password generator screen."""
         from passfx.screens.generator import GeneratorScreen
@@ -487,6 +500,12 @@ class MainMenuScreen(Screen):
         from passfx.screens.settings import SettingsScreen
 
         self.app.push_screen(SettingsScreen())
+
+    def action_help(self) -> None:
+        """Show the help screen."""
+        from passfx.screens.help import HelpScreen
+
+        self.app.push_screen(HelpScreen())
 
     def action_quit(self) -> None:
         """Quit the application."""

@@ -1777,3 +1777,486 @@ CommandPalette OptionList > .option-list--option-hover {
     background: $pfx-surface-light;
     color: $pfx-fg;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HELP SCREEN - SYSTEM OPERATOR'S MANUAL
+   Theme: Holographic Cyan (#00d4ff) for informational overlay
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Help Modal Container */
+#help-modal {
+    width: 70;
+    height: auto;
+    max-height: 40;
+    background: #0a0e27;
+    border: heavy #00d4ff;
+    padding: 0;
+}
+
+/* Help Header - Inverted block style */
+#help-modal #help-header {
+    width: 100%;
+    height: 1;
+    background: #00d4ff;
+    color: #000000;
+    text-style: bold;
+    text-align: center;
+    content-align: center middle;
+    padding: 0;
+}
+
+/* Help Subtitle */
+#help-subtitle {
+    width: 100%;
+    height: 1;
+    text-align: center;
+    padding: 0;
+    margin-bottom: 1;
+}
+
+/* Help Footer */
+#help-footer {
+    width: 100%;
+    height: 1;
+    background: $pfx-surface;
+    padding: 0 2;
+    dock: bottom;
+}
+
+#help-footer-left {
+    width: 1fr;
+    height: 1;
+}
+
+#help-footer-right {
+    width: auto;
+    height: 1;
+}
+
+/* Tabbed Content Container */
+#help-tabs {
+    width: 100%;
+    height: 1fr;
+    background: transparent;
+    padding: 0;
+}
+
+/* Tab Bar */
+#help-tabs Tabs {
+    background: #0a0e27;
+    width: 100%;
+    height: 3;
+    dock: top;
+}
+
+#help-tabs Tab {
+    background: $pfx-surface;
+    color: #64748b;
+    padding: 0 3;
+    margin: 0 1 0 0;
+    text-style: bold;
+    min-width: 12;
+}
+
+#help-tabs Tab:hover {
+    background: $pfx-surface-light;
+    color: #00d4ff;
+}
+
+#help-tabs Tab.-active {
+    background: #00d4ff;
+    color: #000000;
+    text-style: bold;
+}
+
+/* Tab Underline */
+#help-tabs Underline {
+    background: $pfx-surface;
+}
+
+#help-tabs Underline > .underline--bar {
+    background: #00d4ff;
+    color: #00d4ff;
+}
+
+/* Content Switcher */
+#help-tabs ContentSwitcher {
+    background: transparent;
+    height: 1fr;
+    padding: 0;
+}
+
+/* Tab Panes */
+#help-tabs TabPane {
+    background: transparent;
+    padding: 0;
+    height: 1fr;
+}
+
+/* Scrollable areas inside tabs */
+#commands-scroll,
+#legend-scroll,
+#system-scroll {
+    background: transparent;
+    height: 1fr;
+    padding: 1 2;
+}
+
+/* Content Static widgets */
+#commands-content,
+#legend-content,
+#system-content {
+    background: transparent;
+    color: $pfx-fg;
+    padding: 0;
+    height: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENV VARS SCREEN - CONFIG INJECTOR THEME
+   Theme: Amber/Yellow (#f59e0b) for Low-level System Access
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Amber accent color */
+$pfx-amber: #f59e0b;
+$pfx-amber-dim: #92400e;
+$pfx-amber-light: #fbbf24;
+
+/* ENV Header Block - Amber variant */
+.env-header {
+    background: #f59e0b;
+    color: #000000;
+}
+
+/* ENV Card wrapper with amber accent */
+.env-card {
+    border-left: heavy #f59e0b;
+}
+
+/* ENV Preview with amber border */
+.env-preview {
+    border: solid #f59e0b 50%;
+    border-title-color: #f59e0b;
+}
+
+/* ENV Table - Mainframe Terminal Look with Amber accents */
+#envs-table {
+    background: $pfx-bg;
+    border: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 1fr;
+}
+
+#envs-table:focus {
+    border: none;
+}
+
+#envs-table > .datatable--cursor {
+    background: #1e293b;
+    color: $pfx-fg;
+    text-style: none;
+}
+
+#envs-table > .datatable--cursor:hover {
+    background: #1e293b;
+}
+
+#envs-table > .datatable--header {
+    background: #92400e;
+    color: #fef3c7;
+    text-style: bold;
+}
+
+#envs-table > .datatable--even-row {
+    background: #02040a;
+    border-bottom: solid #1e293b;
+}
+
+#envs-table > .datatable--odd-row {
+    background: #060a12;
+    border-bottom: solid #1e293b;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CODE EDITOR / TEXTAREA STYLING
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Code Editor TextArea - Dark terminal look */
+.code-editor {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: solid #f59e0b 50%;
+    padding: 1;
+    margin: 0 0 1 0;
+    height: 12;
+    max-height: 12;
+}
+
+.code-editor:focus {
+    border: solid #f59e0b;
+}
+
+/* TextArea cursor and selection */
+TextArea {
+    background: #1e1e1e;
+    color: #d4d4d4;
+}
+
+TextArea:focus {
+    border: solid #f59e0b;
+}
+
+TextArea > .text-area--cursor {
+    background: #f59e0b;
+    color: #000000;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENV MODAL SCREENS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* View ENV Modal */
+#env-view-modal {
+    width: 70;
+    height: auto;
+    max-height: 40;
+    background: $pfx-bg;
+    border: heavy #f59e0b;
+    padding: 1 2;
+}
+
+#env-view-title {
+    text-align: center;
+    text-style: bold;
+    color: #f59e0b;
+    padding: 0 0 1 0;
+    border-bottom: solid #f59e0b 50%;
+}
+
+#env-view-info {
+    padding: 1 0;
+}
+
+.env-view-name {
+    text-style: bold;
+}
+
+.env-view-filename {
+    padding: 0 0 1 0;
+}
+
+.env-view-stats {
+    height: auto;
+}
+
+.env-view-stats Static {
+    margin-right: 3;
+}
+
+/* Read-only code editor for viewing */
+.code-editor-view {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: solid #f59e0b 50%;
+    padding: 1;
+    height: 16;
+    max-height: 16;
+}
+
+#env-view-footer {
+    text-align: center;
+    padding: 1 0;
+}
+
+#env-view-modal #modal-buttons {
+    width: 100%;
+    height: auto;
+    padding: 1 0 0 0;
+    align: center middle;
+}
+
+#env-view-modal #modal-buttons Button {
+    width: 16;
+    margin: 0 2;
+}
+
+/* Add/Edit ENV Modal */
+#env-edit-modal {
+    width: 70;
+    height: auto;
+    max-height: 45;
+    background: $pfx-bg;
+    border: heavy #f59e0b;
+    padding: 2 3;
+}
+
+#env-edit-title {
+    text-style: bold;
+    color: #f59e0b;
+    text-align: center;
+    padding: 0 0 1 0;
+    margin-bottom: 1;
+}
+
+#env-form {
+    padding: 1 0;
+    height: auto;
+    max-height: 35;
+    overflow-y: auto;
+}
+
+.env-input-label {
+    color: #f59e0b;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+}
+
+#env-form Input {
+    background: transparent;
+    border: none;
+    border-bottom: solid #92400e;
+    padding: 0 1 0 1;
+    margin: 0 0 1 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 2;
+}
+
+#env-form Input:focus {
+    border-bottom: heavy #f59e0b;
+}
+
+/* ENV Modal Buttons Container */
+#env-edit-modal #modal-buttons {
+    width: 100%;
+    height: auto;
+    padding: 2 0 0 0;
+    align: center middle;
+}
+
+#env-edit-modal #modal-buttons Button {
+    width: 16;
+    margin: 0 1;
+}
+
+#env-edit-modal #cancel-button {
+    background: $pfx-surface;
+    color: $pfx-muted;
+    border: solid $pfx-surface-light;
+}
+
+#env-edit-modal #cancel-button:hover {
+    background: $pfx-surface-light;
+    color: $pfx-fg;
+}
+
+/* Import button - distinctive style */
+Button.import-btn {
+    background: #451a03;
+    color: #fbbf24;
+    border: solid #f59e0b;
+    text-style: bold;
+    content-align: center middle;
+}
+
+Button.import-btn:hover {
+    background: #f59e0b;
+    color: #000000;
+}
+
+Button.import-btn:focus {
+    background: #78350f;
+    color: #fbbf24;
+    border: solid #f59e0b;
+}
+
+/* ENV Modal Save Button - Amber styling */
+Button.env-save-btn {
+    background: #f59e0b;
+    color: #000000;
+    border: solid #f59e0b;
+    text-style: bold;
+    content-align: center middle;
+}
+
+Button.env-save-btn:hover {
+    background: #fbbf24;
+    color: #000000;
+}
+
+Button.env-save-btn:focus {
+    background: #fbbf24;
+    color: #000000;
+    border: solid #fbbf24;
+}
+
+/* ENV Modal Delete Button - Red styling */
+Button.env-delete-btn {
+    background: #ef4444;
+    color: #ffffff;
+    border: solid #ef4444;
+    text-style: bold;
+    content-align: center middle;
+}
+
+Button.env-delete-btn:hover {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+Button.env-delete-btn:focus {
+    background: #dc2626;
+    color: #ffffff;
+    border: solid #dc2626;
+}
+
+/* Import Path Modal */
+#import-modal {
+    width: 50;
+    height: auto;
+    background: $pfx-bg;
+    border: heavy #f59e0b;
+    padding: 2 3;
+}
+
+#import-title {
+    text-style: bold;
+    color: #f59e0b;
+    text-align: center;
+    padding: 0 0 1 0;
+}
+
+#import-hint {
+    text-align: center;
+    padding: 1 0;
+}
+
+
+/* Delete ENV Modal */
+#env-delete-modal {
+    width: 50;
+    height: auto;
+    background: $pfx-bg;
+    border: heavy #f59e0b;
+    padding: 2 3;
+}
+
+#delete-title {
+    text-style: bold;
+    color: #f59e0b;
+    text-align: center;
+    padding: 0 0 1 0;
+}
+
+#delete-content {
+    padding: 1 0;
+    text-align: center;
+}
+
+.delete-target {
+    text-align: center;
+    padding: 1 0;
+}
