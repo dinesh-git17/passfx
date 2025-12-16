@@ -225,8 +225,8 @@ class GeneratorScreen(Screen):
 
                         # Password Options (default visible)
                         with Vertical(id="password-options", classes="config-panel"):
-                            yield Label("LENGTH:", classes="config-label")
-                            yield Input(value="16", id="length-input")
+                            yield Label("LENGTH (8-128):", classes="config-label")
+                            yield Input(value="16", placeholder="8-128", id="length-input")
                             yield Checkbox(
                                 "Exclude ambiguous (0, O, l, 1)",
                                 id="exclude-ambiguous",
@@ -240,15 +240,15 @@ class GeneratorScreen(Screen):
 
                         # Passphrase Options (hidden by default)
                         with Vertical(id="passphrase-options", classes="config-panel"):
-                            yield Label("WORDS:", classes="config-label")
-                            yield Input(value="4", id="words-input")
+                            yield Label("WORDS (3-10):", classes="config-label")
+                            yield Input(value="4", placeholder="3-10", id="words-input")
                             yield Label("SEPARATOR:", classes="config-label")
                             yield Input(value="-", id="separator-input")
 
                         # PIN Options (hidden by default)
                         with Vertical(id="pin-options", classes="config-panel"):
-                            yield Label("DIGITS:", classes="config-label")
-                            yield Input(value="6", id="pin-length-input")
+                            yield Label("DIGITS (4-12):", classes="config-label")
+                            yield Input(value="6", placeholder="4-12", id="pin-length-input")
 
                     # Section B: Output Display
                     with Vertical(id="output-section"):
