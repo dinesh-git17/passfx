@@ -10,8 +10,8 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable
 
-# Track active clipboard timers
-_active_timer: threading.Timer | None = None
+# Track active clipboard timers (mutable module state, not a constant)
+_active_timer: threading.Timer | None = None  # pylint: disable=invalid-name
 _clipboard_lock = threading.Lock()
 
 # Default clear timeout in seconds
