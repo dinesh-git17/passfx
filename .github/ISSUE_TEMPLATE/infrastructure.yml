@@ -1,0 +1,102 @@
+name: Infrastructure / Maintenance
+description: CI, tooling, dependencies, security, or repository configuration
+labels: ["infrastructure", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for infrastructure, tooling, and maintenance tasks.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: What area does this issue concern?
+      options:
+        - CI / GitHub Actions
+        - Dependencies / Updates
+        - Development Tooling
+        - Security Hardening
+        - Repository Configuration
+        - Build / Packaging
+        - Documentation Infrastructure
+        - Testing Infrastructure
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the infrastructure change or issue
+      placeholder: "We need to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this change needed? What problem does it solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Changes
+      description: What specific changes are you proposing?
+      placeholder: |
+        - Update X to version Y
+        - Add workflow for Z
+        - Configure setting A
+    validations:
+      required: true
+
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk Level
+      description: What is the risk of this change?
+      options:
+        - Low (no impact on functionality, easy to revert)
+        - Medium (some impact, requires testing)
+        - High (significant impact, careful rollout needed)
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk-details
+    attributes:
+      label: Risk Assessment
+      description: What could go wrong? What is the blast radius?
+    validations:
+      required: false
+
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback Plan
+      description: How can we revert if something goes wrong?
+      placeholder: "Revert commit / Restore previous config / etc."
+    validations:
+      required: false
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing Plan
+      description: How will this change be validated?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate
+          required: true
+        - label: I have considered the impact on existing workflows
+          required: true
