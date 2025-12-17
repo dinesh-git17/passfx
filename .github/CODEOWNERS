@@ -1,0 +1,6 @@
+# Code Owners for PassFX
+# All changes require review and approval from the repository owner.
+# This file enforces mandatory code review before merging to protected branches.
+
+# Repository-wide ownership - all files require owner approval
+* @dinesh-git17
