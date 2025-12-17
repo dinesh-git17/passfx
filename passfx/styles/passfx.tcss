@@ -338,7 +338,8 @@ FooterKey > .footer-key--description {
 #stats-strip,
 #stats-strip-2 {
     width: 100%;
-    height: 10;
+    height: 2fr;
+    max-height: 10;
     background: #0a0e27;
     padding: 0;
 }
@@ -380,9 +381,9 @@ FooterKey > .footer-key--description {
     background: transparent;
 }
 
-/* Digits - Fixed height for consistency */
+/* Digits - Flexible height for responsiveness */
 .stat-value {
-    height: 7;
+    height: 1fr;
     text-align: center;
     background: transparent;
 }
@@ -416,14 +417,15 @@ FooterKey > .footer-key--description {
 /* Panels Row - Responsive Side-by-Side Layout */
 #panels-row {
     width: auto;
-    height: 16;
+    height: 3fr;
+    min-height: 8;
     align: left top;
     overflow: hidden;
 }
 
 /* CRT-style dashboard panels - deep recessed screen effect */
 .gauge-panel {
-    width: 44;
+    width: 1fr;
     height: 100%;
     background: #000000;
     border: heavy $pfx-primary-dim;
@@ -436,7 +438,7 @@ FooterKey > .footer-key--description {
 }
 
 .log-panel {
-    width: 44;
+    width: 1fr;
     height: 100%;
     background: #000000;
     border: heavy $pfx-accent-dim;

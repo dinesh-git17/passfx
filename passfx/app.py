@@ -7,6 +7,7 @@ from textual.binding import Binding
 
 from passfx.core.crypto import CryptoError
 from passfx.core.vault import Vault, VaultError
+from passfx.screens.login import LoginScreen
 
 
 class PassFXApp(App):
@@ -20,7 +21,7 @@ class PassFXApp(App):
         Binding("escape", "back", "Back", show=True),
     ]
 
-    SCREENS = {"login": "passfx.screens.login.LoginScreen"}
+    SCREENS = {"login": LoginScreen}
 
     def __init__(self) -> None:
         super().__init__()
