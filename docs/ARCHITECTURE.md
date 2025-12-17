@@ -56,6 +56,29 @@ The `CryptoManager` is the most critical component. It is a **Zero-Knowledge** m
 
 This is the most critical section. Here is exactly how data moves through the system.
 
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as TUI (Presentation)
+    participant Vault as Vault (Logic)
+    participant Crypto as CryptoManager
+    participant Disk as ~/.passfx/
+
+    User->>UI: Enters Master Password
+    UI->>Vault: Unlock Request
+    Vault->>Disk: Read Salt
+    Disk-->>Vault: Salt Bytes
+    Vault->>Crypto: Derive Key (Pass + Salt)
+    Crypto-->>Vault: Session Key (Memory Only)
+
+    Vault->>Disk: Read vault.enc
+    Disk-->>Vault: Encrypted Blob
+    Vault->>Crypto: Decrypt(Blob, Key)
+    Crypto-->>Vault: JSON Data
+    Vault->>UI: Show Dashboard
+```
+
+
 ### A. Unlocking the Vault
 
 1.  User inputs **Master Password**.
