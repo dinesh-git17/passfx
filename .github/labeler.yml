@@ -1,0 +1,96 @@
+# PR Labeler Configuration
+# Automatically applies labels based on changed file paths.
+# Documentation: https://github.com/actions/labeler
+
+# Documentation changes
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - '*.md'
+          - 'LICENSE*'
+          - '.github/*.md'
+
+# Security-critical code (core encryption, vault, crypto)
+security:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'passfx/core/crypto.py'
+          - 'passfx/core/vault.py'
+          - 'passfx/utils/generator.py'
+          - '.github/SECURITY*'
+          - 'SECURITY.md'
+
+# Core application logic
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'passfx/core/**'
+
+# User interface changes
+ui:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'passfx/screens/**'
+          - 'passfx/widgets/**'
+          - 'passfx/ui/**'
+          - '**/*.tcss'
+
+# Infrastructure, CI/CD, and tooling
+infra:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+          - '.pre-commit-config.yaml'
+          - 'pyproject.toml'
+          - 'setup.py'
+          - 'setup.cfg'
+          - 'requirements*.txt'
+          - 'Makefile'
+          - 'Dockerfile*'
+          - 'docker-compose*.yml'
+          - '.dockerignore'
+          - 'scripts/**'
+
+# Test changes
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'tests/**'
+          - 'conftest.py'
+          - 'pytest.ini'
+          - '.coveragerc'
+
+# Utility and helper code
+utils:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'passfx/utils/**'
+
+# CLI changes
+cli:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'passfx/cli.py'
+          - 'passfx/__main__.py'
+
+# Configuration and settings
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.toml'
+          - '*.ini'
+          - '*.cfg'
+          - '.pylintrc'
+          - '.flake8'
+          - 'ruff.toml'
+          - '.ruff.toml'
+
+# Dependencies
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'requirements*.txt'
+          - 'pyproject.toml'
+          - 'poetry.lock'
+          - 'Pipfile*'
