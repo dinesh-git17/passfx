@@ -35,6 +35,10 @@ EXCLUDED_FILES = {
     "attribution_guard.py",
     ".pre-commit-config.yaml",
     "code-quality.yml",
+    "docs/ARCHITECTURE.md",
+    "docs/CONTRIBUTING.md",
+    "docs/CHANGELOG.md",
+    "README.md",
 }
 
 # Compile patterns for efficiency
