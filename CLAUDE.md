@@ -84,7 +84,157 @@ def secure_delete(data: str) -> None:
 
 ---
 
-## Code Standards (FAANG Senior Engineer Level)
+## Modern Python Standards (2025)
+
+### Project Structure
+
+- Use `pyproject.toml` as the single source of truth
+- Keep packages flat and explicit
+- Include `tests/` at project root
+- Add a clear `README.md`
+
+### Python Version & Syntax
+
+- Target Python **3.11+** (3.12 if deps allow)
+- Use type hints everywhere
+- Prefer `dataclasses` (frozen) or `pydantic` for models
+- Avoid implicit globals and magic behavior
+- Explicit is better than implicit
+
+### Formatting & Style (Fully Automated)
+
+| Tool | Purpose |
+|------|---------|
+| **Black** | Code formatting (88 char lines) |
+| **isort** | Import sorting |
+| **Ruff** | Fast linting |
+
+Never format code manually. Let tooling handle it.
+
+### Linting Rules (Enforced in CI)
+
+- No unused imports or variables
+- No wildcard imports (`from x import *`)
+- No bare `except:` - catch specific exceptions
+- No commented-out code (delete it)
+- No `print()` in production code
+- Low cyclomatic complexity
+
+### Typing Discipline
+
+- Fully typed functions and methods
+- Use `TypedDict`, `Protocol`, `Literal` where appropriate
+- Avoid `Any` unless unavoidable (document why)
+- Pass `mypy --strict` cleanly
+
+```python
+# Good
+def derive_key(password: str, salt: bytes) -> bytes: ...
+
+# Bad
+def derive_key(password, salt): ...
+```
+
+### Error Handling
+
+- Create custom exception classes in `core/exceptions.py`
+- Catch specific exceptions only
+- Never swallow exceptions silently
+- Re-raise with context: `raise NewError(...) from e`
+- On crypto errors: lock vault, clear sensitive data
+
+```python
+# Good
+try:
+    data = decrypt(ciphertext)
+except InvalidToken as e:
+    self._lock_vault()
+    raise DecryptionError("Invalid master password") from e
+
+# Bad
+try:
+    data = decrypt(ciphertext)
+except:
+    pass
+```
+
+### Logging (No Print Debugging)
+
+- Use `logging` module exclusively
+- Prefer structured logs (JSON for services)
+- Log events, not thoughts
+- **NEVER** log secrets, passwords, or PII
+
+```python
+# Good
+logger.info("Vault unlocked", extra={"user_id": user_id})
+
+# Bad
+print(f"Password is {password}")
+logger.debug(f"Master password: {master_password}")
+```
+
+### Functions & Architecture
+
+- Functions do one thing (single responsibility)
+- Side effects are explicit and documented
+- Prefer pure functions where possible
+- Keep functions under ~40 lines
+- Separate business logic from I/O
+
+```python
+# Good - pure function
+def calculate_strength(password: str) -> int:
+    return zxcvbn(password)["score"]
+
+# Good - explicit side effect
+def save_credential(cred: Credential) -> None:
+    """Writes credential to vault. Side effect: disk I/O."""
+    self._vault.write(cred)
+```
+
+### Dependency Management
+
+| Requirement | Action |
+|-------------|--------|
+| Production deps | Pin exact versions |
+| Dev deps | Separate in `[project.optional-dependencies]` |
+| Lock file | Use `pip-tools` or `poetry.lock` |
+| Audit | Run `pip-audit` regularly |
+| Minimize | Fewer deps = smaller attack surface |
+
+### Performance & Readability
+
+- Readability over cleverness
+- Avoid premature optimization
+- Use standard library (`pathlib`, `itertools`, `functools`)
+- Avoid deep nesting (max 3 levels)
+- Prefer clarity over terseness
+
+```python
+# Good
+vault_path = Path.home() / ".passfx" / "vault.enc"
+
+# Bad
+vault_path = os.path.join(os.path.expanduser("~"), ".passfx", "vault.enc")
+```
+
+### Red Flags (Immediate Review Required)
+
+| Flag | Problem |
+|------|---------|
+| No type hints | Maintenance nightmare |
+| `print()` debugging | Unprofessional, security risk |
+| God functions (100+ lines) | Untestable, unmaintainable |
+| Silent exception handling | Hides bugs |
+| No tests | Unverifiable behavior |
+| Manual formatting | Inconsistent style |
+| Hidden global state | Unpredictable behavior |
+| `Any` types everywhere | Type safety defeated |
+
+---
+
+## Code Standards (Senior Engineer Level)
 
 ### Philosophy
 
@@ -112,26 +262,10 @@ def secure_delete(data: str) -> None:
 **Forbidden:**
 - Emojis in code/comments
 - Casual/conversational tone
-- Obvious restatements (`// encrypt the data`)
+- Obvious restatements (`# encrypt the data`)
 - Commented-out code (delete it)
 - Unscoped TODOs without tickets/context
 - Debugging leftovers (`print()`, `# testing`)
-
-### Python Standards
-
-- Python 3.11+ with strict type hints
-- No `Any` types unless absolutely necessary (document why)
-- Explicit return types for all functions
-- Frozen dataclasses for credential models
-- Unused variables prefixed with `_`
-
-### Error Handling
-
-- Never silently swallow errors
-- On crypto errors: lock vault, clear sensitive data
-- Log errors with context (never log sensitive data)
-- Handle edge cases explicitly
-- Use custom exceptions from `core/exceptions.py`
 
 ### Naming Conventions
 
@@ -206,8 +340,8 @@ passfx/
 ### Navigation Flow
 
 ```
-login.py → main_menu.py → [passwords | phones | cards | notes | envs | generator | settings]
-                         ↓
+login.py -> main_menu.py -> [passwords | phones | cards | notes | envs | generator | settings]
+                         |
                     All screens pop back to menu via ESC
 ```
 
@@ -225,10 +359,11 @@ pre-commit install
 passfx                    # Production
 python -m passfx          # Development
 
-# Quality
+# Quality (run before every commit)
+black passfx/             # Format
+isort passfx/             # Sort imports
 ruff check passfx/ --fix  # Lint
 mypy passfx/              # Type check
-black passfx/             # Format
 
 # Security
 bandit -r passfx/         # Security audit
@@ -251,6 +386,14 @@ pytest tests/ --cov=passfx --cov-report=html
 | `core/models.py` | 95% |
 | `utils/generator.py` | 95% |
 | Overall | 90% minimum |
+
+### Test Standards
+
+- Use `pytest` exclusively
+- Prioritize unit tests over integration tests
+- Test edge cases and error paths
+- Avoid flaky tests (no timing-dependent assertions)
+- Mock only at boundaries (I/O, external services)
 
 ### Test Categories
 
@@ -299,6 +442,37 @@ $pfx-surface: #151b3d;      /* Panel background */
 $pfx-text: #e0e0e0;         /* Light gray */
 $pfx-border: #00ff41 50%;   /* Green with opacity */
 ```
+
+---
+
+## CI / Automation
+
+### Required CI Checks
+
+All checks must pass before merge:
+
+```yaml
+# Example GitHub Actions workflow
+- run: black --check passfx/
+- run: isort --check passfx/
+- run: ruff check passfx/
+- run: mypy passfx/
+- run: bandit -r passfx/
+- run: pytest tests/ --cov=passfx --cov-fail-under=90
+```
+
+### Pre-commit Hooks
+
+Enable pre-commit hooks for automated quality checks:
+
+```bash
+pre-commit install
+```
+
+### Code Review Required
+
+- All PRs require at least one review
+- Security-critical changes (`core/`) require security-focused review
 
 ---
 
@@ -375,10 +549,19 @@ Fixes #89
 - [ ] Input validation on all user data
 - [ ] Secure deletion implemented where needed
 
+### Code Quality Review
+
+- [ ] Type hints on all functions and methods
+- [ ] No `Any` types (or documented exception)
+- [ ] Custom exceptions used appropriately
+- [ ] No `print()` statements
+- [ ] No commented-out code
+- [ ] Functions under 40 lines
+- [ ] Cyclomatic complexity acceptable
+
 ### Functional Review
 
-- [ ] Type hints on all functions
-- [ ] Docstrings on public APIs
+- [ ] Docstrings on public APIs (explain why, not what)
 - [ ] Unit tests with >90% coverage
 - [ ] Error messages are user-friendly (no stack traces to user)
 - [ ] No circular imports
