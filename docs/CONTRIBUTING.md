@@ -77,14 +77,13 @@ The CI pipeline validates:
 
 Your branch must be rebased or merged with the latest `main` before merging.
 
-### Commit Requirements
+### History Requirements
 
 | Rule | Status |
 |------|--------|
-| Require signed commits | Enforced |
 | Require linear history | Enforced |
 
-All commits merged to `main` must be GPG-signed. See [Setting Up Signed Commits](#setting-up-signed-commits).
+All merges use squash or rebase to maintain a clean, linear commit history.
 
 ### Administrative Protections
 
@@ -159,11 +158,11 @@ pylint passfx/ --rcfile=.pylintrc --fail-under=10.0
 
 ### Step 5: Commit Changes
 
-Commits must be signed. See [Setting Up Signed Commits](#setting-up-signed-commits).
+Follow the [Commit Standards](#commit-standards) when writing commit messages.
 
 ```bash
 git add .
-git commit -S -m "feat(scope): description"
+git commit -m "feat(scope): description"
 ```
 
 ### Step 6: Push and Create Pull Request
@@ -373,7 +372,6 @@ Before a PR can be merged:
 - [ ] At least 1 approval from codeowner
 - [ ] All conversations resolved
 - [ ] Branch is up to date with `main`
-- [ ] Commits are signed
 
 ---
 
@@ -407,62 +405,6 @@ Do not modify cryptographic parameters without security review:
 | PBKDF2 iterations | 480,000 | OWASP 2023 |
 | Salt length | 32 bytes | 256-bit |
 | Encryption | AES-256-CBC | Fernet |
-
----
-
-## Setting Up Signed Commits
-
-Signed commits are required for all merges to `main`.
-
-### Generate GPG Key
-
-```bash
-gpg --full-generate-key
-```
-
-Select:
-- Key type: RSA and RSA
-- Key size: 4096
-- Expiration: 1 year recommended
-
-### Get Key ID
-
-```bash
-gpg --list-secret-keys --keyid-format=long
-```
-
-Output example:
-```
-sec   rsa4096/ABC123DEF456GHI7 2025-01-01 [SC]
-```
-
-The key ID is `ABC123DEF456GHI7`.
-
-### Export and Add to GitHub
-
-```bash
-gpg --armor --export ABC123DEF456GHI7
-```
-
-1. Copy the entire output (including BEGIN/END lines)
-2. Go to GitHub Settings > SSH and GPG keys
-3. Click "New GPG key"
-4. Paste and save
-
-### Configure Git
-
-```bash
-git config --global user.signingkey ABC123DEF456GHI7
-git config --global commit.gpgsign true
-```
-
-### Verify Setup
-
-```bash
-echo "test" | gpg --clearsign
-```
-
-If this produces signed output, your setup is complete.
 
 ---
 
