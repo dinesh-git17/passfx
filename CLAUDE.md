@@ -24,6 +24,54 @@ This document provides guidance for AI assistants working on the PassFX codebase
 - Use conventional commit format: `type(scope): description`
 - Always show the proposed commit message and proceed to commit
 
+### Git Workflow (Mandatory Execution Order)
+
+Claude must **ALWAYS** follow this exact workflow — no deviations:
+
+1. **Start on `main`**
+
+   - Ensure working from the latest code:
+     ```bash
+     git checkout main
+     git pull origin main
+     ```
+
+2. **Proceed with the assigned task**
+
+   - Make all code changes locally
+   - Do **NOT** commit during this phase
+   - Do **NOT** create a branch yet
+
+3. **Create and switch to an appropriate feature branch BEFORE committing**
+
+   - Branch name must reflect the task just completed:
+     ```bash
+     git checkout -b feature/<scope>-<short-description>
+     ```
+   - Examples:
+     - `feature/crypto-key-derivation`
+     - `feature/ui-password-search`
+     - `feature/vault-locking`
+     - `security/pbkdf2-hardening`
+     - `hotfix/vault-corruption-fix`
+
+4. **Commit ONLY from the feature branch**
+
+   - Commits on `main` or `develop` are **STRICTLY FORBIDDEN**
+   - If the current branch is `main` or `develop`, **ABORT COMMIT IMMEDIATELY**
+
+5. **Before committing**
+   - Show the proposed commit message
+   - Wait for explicit user approval
+   - Only then proceed with `git commit`
+
+🚫 **Hard Rules**
+
+- Never commit directly on `main`
+- Never commit directly on `develop`
+- Never create generic branches (e.g. `feature/update`, `feature/fix`)
+- Branch naming must clearly map to the work performed
+
 ### Code Quality Enforcement
 
 Before pushing to GitHub, and **before providing a summary**:
@@ -40,23 +88,23 @@ Before pushing to GitHub, and **before providing a summary**:
 
 ### Cryptographic Standards
 
-| Requirement | Specification |
-|-------------|---------------|
-| Encryption | AES-256-CBC via Fernet |
-| Key Derivation | PBKDF2-HMAC-SHA256 |
-| KDF Iterations | 480,000 minimum |
-| Salt Length | 32 bytes |
-| RNG | `secrets` module only |
+| Requirement    | Specification          |
+| -------------- | ---------------------- |
+| Encryption     | AES-256-CBC via Fernet |
+| Key Derivation | PBKDF2-HMAC-SHA256     |
+| KDF Iterations | 480,000 minimum        |
+| Salt Length    | 32 bytes               |
+| RNG            | `secrets` module only  |
 
 ### File Permissions
 
 | File/Directory | Permission |
-|----------------|------------|
-| `~/.passfx/` | 0o700 |
-| `vault.enc` | 0o600 |
-| `salt` | 0o600 |
-| `logs/` | 0o700 |
-| `*.log` | 0o600 |
+| -------------- | ---------- |
+| `~/.passfx/`   | 0o700      |
+| `vault.enc`    | 0o600      |
+| `salt`         | 0o600      |
+| `logs/`        | 0o700      |
+| `*.log`        | 0o600      |
 
 ### Memory Security
 
@@ -74,13 +122,13 @@ def secure_delete(data: str) -> None:
 
 ### Prohibited Practices
 
-| Never Do This | Why |
-|---------------|-----|
-| `print(password)` | Exposes secrets in logs |
-| `import random` | Not cryptographically secure |
-| `pickle.dump(creds)` | Arbitrary code execution risk |
-| Store keys in env vars | Accessible to child processes |
-| Password hints/recovery | Defeats security model |
+| Never Do This           | Why                           |
+| ----------------------- | ----------------------------- |
+| `print(password)`       | Exposes secrets in logs       |
+| `import random`         | Not cryptographically secure  |
+| `pickle.dump(creds)`    | Arbitrary code execution risk |
+| Store keys in env vars  | Accessible to child processes |
+| Password hints/recovery | Defeats security model        |
 
 ---
 
@@ -103,11 +151,11 @@ def secure_delete(data: str) -> None:
 
 ### Formatting & Style (Fully Automated)
 
-| Tool | Purpose |
-|------|---------|
+| Tool      | Purpose                         |
+| --------- | ------------------------------- |
 | **Black** | Code formatting (88 char lines) |
-| **isort** | Import sorting |
-| **Ruff** | Fast linting |
+| **isort** | Import sorting                  |
+| **Ruff**  | Fast linting                    |
 
 Never format code manually. Let tooling handle it.
 
@@ -195,13 +243,13 @@ def save_credential(cred: Credential) -> None:
 
 ### Dependency Management
 
-| Requirement | Action |
-|-------------|--------|
-| Production deps | Pin exact versions |
-| Dev deps | Separate in `[project.optional-dependencies]` |
-| Lock file | Use `pip-tools` or `poetry.lock` |
-| Audit | Run `pip-audit` regularly |
-| Minimize | Fewer deps = smaller attack surface |
+| Requirement     | Action                                        |
+| --------------- | --------------------------------------------- |
+| Production deps | Pin exact versions                            |
+| Dev deps        | Separate in `[project.optional-dependencies]` |
+| Lock file       | Use `pip-tools` or `poetry.lock`              |
+| Audit           | Run `pip-audit` regularly                     |
+| Minimize        | Fewer deps = smaller attack surface           |
 
 ### Performance & Readability
 
@@ -221,16 +269,16 @@ vault_path = os.path.join(os.path.expanduser("~"), ".passfx", "vault.enc")
 
 ### Red Flags (Immediate Review Required)
 
-| Flag | Problem |
-|------|---------|
-| No type hints | Maintenance nightmare |
-| `print()` debugging | Unprofessional, security risk |
-| God functions (100+ lines) | Untestable, unmaintainable |
-| Silent exception handling | Hides bugs |
-| No tests | Unverifiable behavior |
-| Manual formatting | Inconsistent style |
-| Hidden global state | Unpredictable behavior |
-| `Any` types everywhere | Type safety defeated |
+| Flag                       | Problem                       |
+| -------------------------- | ----------------------------- |
+| No type hints              | Maintenance nightmare         |
+| `print()` debugging        | Unprofessional, security risk |
+| God functions (100+ lines) | Untestable, unmaintainable    |
+| Silent exception handling  | Hides bugs                    |
+| No tests                   | Unverifiable behavior         |
+| Manual formatting          | Inconsistent style            |
+| Hidden global state        | Unpredictable behavior        |
+| `Any` types everywhere     | Type safety defeated          |
 
 ---
 
@@ -246,20 +294,24 @@ vault_path = os.path.join(os.path.expanduser("~"), ".passfx", "vault.enc")
 ### Comment Standards (Strict)
 
 **File-Level Comments:**
+
 - Every file must have ONE block comment at the top (2-4 lines max)
 - Describe purpose and role in security architecture
 - No implementation details
 
 **Function/Method Comments:**
+
 - Only when the "why" is non-obvious
 - Document security implications, edge cases, business constraints
 - Never explain what code does (code should be self-explanatory)
 
 **Inline Comments:**
+
 - Use sparingly for critical security context only
 - Explain crypto decisions, security tradeoffs, non-obvious constraints
 
 **Forbidden:**
+
 - Emojis in code/comments
 - Casual/conversational tone
 - Obvious restatements (`# encrypt the data`)
@@ -269,13 +321,13 @@ vault_path = os.path.join(os.path.expanduser("~"), ".passfx", "vault.enc")
 
 ### Naming Conventions
 
-| Type | Convention | Example |
-|------|------------|---------|
-| Functions | verbs | `encrypt_vault`, `derive_key`, `validate_input` |
-| Variables | nouns | `vault_data`, `is_locked`, `credential_count` |
-| Classes | PascalCase | `CryptoManager`, `VaultError`, `EmailCredential` |
+| Type      | Convention  | Example                                          |
+| --------- | ----------- | ------------------------------------------------ |
+| Functions | verbs       | `encrypt_vault`, `derive_key`, `validate_input`  |
+| Variables | nouns       | `vault_data`, `is_locked`, `credential_count`    |
+| Classes   | PascalCase  | `CryptoManager`, `VaultError`, `EmailCredential` |
 | Constants | UPPER_SNAKE | `ITERATIONS`, `SALT_LENGTH`, `AUTO_LOCK_MINUTES` |
-| Private | underscore | `_fernet`, `_last_activity`, `_load_salt` |
+| Private   | underscore  | `_fernet`, `_last_activity`, `_load_salt`        |
 
 ---
 
@@ -285,15 +337,15 @@ vault_path = os.path.join(os.path.expanduser("~"), ".passfx", "vault.enc")
 
 ### Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Textual (TUI) |
-| Language | Python 3.11+ (strict typing) |
-| Encryption | cryptography (Fernet/AES-256) |
-| Key Derivation | PBKDF2 (480k iterations) |
-| Styling | Textual CSS (.tcss) |
-| Clipboard | pyperclip |
-| Strength | zxcvbn |
+| Layer          | Technology                    |
+| -------------- | ----------------------------- |
+| Framework      | Textual (TUI)                 |
+| Language       | Python 3.11+ (strict typing)  |
+| Encryption     | cryptography (Fernet/AES-256) |
+| Key Derivation | PBKDF2 (480k iterations)      |
+| Styling        | Textual CSS (.tcss)           |
+| Clipboard      | pyperclip                     |
+| Strength       | zxcvbn                        |
 
 ### Directory Structure
 
@@ -379,13 +431,13 @@ pytest tests/ --cov=passfx --cov-report=html
 
 ### Coverage Standards
 
-| Component | Required Coverage |
-|-----------|-------------------|
-| `core/crypto.py` | 100% |
-| `core/vault.py` | 100% |
-| `core/models.py` | 95% |
-| `utils/generator.py` | 95% |
-| Overall | 90% minimum |
+| Component            | Required Coverage |
+| -------------------- | ----------------- |
+| `core/crypto.py`     | 100%              |
+| `core/vault.py`      | 100%              |
+| `core/models.py`     | 95%               |
+| `utils/generator.py` | 95%               |
+| Overall              | 90% minimum       |
 
 ### Test Standards
 
@@ -527,12 +579,12 @@ Fixes #89
 
 ## Performance Targets
 
-| Operation | Target |
-|-----------|--------|
-| Vault unlock | <500ms |
-| Credential search | <100ms |
-| Screen transitions | <50ms |
-| Memory baseline | <50MB |
+| Operation          | Target |
+| ------------------ | ------ |
+| Vault unlock       | <500ms |
+| Credential search  | <100ms |
+| Screen transitions | <50ms  |
+| Memory baseline    | <50MB  |
 
 ---
 
