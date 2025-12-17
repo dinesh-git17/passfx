@@ -127,8 +127,12 @@ class Vault:  # pylint: disable=too-many-public-methods
 
         # Initialize empty data
         self._data = {
-            "emails": [], "phones": [], "cards": [],
-            "envs": [], "recovery": [], "notes": [],
+            "emails": [],
+            "phones": [],
+            "cards": [],
+            "envs": [],
+            "recovery": [],
+            "notes": [],
         }
 
         # Save empty vault
@@ -182,8 +186,12 @@ class Vault:  # pylint: disable=too-many-public-methods
             self._crypto.wipe()
             self._crypto = None
         self._data = {
-            "emails": [], "phones": [], "cards": [],
-            "envs": [], "recovery": [], "notes": [],
+            "emails": [],
+            "phones": [],
+            "cards": [],
+            "envs": [],
+            "recovery": [],
+            "notes": [],
         }
 
     def _save(self) -> None:
@@ -590,12 +598,23 @@ class Vault:  # pylint: disable=too-many-public-methods
             Count of imported items by type.
         """
         self._update_activity()
-        counts = {"emails": 0, "phones": 0, "cards": 0, "envs": 0, "recovery": 0, "notes": 0}
+        counts = {
+            "emails": 0,
+            "phones": 0,
+            "cards": 0,
+            "envs": 0,
+            "recovery": 0,
+            "notes": 0,
+        }
 
         if not merge:
             self._data = {
-                "emails": [], "phones": [], "cards": [],
-                "envs": [], "recovery": [], "notes": [],
+                "emails": [],
+                "phones": [],
+                "cards": [],
+                "envs": [],
+                "recovery": [],
+                "notes": [],
             }
 
         # Get existing IDs to avoid duplicates

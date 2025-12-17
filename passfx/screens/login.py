@@ -81,7 +81,9 @@ class LoginScreen(Screen):
                             id="form-title",
                         )
                         with Center():
-                            yield Label("ENTER MASTER PASSWORD", classes="muted terminal-label")
+                            yield Label(
+                                "ENTER MASTER PASSWORD", classes="muted terminal-label"
+                            )
                         with Center():
                             yield Input(
                                 placeholder="••••••••",
@@ -89,7 +91,9 @@ class LoginScreen(Screen):
                                 id="password-input",
                             )
                         with Center():
-                            yield Button("▶ UNLOCK VAULT", variant="primary", id="unlock-button")
+                            yield Button(
+                                "▶ UNLOCK VAULT", variant="primary", id="unlock-button"
+                            )
                     else:
                         yield Static(
                             "[bold #60a5fa]━━━ VAULT INITIALIZATION ━━━[/]",
@@ -106,7 +110,9 @@ class LoginScreen(Screen):
                                 id="password-input",
                             )
                         with Center():
-                            yield Label("CONFIRM PASSWORD", classes="muted terminal-label")
+                            yield Label(
+                                "CONFIRM PASSWORD", classes="muted terminal-label"
+                            )
                         with Center():
                             yield Input(
                                 placeholder="••••••••",
@@ -115,7 +121,9 @@ class LoginScreen(Screen):
                             )
                         with Center():
                             yield Button(
-                                "▶ INITIALIZE VAULT", variant="primary", id="create-button"
+                                "▶ INITIALIZE VAULT",
+                                variant="primary",
+                                id="create-button",
                             )
 
                     yield Static("", id="error-message")
@@ -171,6 +179,7 @@ class LoginScreen(Screen):
             # Success - go to main menu
             # pylint: disable=import-outside-toplevel
             from passfx.screens.main_menu import MainMenuScreen
+
             self.app.switch_screen(MainMenuScreen())
         else:
             self.attempts += 1
@@ -214,6 +223,7 @@ class LoginScreen(Screen):
             # Success - go to main menu
             # pylint: disable=import-outside-toplevel
             from passfx.screens.main_menu import MainMenuScreen
+
             self.app.switch_screen(MainMenuScreen())
         else:
             error_label.update("[error]Failed to create vault[/error]")

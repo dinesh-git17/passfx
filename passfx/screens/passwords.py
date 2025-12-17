@@ -1,5 +1,5 @@
 """Passwords Screen for PassFX."""
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code,too-many-lines
 
 from __future__ import annotations
 
@@ -175,7 +175,9 @@ class AddPasswordModal(ModalScreen[EmailCredential | None]):
                 # Row 3: Password (Secret)
                 yield Label("ACCESS_KEY", classes="input-label")
                 with Horizontal(classes="input-row"):
-                    yield Input(placeholder="••••••••••••", password=True, id="password-input")
+                    yield Input(
+                        placeholder="••••••••••••", password=True, id="password-input"
+                    )
 
                 # Row 4: Notes
                 yield Label("METADATA", classes="input-label")
@@ -184,7 +186,9 @@ class AddPasswordModal(ModalScreen[EmailCredential | None]):
             # Footer Actions
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
+                yield Button(
+                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                )
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -235,7 +239,10 @@ class EditPasswordModal(ModalScreen[dict | None]):
     def compose(self) -> ComposeResult:
         """Create the modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            yield Static(f":: MODIFY_ENTRY // {self.credential.label.upper()} ::", id="modal-title")
+            yield Static(
+                f":: MODIFY_ENTRY // {self.credential.label.upper()} ::",
+                id="modal-title",
+            )
 
             with Vertical(id="pwd-form"):
                 yield Label("TARGET_SYSTEM", classes="input-label")
@@ -254,7 +261,9 @@ class EditPasswordModal(ModalScreen[dict | None]):
 
                 yield Label("ACCESS_KEY [BLANK = KEEP CURRENT]", classes="input-label")
                 with Horizontal(classes="input-row"):
-                    yield Input(placeholder="••••••••••••", password=True, id="password-input")
+                    yield Input(
+                        placeholder="••••••••••••", password=True, id="password-input"
+                    )
 
                 yield Label("METADATA", classes="input-label")
                 yield Input(
@@ -265,7 +274,9 @@ class EditPasswordModal(ModalScreen[dict | None]):
 
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
+                yield Button(
+                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -383,13 +394,19 @@ class ViewPasswordModal(ModalScreen[None]):
         # Build security level indicator bars
         filled = strength.score + 1
         security_bars = (
-            f"[{strength_color}]" + ("█" * filled) + "[/]"
-            + "[#1e293b]" + ("░" * (5 - filled)) + "[/]"
+            f"[{strength_color}]"
+            + ("█" * filled)
+            + "[/]"
+            + "[#1e293b]"
+            + ("░" * (5 - filled))
+            + "[/]"
         )
 
         # Format timestamp
         try:
-            created = datetime.fromisoformat(self.credential.created_at).strftime("%Y.%m.%d")
+            created = datetime.fromisoformat(self.credential.created_at).strftime(
+                "%Y.%m.%d"
+            )
         except (ValueError, TypeError):
             created = "UNKNOWN"
 
@@ -424,7 +441,9 @@ class ViewPasswordModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # User Identity section
                 yield Static(
@@ -444,7 +463,9 @@ class ViewPasswordModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Access Key section
                 yield Static(
@@ -464,7 +485,9 @@ class ViewPasswordModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Security bar
                 sec_content = (
@@ -580,7 +603,9 @@ class PasswordsScreen(Screen):
                         id="empty-state-text",
                     )
                 # Footer with object count
-                yield Static(" └── SYSTEM_READY", classes="pane-footer", id="grid-footer")
+                yield Static(
+                    " └── SYSTEM_READY", classes="pane-footer", id="grid-footer"
+                )
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
@@ -687,7 +712,13 @@ class PasswordsScreen(Screen):
             notes_text = f"[dim #64748b]{notes}[/]"
 
             table.add_row(
-                indicator, label_text, email_text, status, updated_text, notes_text, key=cred.id
+                indicator,
+                label_text,
+                email_text,
+                status,
+                updated_text,
+                notes_text,
+                key=cred.id,
             )
 
         # Update the grid footer with object count
@@ -812,7 +843,11 @@ class PasswordsScreen(Screen):
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update inspector panel when a row is highlighted."""
         # row_key is a RowKey object, get its value
-        key_value = event.row_key.value if hasattr(event.row_key, "value") else str(event.row_key)
+        key_value = (
+            event.row_key.value
+            if hasattr(event.row_key, "value")
+            else str(event.row_key)
+        )
         old_key = self._selected_row_key
         self._selected_row_key = key_value
         self._update_inspector(key_value)
@@ -875,8 +910,12 @@ class PasswordsScreen(Screen):
                         classes="avatar-box",
                     ),
                     Vertical(
-                        Static(f"[bold #f8fafc]{cred.label}[/]", classes="id-label-text"),
-                        Static(f"[dim #94a3b8]{cred.email}[/]", classes="id-email-text"),
+                        Static(
+                            f"[bold #f8fafc]{cred.label}[/]", classes="id-label-text"
+                        ),
+                        Static(
+                            f"[dim #94a3b8]{cred.email}[/]", classes="id-email-text"
+                        ),
                         classes="id-details-stack",
                     ),
                     classes="id-card-header",
@@ -947,7 +986,9 @@ class PasswordsScreen(Screen):
         # SECTION 4: Footer Metadata Bar (ID + Updated)
         # ═══════════════════════════════════════════════════════════════
         try:
-            updated_full = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d %H:%M")
+            updated_full = datetime.fromisoformat(cred.updated_at).strftime(
+                "%Y-%m-%d %H:%M"
+            )
         except (ValueError, TypeError):
             updated_full = cred.updated_at or "Unknown"
 

@@ -8,7 +8,6 @@ from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Static, TabbedContent, TabPane
 
-
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONTENT DATA
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -184,7 +184,9 @@ class AddPhoneModal(ModalScreen[PhoneCredential | None]):
             # Footer Actions
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
+                yield Button(
+                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                )
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -235,7 +237,10 @@ class EditPhoneModal(ModalScreen[dict | None]):
     def compose(self) -> ComposeResult:
         """Create the modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            yield Static(f":: MODIFY_ENTRY // {self.credential.label.upper()} ::", id="modal-title")
+            yield Static(
+                f":: MODIFY_ENTRY // {self.credential.label.upper()} ::",
+                id="modal-title",
+            )
 
             with Vertical(id="pwd-form"):
                 yield Label("TARGET_DEVICE", classes="input-label")
@@ -265,7 +270,9 @@ class EditPhoneModal(ModalScreen[dict | None]):
 
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
+                yield Button(
+                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -391,12 +398,16 @@ class ViewPhoneModal(ModalScreen[None]):
 
         # Format timestamp
         try:
-            created = datetime.fromisoformat(self.credential.created_at).strftime("%Y.%m.%d")
+            created = datetime.fromisoformat(self.credential.created_at).strftime(
+                "%Y.%m.%d"
+            )
         except (ValueError, TypeError):
             created = "UNKNOWN"
 
         # Build encryption lock visual
-        lock_icon = f"[{c['accent']}]◈[/]" if strength.score >= 2 else f"[{c['border']}]◇[/]"
+        lock_icon = (
+            f"[{c['accent']}]◈[/]" if strength.score >= 2 else f"[{c['border']}]◇[/]"
+        )
 
         # Card dimensions
         width = 96
@@ -432,7 +443,9 @@ class ViewPhoneModal(ModalScreen[None]):
                 yield Static(device_line)
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Signal strength row
                 signal_content = (
@@ -447,7 +460,9 @@ class ViewPhoneModal(ModalScreen[None]):
                 yield Static(signal_line)
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Uplink Number section
                 uplink_header = (
@@ -472,7 +487,9 @@ class ViewPhoneModal(ModalScreen[None]):
                 yield Static(uplink_footer)
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Access PIN section
                 pin_header = (
@@ -497,7 +514,9 @@ class ViewPhoneModal(ModalScreen[None]):
                 yield Static(pin_footer)
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Complexity row
                 complexity_content = (
@@ -520,8 +539,7 @@ class ViewPhoneModal(ModalScreen[None]):
                     f"[{c['muted']}]{self.credential.id[:8]}[/]"
                 )
                 footer_right = (
-                    f"[dim {c['section_border']}]LINKED:[/] "
-                    f"[{c['muted']}]{created}[/]"
+                    f"[dim {c['section_border']}]LINKED:[/] [{c['muted']}]{created}[/]"
                 )
                 footer_pad = inner - 30 - len(created)
                 footer_line = (
@@ -617,7 +635,9 @@ class PhonesScreen(Screen):
                         id="empty-state-text",
                     )
                 # Footer with object count
-                yield Static(" └── UPLINK_ESTABLISHED", classes="pane-footer", id="grid-footer")
+                yield Static(
+                    " └── UPLINK_ESTABLISHED", classes="pane-footer", id="grid-footer"
+                )
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
@@ -854,7 +874,11 @@ class PhonesScreen(Screen):
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update inspector panel when a row is highlighted."""
         # row_key is a RowKey object, get its value
-        key_value = event.row_key.value if hasattr(event.row_key, "value") else str(event.row_key)
+        key_value = (
+            event.row_key.value
+            if hasattr(event.row_key, "value")
+            else str(event.row_key)
+        )
         old_key = self._selected_row_key
         self._selected_row_key = key_value
         self._update_inspector(key_value)
@@ -995,7 +1019,9 @@ class PhonesScreen(Screen):
         # SECTION 4: Footer Metadata Bar (ID + Updated)
         # ═══════════════════════════════════════════════════════════════
         try:
-            updated_full = datetime.fromisoformat(cred.updated_at).strftime("%Y-%m-%d %H:%M")
+            updated_full = datetime.fromisoformat(cred.updated_at).strftime(
+                "%Y-%m-%d %H:%M"
+            )
         except (ValueError, TypeError):
             updated_full = cred.updated_at or "Unknown"
 

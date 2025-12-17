@@ -124,16 +124,18 @@ class ViewEnvModal(ModalScreen[None]):
         )
 
         # Get content preview (first 5 lines for env files)
-        content_lines = self.env.content.split('\n')[:5] if self.env.content else []
+        content_lines = self.env.content.split("\n")[:5] if self.env.content else []
         preview_lines = []
         for line in content_lines:
             # Mask values in env files (show key=***)
-            if '=' in line and not line.strip().startswith('#'):
-                key = line.split('=', 1)[0]
+            if "=" in line and not line.strip().startswith("#"):
+                key = line.split("=", 1)[0]
                 preview = f"{key}=***"
             else:
                 preview = line
-            preview = preview[:content_width] if len(preview) > content_width else preview
+            preview = (
+                preview[:content_width] if len(preview) > content_width else preview
+            )
             preview_lines.append(preview)
 
         with Vertical(id="env-modal"):
@@ -173,7 +175,9 @@ class ViewEnvModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Stats section
                 stats = (
@@ -186,7 +190,9 @@ class ViewEnvModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Content section
                 yield Static(
@@ -197,9 +203,9 @@ class ViewEnvModal(ModalScreen[None]):
 
                 # Show preview lines (masked values)
                 for line in preview_lines:
-                    if '=' in line and not line.strip().startswith('#'):
+                    if "=" in line and not line.strip().startswith("#"):
                         # Highlight env var keys
-                        key = line.split('=', 1)[0]
+                        key = line.split("=", 1)[0]
                         yield Static(
                             f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
                             f"[{c['accent']}]►[/] [{c['accent']}]{key}[/][{c['muted']}]=***"
@@ -227,7 +233,9 @@ class ViewEnvModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Footer divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
@@ -238,8 +246,7 @@ class ViewEnvModal(ModalScreen[None]):
                     f"[{c['muted']}]{self.env.id[:8]}[/]"
                 )
                 footer_right = (
-                    f"[dim {c['section_border']}]CREATED:[/] "
-                    f"[{c['muted']}]{created}[/]"
+                    f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
                 )
                 footer_pad = inner - 32 - len(created)
                 yield Static(
@@ -328,7 +335,7 @@ class AddEnvModal(ModalScreen[EnvEntry | None]):
 
     def on_drop(self, event) -> None:
         """Handle file drop events."""
-        if hasattr(event, 'paths') and event.paths:
+        if hasattr(event, "paths") and event.paths:
             # Get the first dropped file
             file_path = event.paths[0]
             self._handle_import(str(file_path))
@@ -458,7 +465,7 @@ class EditEnvModal(ModalScreen[dict | None]):
 
     def on_drop(self, event) -> None:
         """Handle file drop events."""
-        if hasattr(event, 'paths') and event.paths:
+        if hasattr(event, "paths") and event.paths:
             file_path = event.paths[0]
             self._handle_import(str(file_path))
 
@@ -548,7 +555,9 @@ class ImportPathModal(ModalScreen[str | None]):
             )
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[ENTER] IMPORT", id="do-import-button", classes="env-save-btn")
+                yield Button(
+                    "[ENTER] IMPORT", id="do-import-button", classes="env-save-btn"
+                )
 
     def on_mount(self) -> None:
         """Focus input."""
@@ -599,11 +608,17 @@ class ConfirmDeleteEnvModal(ModalScreen[bool]):
                 id="delete-title",
             )
             with Vertical(id="delete-content"):
-                yield Static(f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target")
-                yield Static("[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning")
+                yield Static(
+                    f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target"
+                )
+                yield Static(
+                    "[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning"
+                )
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[Y] CONFIRM DELETE", id="delete-button", classes="env-delete-btn")
+                yield Button(
+                    "[Y] CONFIRM DELETE", id="delete-button", classes="env-delete-btn"
+                )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -673,7 +688,9 @@ class EnvsScreen(Screen):
                         "╚══════════════════════════════════════╝[/]",
                         id="empty-state-text",
                     )
-                yield Static(" └── SYSTEM_READY", classes="pane-footer", id="grid-footer")
+                yield Static(
+                    " └── SYSTEM_READY", classes="pane-footer", id="grid-footer"
+                )
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
@@ -879,7 +896,11 @@ class EnvsScreen(Screen):
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update inspector when row is highlighted."""
-        key_value = event.row_key.value if hasattr(event.row_key, "value") else str(event.row_key)
+        key_value = (
+            event.row_key.value
+            if hasattr(event.row_key, "value")
+            else str(event.row_key)
+        )
         old_key = self._selected_row_key
         self._selected_row_key = key_value
         self._update_inspector(key_value)
@@ -917,13 +938,20 @@ class EnvsScreen(Screen):
             Vertical(
                 Horizontal(
                     Vertical(
-                        Static("[on #f59e0b][bold #000000] ENV [/][/]", classes="avatar-char"),
+                        Static(
+                            "[on #f59e0b][bold #000000] ENV [/][/]",
+                            classes="avatar-char",
+                        ),
                         Static("[on #f59e0b]     [/]", classes="avatar-char"),
                         classes="avatar-box",
                     ),
                     Vertical(
-                        Static(f"[bold #f8fafc]{env.title}[/]", classes="id-label-text"),
-                        Static(f"[dim #94a3b8]{env.filename}[/]", classes="id-email-text"),
+                        Static(
+                            f"[bold #f8fafc]{env.title}[/]", classes="id-label-text"
+                        ),
+                        Static(
+                            f"[dim #94a3b8]{env.filename}[/]", classes="id-email-text"
+                        ),
                         classes="id-details-stack",
                     ),
                     classes="id-card-header",
@@ -983,7 +1011,9 @@ class EnvsScreen(Screen):
 
         # Section 4: Footer
         try:
-            updated_full = datetime.fromisoformat(env.updated_at).strftime("%Y-%m-%d %H:%M")
+            updated_full = datetime.fromisoformat(env.updated_at).strftime(
+                "%Y-%m-%d %H:%M"
+            )
         except (ValueError, TypeError):
             updated_full = env.updated_at or "Unknown"
 

@@ -106,7 +106,9 @@ class ViewRecoveryModal(ModalScreen[None]):
 
         # Format timestamp
         try:
-            created = datetime.fromisoformat(self.recovery.created_at).strftime("%Y.%m.%d")
+            created = datetime.fromisoformat(self.recovery.created_at).strftime(
+                "%Y.%m.%d"
+            )
         except (ValueError, TypeError):
             created = "UNKNOWN"
 
@@ -167,7 +169,9 @@ class ViewRecoveryModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Stats section
                 stats = (
@@ -180,7 +184,9 @@ class ViewRecoveryModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Content section
                 yield Static(
@@ -220,7 +226,9 @@ class ViewRecoveryModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Footer divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
@@ -305,7 +313,9 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
 
             # All buttons on one line
             with Horizontal(id="modal-buttons"):
-                yield Button("IMPORT", id="import-button", classes="recovery-import-btn")
+                yield Button(
+                    "IMPORT", id="import-button", classes="recovery-import-btn"
+                )
                 yield Button("ABORT", id="cancel-button")
                 yield Button("SAVE", id="save-button", classes="recovery-save-btn")
 
@@ -345,7 +355,9 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
             text_area = self.query_one("#content-area", TextArea)
             text_area.load_text(content)
 
-            self.notify(f"Imported {len(content)} chars from {path.name}", title="Imported")
+            self.notify(
+                f"Imported {len(content)} chars from {path.name}", title="Imported"
+            )
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.notify(f"Failed to read file: {e}", severity="error")
 
@@ -410,7 +422,9 @@ class EditRecoveryModal(ModalScreen[dict | None]):
 
             # All buttons on one line
             with Horizontal(id="modal-buttons"):
-                yield Button("IMPORT", id="import-button", classes="recovery-import-btn")
+                yield Button(
+                    "IMPORT", id="import-button", classes="recovery-import-btn"
+                )
                 yield Button("ABORT", id="cancel-button")
                 yield Button("SAVE", id="save-button", classes="recovery-save-btn")
 
@@ -445,7 +459,9 @@ class EditRecoveryModal(ModalScreen[dict | None]):
             content = path.read_text(encoding="utf-8")
             text_area = self.query_one("#content-area", TextArea)
             text_area.load_text(content)
-            self.notify(f"Imported {len(content)} chars from {path.name}", title="Imported")
+            self.notify(
+                f"Imported {len(content)} chars from {path.name}", title="Imported"
+            )
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.notify(f"Failed to read file: {e}", severity="error")
 
@@ -491,7 +507,9 @@ class ImportRecoveryPathModal(ModalScreen[str | None]):
             )
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[ENTER] IMPORT", id="do-import-button", classes="recovery-save-btn")
+                yield Button(
+                    "[ENTER] IMPORT", id="do-import-button", classes="recovery-save-btn"
+                )
 
     def on_mount(self) -> None:
         """Focus input."""
@@ -542,8 +560,12 @@ class ConfirmDeleteRecoveryModal(ModalScreen[bool]):
                 id="recovery-delete-title",
             )
             with Vertical(id="delete-content"):
-                yield Static(f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target")
-                yield Static("[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning")
+                yield Static(
+                    f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target"
+                )
+                yield Static(
+                    "[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning"
+                )
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
                 yield Button(
@@ -620,11 +642,15 @@ class RecoveryScreen(Screen):
                         "╚══════════════════════════════════════╝[/]",
                         id="empty-state-text",
                     )
-                yield Static(" └── SYSTEM_READY", classes="pane-footer", id="grid-footer")
+                yield Static(
+                    " └── SYSTEM_READY", classes="pane-footer", id="grid-footer"
+                )
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
-                yield Static(" ≡ FAIL-SAFE_INSPECTOR ", classes="pane-header-block-rose")
+                yield Static(
+                    " ≡ FAIL-SAFE_INSPECTOR ", classes="pane-header-block-rose"
+                )
                 yield Vertical(id="inspector-content")
 
         # 3. Global Footer
@@ -698,12 +724,21 @@ class RecoveryScreen(Screen):
             updated_text = f"[dim]{updated}[/]"
             notes_preview = ""
             if entry.notes:
-                notes_preview = entry.notes[:50] + ("..." if len(entry.notes) > 50 else "")
+                notes_preview = entry.notes[:50] + (
+                    "..." if len(entry.notes) > 50 else ""
+                )
                 notes_text = f"[dim]{notes_preview}[/]"
             else:
                 notes_text = "[dim #555555]-[/]"
 
-            table.add_row(indicator, title_text, codes_text, updated_text, notes_text, key=entry.id)
+            table.add_row(
+                indicator,
+                title_text,
+                codes_text,
+                updated_text,
+                notes_text,
+                key=entry.id,
+            )
 
         footer = self.query_one("#grid-footer", Static)
         count = len(entries)
@@ -816,7 +851,11 @@ class RecoveryScreen(Screen):
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update inspector when row is highlighted."""
-        key_value = event.row_key.value if hasattr(event.row_key, "value") else str(event.row_key)
+        key_value = (
+            event.row_key.value
+            if hasattr(event.row_key, "value")
+            else str(event.row_key)
+        )
         old_key = self._selected_row_key
         self._selected_row_key = key_value
         self._update_inspector(key_value)
@@ -854,13 +893,21 @@ class RecoveryScreen(Screen):
             Vertical(
                 Horizontal(
                     Vertical(
-                        Static("[on #f43f5e][bold #000000] SOS [/][/]", classes="avatar-char"),
+                        Static(
+                            "[on #f43f5e][bold #000000] SOS [/][/]",
+                            classes="avatar-char",
+                        ),
                         Static("[on #f43f5e]     [/]", classes="avatar-char"),
                         classes="avatar-box",
                     ),
                     Vertical(
-                        Static(f"[bold #f8fafc]{entry.title}[/]", classes="id-label-text"),
-                        Static("[dim #94a3b8]Emergency Backup Codes[/]", classes="id-email-text"),
+                        Static(
+                            f"[bold #f8fafc]{entry.title}[/]", classes="id-label-text"
+                        ),
+                        Static(
+                            "[dim #94a3b8]Emergency Backup Codes[/]",
+                            classes="id-email-text",
+                        ),
                         classes="id-details-stack",
                     ),
                     classes="id-card-header",

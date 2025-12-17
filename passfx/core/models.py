@@ -409,7 +409,14 @@ class NoteEntry:
 
 
 # Type alias for any credential type
-Credential = EmailCredential | PhoneCredential | CreditCard | EnvEntry | RecoveryEntry | NoteEntry
+Credential = (
+    EmailCredential
+    | PhoneCredential
+    | CreditCard
+    | EnvEntry
+    | RecoveryEntry
+    | NoteEntry
+)
 
 
 def credential_from_dict(data: dict[str, Any]) -> Credential:

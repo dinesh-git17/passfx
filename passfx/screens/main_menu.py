@@ -74,9 +74,7 @@ class SecurityScore(Static):
             f"[bold {old_color}]{health.old_count:^12}[/]"
             f"[bold {weak_color}]{health.weak_count:^12}[/]"
         )
-        lines.append(
-            f"[#64748b]{'REUSED':^12}{'OLD (90d)':^12}{'WEAK':^12}[/]"
-        )
+        lines.append(f"[#64748b]{'REUSED':^12}{'OLD (90d)':^12}{'WEAK':^12}[/]")
         lines.append("")  # Breathing room
 
         # Histogram
@@ -457,60 +455,71 @@ class MainMenuScreen(Screen):
             terminal.write_log("[bold #8b5cf6]⟩[/] Executing navigation protocol...")
             commands[command]()
         else:
-            terminal.write_log("[bold #ef4444]✗[/] Command not recognized. Try [bold]/help[/]")
+            terminal.write_log(
+                "[bold #ef4444]✗[/] Command not recognized. Try [bold]/help[/]"
+            )
 
     def action_passwords(self) -> None:
         """Go to passwords screen."""
         # pylint: disable=import-outside-toplevel
         from passfx.screens.passwords import PasswordsScreen
+
         self.app.push_screen(PasswordsScreen())
 
     def action_phones(self) -> None:
         """Go to phones screen."""
         # pylint: disable=import-outside-toplevel
         from passfx.screens.phones import PhonesScreen
+
         self.app.push_screen(PhonesScreen())
 
     def action_cards(self) -> None:
         """Go to cards screen."""
         # pylint: disable=import-outside-toplevel
         from passfx.screens.cards import CardsScreen
+
         self.app.push_screen(CardsScreen())
 
     def action_notes(self) -> None:
         """Go to secure notes screen."""
         # pylint: disable=import-outside-toplevel
         from passfx.screens.notes import NotesScreen
+
         self.app.push_screen(NotesScreen())
 
     def action_envs(self) -> None:
         """Go to env vars screen."""
         # pylint: disable=import-outside-toplevel
         from passfx.screens.envs import EnvsScreen
+
         self.app.push_screen(EnvsScreen())
 
     def action_recovery(self) -> None:
         """Go to recovery codes screen."""
         # pylint: disable=import-outside-toplevel
         from passfx.screens.recovery import RecoveryScreen
+
         self.app.push_screen(RecoveryScreen())
 
     def action_generator(self) -> None:
         """Go to password generator screen."""
         # pylint: disable=import-outside-toplevel
         from passfx.screens.generator import GeneratorScreen
+
         self.app.push_screen(GeneratorScreen())
 
     def action_settings(self) -> None:
         """Go to settings screen."""
         # pylint: disable=import-outside-toplevel
         from passfx.screens.settings import SettingsScreen
+
         self.app.push_screen(SettingsScreen())
 
     def action_help(self) -> None:
         """Show the help screen."""
         # pylint: disable=import-outside-toplevel
         from passfx.screens.help import HelpScreen
+
         self.app.push_screen(HelpScreen())
 
     def action_quit(self) -> None:

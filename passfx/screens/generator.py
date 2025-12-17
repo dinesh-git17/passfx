@@ -128,7 +128,9 @@ class SaveGeneratedModal(ModalScreen[EmailCredential | None]):
 
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[ENTER] ENCRYPT & SAVE", variant="primary", id="save-button")
+                yield Button(
+                    "[ENTER] ENCRYPT & SAVE", variant="primary", id="save-button"
+                )
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -210,7 +212,9 @@ class GeneratorScreen(Screen):
                     id="mode-select",
                 )
 
-                yield Static(" |-- SYSTEM_READY", classes="pane-footer", id="mode-footer")
+                yield Static(
+                    " |-- SYSTEM_READY", classes="pane-footer", id="mode-footer"
+                )
 
             # Right Pane: Generator Console (70%)
             with Vertical(id="generator-console"):
@@ -228,7 +232,9 @@ class GeneratorScreen(Screen):
                         # Password Options (default visible)
                         with Vertical(id="password-options", classes="config-panel"):
                             yield Label("LENGTH (8-128):", classes="config-label")
-                            yield Input(value="16", placeholder="8-128", id="length-input")
+                            yield Input(
+                                value="16", placeholder="8-128", id="length-input"
+                            )
                             yield Checkbox(
                                 "Exclude ambiguous (0, O, l, 1)",
                                 id="exclude-ambiguous",
@@ -250,7 +256,9 @@ class GeneratorScreen(Screen):
                         # PIN Options (hidden by default)
                         with Vertical(id="pin-options", classes="config-panel"):
                             yield Label("DIGITS (4-12):", classes="config-label")
-                            yield Input(value="6", placeholder="4-12", id="pin-length-input")
+                            yield Input(
+                                value="6", placeholder="4-12", id="pin-length-input"
+                            )
 
                     # Section B: Output Display
                     with Vertical(id="output-section"):
@@ -269,7 +277,9 @@ class GeneratorScreen(Screen):
 
                     # Section C: Action Deck
                     with Horizontal(id="action-deck"):
-                        yield Button("GENERATE", id="generate-button", variant="primary")
+                        yield Button(
+                            "GENERATE", id="generate-button", variant="primary"
+                        )
                         yield Button("COPY", id="copy-button")
                         yield Button("SAVE TO VAULT", id="save-button")
 
@@ -313,7 +323,9 @@ class GeneratorScreen(Screen):
         if event.option.id:
             self._switch_mode(event.option.id)
 
-    def on_option_list_option_highlighted(self, event: OptionList.OptionHighlighted) -> None:
+    def on_option_list_option_highlighted(
+        self, event: OptionList.OptionHighlighted
+    ) -> None:
         """Handle mode highlight change (live preview)."""
         if event.option.id:
             self._switch_mode(event.option.id)

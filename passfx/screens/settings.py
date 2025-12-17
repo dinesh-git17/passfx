@@ -81,7 +81,7 @@ class ExportModal(ModalScreen[None]):
 
         try:
             data = app.vault.get_all_data()
-            count = export_vault(data, path, format=fmt, include_sensitive=True)
+            count = export_vault(data, path, fmt=fmt, include_sensitive=True)
             status.update(f"[success]Exported {count} entries to {path}[/success]")
             self.notify(f"Exported {count} entries", title="Success")
         except ImportExportError as e:
@@ -214,8 +214,10 @@ class SettingsScreen(Screen):
         if option_id == "export":
             self.app.push_screen(ExportModal())
         elif option_id == "import":
+
             def refresh_stats(_: None) -> None:
                 self._show_stats()
+
             self.app.push_screen(ImportModal(), refresh_stats)
         elif option_id == "stats":
             self._show_stats()

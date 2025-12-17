@@ -120,7 +120,7 @@ class ViewNoteModal(ModalScreen[None]):
             title_display = self.note.title
 
         # Get content preview (first 80 chars per line, max 3 lines)
-        content_lines = self.note.content.split('\n')[:3]
+        content_lines = self.note.content.split("\n")[:3]
         preview_lines = []
         for line in content_lines:
             preview = line[:content_width] if len(line) > content_width else line
@@ -153,7 +153,9 @@ class ViewNoteModal(ModalScreen[None]):
                 yield Static(shard_line)
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Stats section
                 stats = (
@@ -167,7 +169,9 @@ class ViewNoteModal(ModalScreen[None]):
                 yield Static(stats_line)
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Content section
                 content_header = (
@@ -202,14 +206,17 @@ class ViewNoteModal(ModalScreen[None]):
                 yield Static(content_footer)
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Footer divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Footer row
                 footer_left = (
-                    f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.note.id[:8]}[/]"
+                    f"  [dim {c['section_border']}]ID:[/] "
+                    f"[{c['muted']}]{self.note.id[:8]}[/]"
                 )
                 footer_right = (
                     f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
@@ -413,11 +420,17 @@ class ConfirmDeleteNoteModal(ModalScreen[bool]):
                 id="note-delete-title",
             )
             with Vertical(id="delete-content"):
-                yield Static(f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target")
-                yield Static("[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning")
+                yield Static(
+                    f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target"
+                )
+                yield Static(
+                    "[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning"
+                )
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[Y] CONFIRM DELETE", id="delete-button", classes="note-delete-btn")
+                yield Button(
+                    "[Y] CONFIRM DELETE", id="delete-button", classes="note-delete-btn"
+                )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -487,7 +500,9 @@ class NotesScreen(Screen):
                         "╚══════════════════════════════════════╝[/]",
                         id="empty-state-text",
                     )
-                yield Static(" └── SYSTEM_READY", classes="pane-footer", id="grid-footer")
+                yield Static(
+                    " └── SYSTEM_READY", classes="pane-footer", id="grid-footer"
+                )
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
@@ -738,7 +753,10 @@ class NotesScreen(Screen):
             Vertical(
                 Horizontal(
                     Vertical(
-                        Static("[on #94a3b8][bold #000000] MEM [/][/]", classes="avatar-char"),
+                        Static(
+                            "[on #94a3b8][bold #000000] MEM [/][/]",
+                            classes="avatar-char",
+                        ),
                         Static("[on #94a3b8]     [/]", classes="avatar-char"),
                         classes="avatar-box",
                     ),
@@ -777,9 +795,7 @@ class NotesScreen(Screen):
             lines = entry.content.split("\n")[:8]
             for i, line in enumerate(lines, 1):
                 line_preview = line[:35] if len(line) > 35 else line
-                formatted_line = (
-                    f"[dim #475569]{i:2}[/] │ [#94a3b8]{line_preview}[/]"
-                )
+                formatted_line = f"[dim #475569]{i:2}[/] │ [#94a3b8]{line_preview}[/]"
                 preview_lines.append(formatted_line)
             if len(entry.content.split("\n")) > 8:
                 more_text = "[dim #475569]   [/]   [dim #64748b]... more content[/]"
@@ -804,7 +820,9 @@ class NotesScreen(Screen):
 
         # Section 4: Footer
         try:
-            updated_full = datetime.fromisoformat(entry.updated_at).strftime("%Y-%m-%d %H:%M")
+            updated_full = datetime.fromisoformat(entry.updated_at).strftime(
+                "%Y-%m-%d %H:%M"
+            )
         except (ValueError, TypeError):
             updated_full = entry.updated_at or "Unknown"
 
