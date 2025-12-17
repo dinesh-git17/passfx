@@ -27,9 +27,9 @@ All code in this repository is owned and maintained by a single codeowner. The o
 ```
 
 This means:
-- All changes require review and approval from the codeowner
+- External contributors require review and approval from the codeowner
 - The codeowner has final authority on all merge decisions
-- No changes can bypass the review process
+- The codeowner can merge their own PRs without external review (CI must still pass)
 
 ### Protected Branches
 
@@ -89,11 +89,11 @@ All merges use squash or rebase to maintain a clean, linear commit history.
 
 | Rule | Status |
 |------|--------|
-| Enforce rules on administrators | Enforced |
+| Enforce rules on administrators | Disabled (codeowner can bypass reviews) |
 | Allow force pushes | Disabled |
 | Allow deletions | Disabled |
 
-No one, including administrators, can bypass these protections.
+The codeowner can bypass review requirements but force pushes and deletions remain blocked for everyone.
 
 ### Allowed Merge Methods
 
