@@ -1,34 +1,56 @@
-# PassFX
+<div align="center">
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+<img src="assets/logo.png" alt="PassFX Logo" width="40%">
+
+**Your secrets. Your terminal. Offline by design.**
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Quality: Strict](https://img.shields.io/badge/quality-strict-red)](.pylintrc)
+[![Changelog](https://img.shields.io/badge/changelog-v1.0.0-orange)](CHANGELOG.md)
 
-A secure, terminal-based password manager with AES-256 encryption and a cyberpunk-themed interface.
+</div>
 
-```
-    ____                 _______  __
-   / __ \____ ___________/ ____/ |/ /
-  / /_/ / __ `/ ___/ ___/ /_   |   /
- / ____/ /_/ (__  |__  ) __/  /   |
-/_/    \__,_/____/____/_/    /_/|_|
+---
 
-    [ Secure Password Management ]
-```
+## 🔐 What is PassFX?
 
-## Features
+**PassFX** is a production-grade, terminal-based password manager (TUI) built for developers who trust code more than clouds (and certainly more than they trust "free tier" SaaS).
 
-- **AES-256 Encryption** — Military-grade encryption for all stored credentials
-- **PBKDF2 Key Derivation** — 480,000 iterations for maximum security against brute-force attacks
-- **Zero-Knowledge Architecture** — Your master password never leaves your device
-- **Multiple Credential Types** — Store passwords, phone PINs, and credit card details
-- **Secure Password Generator** — Cryptographically secure random generation
-- **Password Strength Analysis** — Real-time strength feedback using zxcvbn
-- **Auto-Lock** — Configurable automatic vault locking on inactivity
-- **Clipboard Integration** — One-key copy with automatic clipboard clearing
-- **Cross-Platform** — Works on macOS, Linux, and Windows
+It provides a modern, keyboard-centric interface for managing your most sensitive data—passwords, credit cards, recovery codes, and environment variables—without ever sending a single byte over the network. It combines the usability of a GUI with the speed and security of the command line.
 
-## Installation
+> **Note:** PassFX is currently in Beta. It is stable enough for daily use, but as with all security tools, please maintain backups of your recovery keys.
+
+## 🛡️ Security Philosophy
+
+We take a paranoid, "local-first" approach to security. For a deep dive into our threat model, read our [Security Policy](SECURITY.md).
+
+- **Offline Only:** No servers. No syncing. No "cloud backup." Because there is no cloud, only other people's computers.
+- **Zero Knowledge:** We cannot see your data. If you lose your master password, your data is mathematically irretrievable.
+- **Standard Primitives:** We do not roll our own crypto (rule #1 of crypto club).
+  - **Encryption:** AES-256-CBC via Fernet (with HMAC-SHA256 for integrity).
+  - **Key Derivation:** PBKDF2-HMAC-SHA256 (480,000 iterations, exceeding OWASP 2023 recommendations).
+  - **Randomness:** All secrets are generated using Python's `secrets` module (CSPRNG), never `random`.
+- **Memory Hygiene:** We employ best-effort memory wiping for sensitive keys and implement strict auto-lock timeouts.
+
+## ⚙️ Features
+
+- **🖥️ Modern TUI:** Built on [Textual](https://textual.textualize.io/), featuring full mouse support, modal dialogs, and layouts that actually center the div.
+- **🗃️ Versatile Storage:**
+  - **Credentials:** Email/Password combinations.
+  - **Financial:** Credit card details (PAN, CVV, PIN).
+  - **DevOps:** Environment variables and API keys.
+  - **Recovery:** 2FA backup codes.
+  - **Notes:** Encrypted free-text notes.
+- **⚡ Clipboard Hygiene:** Automatic clipboard clearing after 30 seconds to prevent you from accidentally pasting your password into Slack.
+- **🎲 Secure Generator:** Robust generator for passwords, passphrases (XKCD-style), and PINs.
+- **📊 Strength Meter:** Integrated `zxcvbn` estimation to reject "password123" before you even try to save it.
+- **📤 Portable:** Full JSON/CSV export and import capabilities (encrypted export coming soon).
+
+## 🚀 Installation
+
+PassFX requires Python 3.10 or higher.
 
 ### From PyPI (Recommended)
 
@@ -39,170 +61,95 @@ pip install passfx
 ### From Source
 
 ```bash
-git clone https://github.com/dinesh-git17/passfx.git
+git clone [https://github.com/dinesh-git17/passfx.git](https://github.com/dinesh-git17/passfx.git)
 cd passfx
 pip install -e .
 ```
 
-## Quick Start
+## 🕹️ Usage
+
+Once installed, simply run:
 
 ```bash
-# Launch PassFX
 passfx
-
-# Or run as a module
-python -m passfx
 ```
 
-On first launch, you'll be prompted to create a master password. This password encrypts your vault — **there is no recovery option by design**.
+📖 **Full Manual:** For detailed instructions on recovery codes, environment variables, and drag-and-drop features, consult the **[User Guide](docs/USER_GUIDE.md)**.
 
-## Usage
+### First Run
 
-### Keyboard Shortcuts
+1.  You will be prompted to create a **Master Password**.
+2.  Make this strong. If you lose it, **we cannot recover your data**.
+3.  The vault is initialized at `~/.passfx/vault.enc`.
 
-| Key | Action |
-|-----|--------|
-| `↑` `↓` | Navigate menu |
-| `Enter` | Select |
-| `a` | Add new credential |
-| `e` | Edit selected |
-| `d` | Delete selected |
-| `c` | Copy password to clipboard |
-| `g` | Open password generator |
-| `Escape` | Go back |
-| `Ctrl+Q` | Quit |
+### Navigation
 
-### Credential Types
+- **`TAB` / `Shift+TAB`**: Navigate between fields.
+- **`Enter`**: Select or submit.
+- **`Esc`**: Go back or close modals.
+- **`q`**: Quit the application immediately (auto-locks vault).
 
-- **Passwords** — Email/username and password combinations for websites and services
-- **Phone PINs** — Secure storage for phone unlock codes and PINs
-- **Credit Cards** — Card numbers, expiration dates, and CVVs
+## 🧪 Development & Tooling
 
-## Security
+We treat this project like mission-critical infrastructure. Our development workflow utilizes a modern `pyproject.toml` configuration and enforces strict quality gates:
 
-PassFX is built with security as the top priority:
+- **Formatting:** Enforced by `black` and `isort`.
+- **Linting:** `pylint` configuration requires a perfect **10.0/10** score. Code with smells does not merge.
+- **Pre-commit:** We provide a comprehensive `.pre-commit-config.yaml`.
+- **Attribution Guard:** Our CI pipeline includes a custom scanner (`scripts/attribution_guard.py`) to ensure the codebase remains clean of accidental AI/LLM attribution headers or watermarks.
 
-| Feature | Implementation |
-|---------|----------------|
-| Encryption | AES-256-CBC with HMAC-SHA256 (Fernet) |
-| Key Derivation | PBKDF2-HMAC-SHA256, 480,000 iterations |
-| Salt | 32-byte cryptographically random per vault |
-| File Permissions | Vault files restricted to owner (0600) |
-| Memory | Sensitive data cleared after use |
-| Clipboard | Auto-cleared after 30 seconds |
-
-### Security Design Principles
-
-- **No Cloud Sync** — Your data stays on your device
-- **No Recovery** — Master password cannot be reset or recovered
-- **No Telemetry** — Zero data collection or phone-home functionality
-- **Auditable** — Open source and dependency-minimal
-
-## Configuration
-
-PassFX stores its data in `~/.passfx/`:
-
-```
-~/.passfx/
-├── vault.enc      # Encrypted credential vault
-├── salt           # Cryptographic salt
-├── config.json    # User preferences
-└── logs/          # Audit logs (no sensitive data)
-```
-
-### Settings
-
-Access settings from the main menu to configure:
-
-- Auto-lock timeout (default: 5 minutes)
-- Clipboard clear delay (default: 30 seconds)
-- Password generator defaults
-
-## Development
-
-### Setup
+### Setting up a Dev Environment
 
 ```bash
-# Clone the repository
-git clone https://github.com/dinesh-git17/passfx.git
-cd passfx
+# Install the project in editable mode (dependencies from pyproject.toml)
+pip install -e .
 
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-# .venv\Scripts\activate   # Windows
+# Install development tooling
+pip install black pylint isort pre-commit
 
-# Install in development mode
-pip install -e ".[dev]"
-
-# Install pre-commit hooks
+# Install pre-commit hooks (Mandatory)
 pre-commit install
+
+# Run the test suite
+pytest
 ```
 
-### Code Quality
+## 🧠 Design Decisions
 
-```bash
-# Format code
-black passfx/
+**Why Textual?**
+Most terminal password managers use `curses` or `urwid`. We chose `Textual` because it allows for a CSS-driven layout engine, making the UI easier to audit and significantly more responsive. Plus, it looks better than `vim` on a bad day.
 
-# Lint
-ruff check passfx/ --fix
+**Why Separate Salt?**
+Your vault's cryptographic salt is stored in `~/.passfx/salt`, separate from the encrypted payload `~/.passfx/vault.enc`. This architectural choice adds a layer of complexity for attackers attempting to brute-force a stolen vault file without the accompanying local environment.
 
-# Type checking
-mypy passfx/
+👉 **Deep Dive:** Read the full **[Architecture Document](docs/ARCHITECTURE.md)** for a breakdown of our crypto boundaries and data flow.
 
-# Run tests
-pytest tests/ --cov=passfx
+## 🤝 Contributing
 
-# Security audit
-bandit -r passfx/
-pip-audit
-```
+We welcome contributions from security-conscious developers.
 
-### Project Structure
+1.  Read **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** for our strict quality gates.
+2.  Review our **[Code of Conduct](CODE_OF_CONDUCT.md)**.
+3.  🤖 **AI Users:** If you use an LLM to assist with coding, you **MUST** prompt it to read **[CLAUDE.md](CLAUDE.md)** first.
 
-```
-passfx/
-├── core/           # Encryption, vault, and data models
-├── screens/        # Textual TUI screens
-├── utils/          # Password generation, clipboard, validators
-├── styles/         # Textual CSS theming
-└── ui/             # Reusable UI components
-```
+**Note:** All PRs must pass the "Quality Gate" CI workflow, which includes formatting, strict linting, and the attribution guard.
 
-## Requirements
+## 🧩 FAQ
 
-- Python 3.11 or higher
-- Dependencies:
-  - `textual` — Terminal UI framework
-  - `cryptography` — Encryption primitives
-  - `pyperclip` — Cross-platform clipboard
-  - `zxcvbn` — Password strength estimation
+**Q: Is this safer than storing passwords in a browser?**
+A: Browsers are huge attack surfaces that connect to the internet. PassFX is a small, focused tool that doesn't know how to make a network request. You do the math.
 
-## Contributing
+**Q: Where is my data stored?**
+A: On your hard drive. Specifically `~/.passfx/`. It works on my machine, and it stays on yours.
 
-Contributions are welcome! Please read the following before submitting:
+**Q: I forgot my Master Password. Can you reset it?**
+A: No. We hash it more times than you've pushed to `main` on a Friday. The encryption is standard AES-256. Unless you have a few million years and a supercomputer, that data is gone.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Ensure tests pass and coverage remains above 90%
-4. Run `black`, `ruff`, and `mypy` before committing
-5. Submit a pull request
-
-For security vulnerabilities, please email directly rather than opening a public issue.
-
-## License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [Textual](https://github.com/Textualize/textual) — Modern TUI framework
-- [cryptography](https://github.com/pyca/cryptography) — Cryptographic recipes
-- [zxcvbn](https://github.com/dropbox/zxcvbn) — Password strength estimation
+**Q: Why "PassFX"?**
+A: Because "PasswordManagerForTerminalWrittenInPythonUsingTextual" was rejected by PyPI for being too verbose.
 
 ---
 
-<p align="center">
-  <sub>Built with security in mind.</sub>
-</p>
+<div align="center">
+  <sub>Built with 🔒 and ☕ by Dinesh.</sub>
+</div>

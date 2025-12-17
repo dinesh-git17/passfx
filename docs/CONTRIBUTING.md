@@ -1,413 +1,184 @@
+<div align="center">
+
 # Contributing to PassFX
 
-This document outlines the repository governance, branch protection rules, and contribution workflow for PassFX.
+**Code. Commit. Squash. Repeat.**
+
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+![Strictness: High](https://img.shields.io/badge/strictness-high-red)
+![Pylint: 10.0](https://img.shields.io/badge/pylint-10.0%2F10-blue)
+
+</div>
 
 ---
 
-## Table of Contents
+## 👋 Welcome, Traveller
 
-1. [Repository Governance](#repository-governance)
-2. [Branch Protection Rules](#branch-protection-rules)
-3. [Contribution Workflow](#contribution-workflow)
-4. [Commit Standards](#commit-standards)
-5. [Code Quality Requirements](#code-quality-requirements)
-6. [Pull Request Process](#pull-request-process)
-7. [Security Considerations](#security-considerations)
+So, you want to contribute to **PassFX**? Excellent choice.
+
+We are building a fortress of solitude for secrets, living entirely in the terminal. We value clean code, linear history, and security paranoia above all else.
+
+This document contains the **Rules of Engagement**. Follow them, and your PRs will be merged with glory. Ignore them, and our CI pipeline will reject you faster than a firewall on a bad day.
 
 ---
 
-## Repository Governance
+## 🏛️ Repository Governance
 
-### Code Ownership
+### The Benevolent Dictator
 
-All code in this repository is owned and maintained by a single codeowner. The ownership is defined in `.github/CODEOWNERS`:
+This repository is owned and maintained by **@dinesh-git17**.
 
-```
-* @dinesh-git17
-```
+- **The Codeowner has the final say.** (Yes, even if you disagree with the variable naming).
+- **Approval is mandatory.** No code enters `main` without the Codeowner's blessing.
+- **Direct commits to `main` are blocked.** We aren't savages.
 
-This means:
-- External contributors require review and approval from the codeowner
-- The codeowner has final authority on all merge decisions
-- The codeowner can merge their own PRs without external review (CI must still pass)
+### 🛡️ The Ironclad Branches
 
-### Protected Branches
+The `main` branch is protected by ancient magic (and GitHub settings):
 
-The `main` branch is fully protected. Direct commits are not allowed.
-
----
-
-## Branch Protection Rules
-
-The following protections are enforced on the `main` branch:
-
-### Pull Request Requirements
-
-| Rule | Status |
-|------|--------|
-| Require pull request before merging | Enforced |
-| Required approving reviews | 1 (codeowner) |
-| Dismiss stale reviews on new commits | Enforced |
-| Require review from Code Owners | Enforced |
-| Require approval of most recent push | Enforced |
-| Require conversation resolution | Enforced |
-
-### Status Check Requirements
-
-All CI checks must pass before merging:
-
-| Check | Description |
-|-------|-------------|
-| `Quality Gate (Python 3.10)` | Linting, formatting, compilation on Python 3.10 |
-| `Quality Gate (Python 3.11)` | Linting, formatting, compilation on Python 3.11 |
-
-The CI pipeline validates:
-- Black formatting compliance
-- isort import sorting
-- Pylint score (must be 10.0/10)
-- Python syntax compilation
-- Attribution guard (no AI/LLM references)
-- Pre-commit hook parity
-
-### Branch Synchronization
-
-| Rule | Status |
-|------|--------|
-| Require branch to be up to date | Enforced |
-
-Your branch must be rebased or merged with the latest `main` before merging.
-
-### History Requirements
-
-| Rule | Status |
-|------|--------|
-| Require linear history | Enforced |
-
-All merges use squash or rebase to maintain a clean, linear commit history.
-
-### Administrative Protections
-
-| Rule | Status |
-|------|--------|
-| Enforce rules on administrators | Disabled (codeowner can bypass reviews) |
-| Allow force pushes | Disabled |
-| Allow deletions | Disabled |
-
-The codeowner can bypass review requirements but force pushes and deletions remain blocked for everyone.
-
-### Allowed Merge Methods
-
-| Method | Status |
-|--------|--------|
-| Merge commits | Disabled |
-| Squash merging | Enabled (default) |
-| Rebase merging | Enabled |
-
-All PRs are squashed by default to maintain a clean linear history.
+- **Linear History Only:** We squash-merge everything. Your 17 "fix typo" commits will become one glorious unit of work.
+- **Strict Status Checks:** If the build fails, the merge button physically disappears.
+- **Freshness Required:** Your branch must be up-to-date with `main`. Rebase early, rebase often.
 
 ---
 
-## Contribution Workflow
+## 📜 The "Zero-Tolerance" Quality Gate
 
-### Step 1: Clone the Repository
+We run a tight ship. Our CI pipeline is not a suggestion; it is a law.
+
+| Tool                  | The Requirement           | The Consequence                                                    |
+| --------------------- | ------------------------- | ------------------------------------------------------------------ |
+| **Black**             | Uncompromising formatting | CI Fails.                                                          |
+| **Pylint**            | **10.0 / 10.0 Score**     | CI Fails if you get 9.99. We don't do "technical debt."            |
+| **Attribution Guard** | No AI/LLM headers         | CI Fails if it smells like ChatGPT wrote it.                       |
+| **Type Hints**        | 100% Coverage             | `def foo(bar)` is illegal. `def foo(bar: str) -> None` is the way. |
+| **Tests**             | Must Pass                 | If you break it, you buy it.                                       |
+
+> **Pro Tip:** Don't wait for CI to yell at you. Run `pre-commit` locally, or the git hooks will haunt your dreams.
+
+---
+
+## 🛠️ The Workflow
+
+### 1. Clone & Equip
 
 ```bash
-git clone https://github.com/dinesh-git17/passfx.git
+git clone [https://github.com/dinesh-git17/passfx.git](https://github.com/dinesh-git17/passfx.git)
 cd passfx
-```
 
-### Step 2: Set Up Development Environment
-
-```bash
+# Summon the virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Install the arsenal (Editable mode + Dev Tools)
 pip install -e .
-pip install -r requirements-dev.txt
+pip install black pylint isort pre-commit
+
+# INSTALL THE HOOKS (Do not skip this)
 pre-commit install
 ```
 
-### Step 3: Create a Feature Branch
+### 2. Branch Like a Pro
 
-Always create a new branch from the latest `main`:
+Always branch from the latest `main`.
 
 ```bash
 git checkout main
 git pull origin main
-git checkout -b feature/your-feature-name
+git checkout -b feature/cool-new-widget
 ```
 
-Branch naming conventions:
-- `feature/` - New features
-- `fix/` - Bug fixes
-- `security/` - Security-related changes
-- `refactor/` - Code refactoring
-- `docs/` - Documentation updates
-- `test/` - Test additions or fixes
+- `feature/` - New shinies
+- `fix/` - Squashing bugs
+- `refactor/` - Cleaning up the mess
+- `docs/` - Fixing my typos
 
-### Step 4: Make Changes
+### 3. Write Code (The Fun Part)
 
-1. Write your code following the [Code Quality Requirements](#code-quality-requirements)
-2. Run quality checks locally before committing:
+Write clean, secure, typed Python. When you think you're done, ask yourself: _"Would I trust my bank account with this code?"_
+
+### 4. Local Quality Check
+
+Before you commit, run the gauntlet:
 
 ```bash
+# Format everything
 black passfx/
 isort passfx/
-ruff check passfx/ --fix
+
+# The "Ref" (Linter)
 pylint passfx/ --rcfile=.pylintrc --fail-under=10.0
+
+# The Security Guard
+python scripts/attribution_guard.py passfx/
 ```
 
-### Step 5: Commit Changes
+### 5. Commit with Intent
 
-Follow the [Commit Standards](#commit-standards) when writing commit messages.
+We use **Conventional Commits**. If your commit message is "fixed stuff", we will close your PR.
 
-```bash
-git add .
-git commit -m "feat(scope): description"
-```
+**Format:** `type(scope): description`
 
-### Step 6: Push and Create Pull Request
+**Examples:**
 
-```bash
-git push -u origin feature/your-feature-name
-```
-
-Then create a Pull Request on GitHub targeting `main`.
-
-### Step 7: Address Review Feedback
-
-- Respond to all review comments
-- Push additional commits to address feedback
-- Re-request review when ready
-
-### Step 8: Merge
-
-Once approved and all checks pass, the codeowner will merge via squash merge.
+- ✅ `feat(ui): add matrix rain effect to login screen`
+- ✅ `fix(crypto): plug memory leak in key derivation`
+- ❌ `updated code`
+- ❌ `wip`
 
 ---
 
-## Commit Standards
+## 🚀 The Pull Request Process
 
-### Conventional Commit Format
-
-All commits must follow conventional commit format:
-
-```
-type(scope): description
-
-[optional body]
-
-[optional footer]
-```
-
-### Types
-
-| Type | Description |
-|------|-------------|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `security` | Security-related change |
-| `refactor` | Code refactoring (no functional change) |
-| `perf` | Performance improvement |
-| `test` | Adding or updating tests |
-| `docs` | Documentation changes |
-| `style` | Code style/formatting (no logic change) |
-| `chore` | Maintenance tasks |
-| `ci` | CI/CD configuration changes |
-
-### Scopes
-
-| Scope | Description |
-|-------|-------------|
-| `core` | Core business logic |
-| `crypto` | Cryptographic operations |
-| `vault` | Vault storage operations |
-| `ui` | User interface components |
-| `screens` | Screen-specific changes |
-| `cli` | CLI entry point |
-| `utils` | Utility functions |
-| `tests` | Test files |
-| `deps` | Dependency updates |
-
-### Examples
-
-```
-feat(screens): add search functionality to passwords screen
-
-- Implement case-insensitive search
-- Add keyboard shortcut (/) for quick search
-- Display result count in footer
-
-Fixes #42
-```
-
-```
-fix(crypto): prevent timing attack in password verification
-
-Use secrets.compare_digest() for constant-time comparison
-to prevent timing-based side-channel attacks.
-```
-
-```
-security(vault): enforce stricter file permissions
-
-- Set vault.enc to 0o600
-- Set salt file to 0o600
-- Validate permissions on vault load
-```
-
-### Commit Rules
-
-1. Use imperative mood ("add feature" not "added feature")
-2. Keep subject line under 72 characters
-3. Capitalize the first letter after the colon
-4. Do not end subject line with a period
-5. Separate subject from body with a blank line
-6. Reference issues in the footer with `Fixes #123` or `Closes #123`
-
-### Forbidden in Commits
-
-- References to AI assistants or language models
-- Debugging code or print statements
-- Commented-out code
-- Unfinished work without clear TODO markers
+1.  **Push** your branch to origin.
+2.  **Open a PR** against `main`.
+3.  **Fill out the template.** If you delete the template, we delete your PR.
+4.  **Wait for CI.** Go grab a coffee. If it turns red, fix it.
+5.  **Code Review.** Address comments. We aren't criticizing _you_, just your code. (There's a difference).
+6.  **Squash & Merge.** Welcome to the codebase!
 
 ---
 
-## Code Quality Requirements
+## 🔐 Security Considerations
 
-### Automated Checks
+**This is a password manager. Paranoia is a feature, not a bug.**
 
-All code must pass these checks:
+1.  **Zero Knowledge:** We never log secrets. `print(password)` is a fireable offense.
+2.  **Entropy:** Use `secrets` module only. `import random` is banned for anything security-related.
+3.  **Sanitization:** Wipe variables from memory when done. Python GC is lazy; we try not to be.
+4.  **No Telemetry:** We don't phone home. We don't even know where "home" is.
 
-| Tool | Purpose | Command |
-|------|---------|---------|
-| Black | Code formatting | `black --check passfx/` |
-| isort | Import sorting | `isort --check-only passfx/` |
-| Ruff | Fast linting | `ruff check passfx/` |
-| Pylint | Comprehensive linting | `pylint passfx/ --fail-under=10.0` |
-| Bandit | Security audit | `bandit -r passfx/` |
+### Permitted Crypto Standards
 
-### Pre-commit Hooks
-
-Pre-commit hooks run automatically on each commit:
-
-```bash
-pre-commit install  # One-time setup
-pre-commit run --all-files  # Manual run
-```
-
-### Type Hints
-
-All functions and methods must include type hints:
-
-```python
-# Required
-def derive_key(password: str, salt: bytes) -> bytes:
-    ...
-
-# Not acceptable
-def derive_key(password, salt):
-    ...
-```
-
-### Documentation
-
-- Public APIs require docstrings explaining purpose and security implications
-- Complex logic requires inline comments explaining "why" not "what"
-- No redundant comments that restate the code
+- **Encryption:** AES-256-CBC (Fernet)
+- **KDF:** PBKDF2-HMAC-SHA256 (480k iterations)
+- **Permissions:** `0o700` for dirs, `0o600` for files.
 
 ---
 
-## Pull Request Process
+## 🤖 A Note on AI / LLMs
 
-### PR Title Format
+We utilize an **Attribution Guard** in our CI, but we know you use AI. We all do.
 
-Follow the same format as commits:
+### The Golden Rule of AI Assistance
 
-```
-type(scope): description
-```
+If you are using an AI assistant (Claude, ChatGPT, etc.) to generate or refactor code for this repository, **you MUST prompt it to read `CLAUDE.md` first.**
 
-### PR Description Template
+`CLAUDE.md` is our "context file" designed specifically for LLMs. It contains:
 
-```markdown
-## Summary
+- Our exact Pylint configuration
+- Type hinting rules
+- Architecture summaries
+- The forbidden patterns that will fail CI
 
-Brief description of what this PR does.
+**Example Prompt:**
 
-## Changes
+> "Read CLAUDE.md. Using those guidelines, please refactor the `CryptoManager` class to..."
 
-- Change 1
-- Change 2
-- Change 3
-
-## Testing
-
-How was this tested?
-
-## Security Considerations
-
-Any security implications of these changes?
-
-## Related Issues
-
-Fixes #123
-```
-
-### Review Criteria
-
-PRs are evaluated on:
-
-1. **Security** - No new vulnerabilities, proper handling of sensitive data
-2. **Code Quality** - Follows style guide, type hints, clean code
-3. **Testing** - Adequate test coverage for changes
-4. **Documentation** - Updated docs if needed
-5. **Performance** - No unnecessary performance regressions
-
-### Merge Requirements
-
-Before a PR can be merged:
-
-- [ ] All CI checks pass
-- [ ] At least 1 approval from codeowner
-- [ ] All conversations resolved
-- [ ] Branch is up to date with `main`
+**Remember:** Do not paste code directly if it includes "Generated by..." headers. We want **your** code. If an AI writes it, you better understand every line, because you're the one on the `git blame`.
 
 ---
 
-## Security Considerations
-
-### Sensitive Data Handling
-
-When working with code that handles credentials:
-
-1. Never log passwords, keys, PINs, or CVVs
-2. Use `secrets` module for random generation, never `random`
-3. Clear sensitive data from memory after use
-4. Use constant-time comparison for password verification
-
-### File Permissions
-
-Maintain strict file permissions:
-
-| Resource | Permission |
-|----------|------------|
-| `~/.passfx/` directory | 0o700 |
-| `vault.enc` | 0o600 |
-| `salt` | 0o600 |
-
-### Cryptographic Standards
-
-Do not modify cryptographic parameters without security review:
-
-| Parameter | Current Value | Standard |
-|-----------|---------------|----------|
-| PBKDF2 iterations | 480,000 | OWASP 2023 |
-| Salt length | 32 bytes | 256-bit |
-| Encryption | AES-256-CBC | Fernet |
-
----
-
-## Questions or Issues
-
-For questions about contributing, open an issue on the repository or contact the codeowner directly.
+<div align="center">
+  <sub>Happy Hacking! 🕵️‍♂️</sub>
+</div>

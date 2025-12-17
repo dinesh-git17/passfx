@@ -16,6 +16,47 @@ This document provides guidance for AI assistants working on the PassFX codebase
 - **NEVER** use `pickle` for credential serialization - JSON only
 - **NEVER** use weak KDF parameters (<480k PBKDF2 iterations)
 
+### Python Environment Isolation (Mandatory)
+
+Claude must **ALWAYS** work inside a Python virtual environment.
+
+**Strict Rules:**
+
+1. **Check for an existing virtual environment**
+
+   - If a `.venv/` (or any venv) already exists **before the conversation starts**, it must be **deleted**
+   - This ensures a clean, deterministic environment with no hidden state
+
+2. **Create a fresh virtual environment**
+
+   ```bash
+   python -m venv .venv
+   ```
+
+3. **Activate the virtual environment**
+
+   ```bash
+   source .venv/bin/activate
+   ```
+
+4. **All Python operations must occur inside the venv**
+
+   - Installing dependencies
+   - Running scripts
+   - Running tests
+   - Running linters, formatters, and security tools
+
+5. **Never install packages globally**
+   - No `pip install` outside the venv
+   - No reliance on system Python packages
+
+🚫 **Hard Rules**
+
+- Do not reuse existing virtual environments
+- Do not proceed if the venv is not activated
+- Do not assume system-level packages are available
+- If the venv becomes corrupted or misconfigured, delete it and recreate it
+
 ### Git Commits - NEVER Commit Without Confirmation
 
 - **NEVER** commit to GitHub without explicit user confirmation of the commit message
