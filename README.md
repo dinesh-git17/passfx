@@ -1,8 +1,6 @@
 <div align="center">
 
-![PassFX Logo](assets/logo.png)
-
-# PassFX
+<img src="assets/logo.png" alt="PassFX Logo" width="40%">
 
 **Your secrets. Your terminal. Offline by design.**
 
