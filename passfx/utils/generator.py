@@ -19,6 +19,7 @@ SYMBOLS_SAFE = "!@#$%^&*_+-="  # Symbols less likely to cause issues
 AMBIGUOUS = "0O1lI|"
 
 
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-branches
 def generate_password(
     length: int = 16,
     use_uppercase: bool = True,
@@ -85,7 +86,11 @@ def generate_password(
         password_chars.append(secrets.choice(chars))
 
     if use_digits:
-        chars = DIGITS if not exclude_ambiguous else DIGITS.replace("0", "").replace("1", "")
+        chars = (
+            DIGITS
+            if not exclude_ambiguous
+            else DIGITS.replace("0", "").replace("1", "")
+        )
         password_chars.append(secrets.choice(chars))
 
     if use_symbols:
@@ -123,21 +128,125 @@ def generate_passphrase(
     """
     # Common English words for passphrases (curated list)
     words = [
-        "apple", "arrow", "beach", "brave", "bread", "brick", "bridge", "brush",
-        "candy", "castle", "chair", "cheese", "cherry", "cloud", "clover", "coral",
-        "daisy", "dance", "delta", "dream", "eagle", "earth", "ember", "fable",
-        "falcon", "flame", "forest", "frost", "garden", "giant", "glass", "glory",
-        "grape", "green", "grove", "harbor", "heart", "honey", "horse", "ivory",
-        "jewel", "jungle", "karma", "knight", "lemon", "light", "lily", "lotus",
-        "magic", "maple", "marble", "meadow", "melody", "mist", "moon", "mosaic",
-        "noble", "north", "ocean", "olive", "onyx", "orbit", "orchid", "palace",
-        "panda", "pearl", "phoenix", "piano", "pilot", "planet", "plaza", "polar",
-        "quartz", "queen", "quest", "rabbit", "rainbow", "raven", "river", "rocket",
-        "ruby", "sage", "sailor", "shadow", "silver", "solar", "spark", "spirit",
-        "spring", "star", "stone", "storm", "sugar", "summer", "sunset", "swift",
-        "temple", "tiger", "titan", "tower", "trail", "treasure", "tree", "tulip",
-        "turtle", "twilight", "unity", "valley", "velvet", "violet", "voyage",
-        "water", "willow", "winter", "wisdom", "wolf", "wonder", "zenith", "zephyr",
+        "apple",
+        "arrow",
+        "beach",
+        "brave",
+        "bread",
+        "brick",
+        "bridge",
+        "brush",
+        "candy",
+        "castle",
+        "chair",
+        "cheese",
+        "cherry",
+        "cloud",
+        "clover",
+        "coral",
+        "daisy",
+        "dance",
+        "delta",
+        "dream",
+        "eagle",
+        "earth",
+        "ember",
+        "fable",
+        "falcon",
+        "flame",
+        "forest",
+        "frost",
+        "garden",
+        "giant",
+        "glass",
+        "glory",
+        "grape",
+        "green",
+        "grove",
+        "harbor",
+        "heart",
+        "honey",
+        "horse",
+        "ivory",
+        "jewel",
+        "jungle",
+        "karma",
+        "knight",
+        "lemon",
+        "light",
+        "lily",
+        "lotus",
+        "magic",
+        "maple",
+        "marble",
+        "meadow",
+        "melody",
+        "mist",
+        "moon",
+        "mosaic",
+        "noble",
+        "north",
+        "ocean",
+        "olive",
+        "onyx",
+        "orbit",
+        "orchid",
+        "palace",
+        "panda",
+        "pearl",
+        "phoenix",
+        "piano",
+        "pilot",
+        "planet",
+        "plaza",
+        "polar",
+        "quartz",
+        "queen",
+        "quest",
+        "rabbit",
+        "rainbow",
+        "raven",
+        "river",
+        "rocket",
+        "ruby",
+        "sage",
+        "sailor",
+        "shadow",
+        "silver",
+        "solar",
+        "spark",
+        "spirit",
+        "spring",
+        "star",
+        "stone",
+        "storm",
+        "sugar",
+        "summer",
+        "sunset",
+        "swift",
+        "temple",
+        "tiger",
+        "titan",
+        "tower",
+        "trail",
+        "treasure",
+        "tree",
+        "tulip",
+        "turtle",
+        "twilight",
+        "unity",
+        "valley",
+        "velvet",
+        "violet",
+        "voyage",
+        "water",
+        "willow",
+        "winter",
+        "wisdom",
+        "wolf",
+        "wonder",
+        "zenith",
+        "zephyr",
     ]
 
     selected = [secrets.choice(words) for _ in range(word_count)]
@@ -163,6 +272,7 @@ def generate_pin(length: int = 4) -> str:
     return "".join(secrets.choice(DIGITS) for _ in range(length))
 
 
+# pylint: disable=too-many-return-statements,too-many-branches
 def estimate_crack_time(password: str) -> str:
     """Estimate time to crack a password (rough estimate).
 
@@ -198,17 +308,16 @@ def estimate_crack_time(password: str) -> str:
     # Convert to human readable
     if seconds < 1:
         return "instant"
-    elif seconds < 60:
+    if seconds < 60:
         return f"{int(seconds)} seconds"
-    elif seconds < 3600:
+    if seconds < 3600:
         return f"{int(seconds / 60)} minutes"
-    elif seconds < 86400:
+    if seconds < 86400:
         return f"{int(seconds / 3600)} hours"
-    elif seconds < 31536000:
+    if seconds < 31536000:
         return f"{int(seconds / 86400)} days"
-    elif seconds < 31536000 * 100:
+    if seconds < 31536000 * 100:
         return f"{int(seconds / 31536000)} years"
-    elif seconds < 31536000 * 1000:
+    if seconds < 31536000 * 1000:
         return f"{int(seconds / 31536000)} years"
-    else:
-        return "centuries"
+    return "centuries"

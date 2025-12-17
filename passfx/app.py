@@ -5,7 +5,8 @@ from __future__ import annotations
 from textual.app import App
 from textual.binding import Binding
 
-from passfx.core.vault import Vault
+from passfx.core.crypto import CryptoError
+from passfx.core.vault import Vault, VaultError
 
 
 class PassFXApp(App):
@@ -19,6 +20,8 @@ class PassFXApp(App):
         Binding("escape", "back", "Back", show=True),
     ]
 
+    SCREENS = {"login": "passfx.screens.login.LoginScreen"}
+
     def __init__(self) -> None:
         super().__init__()
         self.vault = Vault()
@@ -26,24 +29,19 @@ class PassFXApp(App):
 
     def on_mount(self) -> None:
         """Called when app is mounted."""
-        from passfx.screens.login import LoginScreen
+        self.push_screen("login")
 
-        self.push_screen(LoginScreen())
-
-    def action_back(self) -> None:
+    async def action_back(self) -> None:
         """Go back to previous screen (but not from main menu)."""
-        from passfx.screens.login import LoginScreen
-        from passfx.screens.main_menu import MainMenuScreen
-
         # Don't allow back from main menu or login
-        current = self.screen
-        if isinstance(current, (MainMenuScreen, LoginScreen)):
+        screen_name = self.screen.__class__.__name__
+        if screen_name in ("MainMenuScreen", "LoginScreen"):
             return
 
         if len(self.screen_stack) > 1:
             self.pop_screen()
 
-    def action_quit(self) -> None:
+    async def action_quit(self) -> None:
         """Quit the application."""
         if self.vault and self._unlocked:
             self.vault.lock()
@@ -55,7 +53,7 @@ class PassFXApp(App):
             self.vault.unlock(password)
             self._unlocked = True
             return True
-        except Exception:
+        except (VaultError, CryptoError):
             return False
 
     def create_vault(self, password: str) -> bool:
@@ -64,7 +62,7 @@ class PassFXApp(App):
             self.vault.create(password)
             self._unlocked = True
             return True
-        except Exception:
+        except VaultError:
             return False
 
 

@@ -6,6 +6,8 @@ import sys
 
 import setproctitle
 
+from passfx.app import PassFXApp
+
 # Terminal title - shown in terminal tab/window
 TERMINAL_TITLE = "◀ PASSFX ▶ Your passwords. Offline. Encrypted."
 
@@ -22,8 +24,6 @@ def main() -> int:
     Returns:
         Exit code (0 for success).
     """
-    from passfx.app import PassFXApp
-
     # Set process title (removes "Python" from terminal tab)
     setproctitle.setproctitle("PassFX")
     set_terminal_title(TERMINAL_TITLE)

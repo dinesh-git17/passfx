@@ -1,9 +1,11 @@
 """ASCII art logo and branding for PassFX - Visual Excellence."""
 
 import random
-from rich.text import Text
-from rich.panel import Panel
+
 from rich.align import Align
+from rich.panel import Panel
+from rich.text import Text
+
 from passfx.ui.styles import console
 
 # Epic ASCII art logo
@@ -113,9 +115,7 @@ def display_logo(show_tagline: bool = True, style: str = "cyber") -> None:
 
     if show_tagline:
         tagline = get_random_tagline()
-        console.print(
-            Align.center(Text(f'"{tagline}"', style="dim italic"))
-        )
+        console.print(Align.center(Text(f'"{tagline}"', style="dim italic")))
 
     console.print()
 
@@ -145,15 +145,21 @@ def display_exit_message() -> None:
     # Create styled exit message
     exit_box = Text()
     exit_box.append("☕ ", style="yellow")
-    exit_box.append("May your passwords be strong and your coffee stronger", style="bright_cyan")
+    exit_box.append(
+        "May your passwords be strong and your coffee stronger", style="bright_cyan"
+    )
 
-    console.print(Panel(
-        Align.center(exit_box),
-        border_style="dim cyan",
-        padding=(0, 2),
-    ))
+    console.print(
+        Panel(
+            Align.center(exit_box),
+            border_style="dim cyan",
+            padding=(0, 2),
+        )
+    )
 
-    console.print(Align.center(Text("Session terminated. Memory wiped. Goodbye!", style="dim")))
+    console.print(
+        Align.center(Text("Session terminated. Memory wiped. Goodbye!", style="dim"))
+    )
     console.print()
 
 
@@ -175,16 +181,20 @@ def display_locked_message() -> None:
 def display_welcome_new_user() -> None:
     """Display welcome message for new users."""
     console.print()
-    console.print(Panel(
-        "[bold cyan]Welcome to PassFX![/bold cyan]\n\n"
-        "[dim]No vault found. Let's create one and secure your digital life.[/dim]\n\n"
-        "[yellow]⚡[/yellow] [dim]Your vault will be encrypted with[/dim] [bold]AES-256[/bold]\n"
-        "[yellow]⚡[/yellow] [dim]Keys derived using[/dim] [bold]PBKDF2-SHA256[/bold] [dim](480k iterations)[/dim]\n"
-        "[yellow]⚡[/yellow] [dim]Only you can unlock it with your master password[/dim]",
-        title="[bold bright_cyan]🔐 First Time Setup[/bold bright_cyan]",
-        border_style="cyan",
-        padding=(1, 2),
-    ))
+    console.print(
+        Panel(
+            "[bold cyan]Welcome to PassFX![/bold cyan]\n\n"
+            "[dim]No vault found. Let's create one and secure your digital life.[/dim]\n\n"
+            "[yellow]⚡[/yellow] [dim]Your vault will be encrypted with[/dim] "
+            "[bold]AES-256[/bold]\n"
+            "[yellow]⚡[/yellow] [dim]Keys derived using[/dim] [bold]PBKDF2-SHA256[/bold] "
+            "[dim](480k iterations)[/dim]\n"
+            "[yellow]⚡[/yellow] [dim]Only you can unlock it with your master password[/dim]",
+            title="[bold bright_cyan]🔐 First Time Setup[/bold bright_cyan]",
+            border_style="cyan",
+            padding=(1, 2),
+        )
+    )
     console.print()
 
 
@@ -213,7 +223,7 @@ def display_vault_stats(emails: int, phones: int, cards: int) -> None:
 
     stats_text.append("├─────────────────────────────────┤\n", style="cyan")
     stats_text.append("│", style="cyan")
-    stats_text.append(f"  ◆  Total Entries  │  ", style="bold cyan")
+    stats_text.append("  ◆  Total Entries  │  ", style="bold cyan")
     stats_text.append(f"{total:>6}", style="bold bright_white")
     stats_text.append("    │\n", style="cyan")
     stats_text.append("╰─────────────────────────────────╯\n", style="cyan")

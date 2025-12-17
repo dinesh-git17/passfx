@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -32,7 +32,7 @@ class IDCardButton:
 
 
 @dataclass
-class IDCardColors:
+class IDCardColors:  # pylint: disable=too-many-instance-attributes
     """Color configuration for the ID card modal."""
 
     # Border and accent color
@@ -60,7 +60,7 @@ class IDCardColors:
 
 
 @dataclass
-class IDCardConfig:
+class IDCardConfig:  # pylint: disable=too-many-instance-attributes
     """Full configuration for an ID card modal."""
 
     title: str
@@ -125,9 +125,14 @@ class IDCardModal(ModalScreen[None]):
         inner_width = self.config.width - 2
         title_text = f" {self.config.title} "
         padding = inner_width - len(title_text) - 2
-        return f"[bold {c.border}]║[/]  [on {c.title_bg}][bold {c.title_fg}]{title_text}[/]{' ' * padding}[bold {c.border}]║[/]"
+        return (
+            f"[bold {c.border}]║[/]  [on {c.title_bg}][bold {c.title_fg}]{title_text}[/]"
+            f"{' ' * padding}[bold {c.border}]║[/]"
+        )
 
-    def _build_label_row(self, label: str, value: str, value_color: str | None = None) -> str:
+    def _build_label_row(
+        self, label: str, value: str, value_color: str | None = None
+    ) -> str:
         """Build a label: value row."""
         c = self.config.colors
         inner_width = self.config.width - 2
@@ -144,7 +149,10 @@ class IDCardModal(ModalScreen[None]):
         inner_width = self.config.width - 6  # Account for outer borders and padding
         label_text = f"─ {label} "
         dashes = inner_width - len(label_text) - 1
-        return f"[bold {c.border}]║[/]  [dim {c.section_border}]┌{label_text}{'─' * dashes}┐[/]  [bold {c.border}]║[/]"
+        return (
+            f"[bold {c.border}]║[/]  [dim {c.section_border}]┌{label_text}"
+            f"{'─' * dashes}┐[/]  [bold {c.border}]║[/]"
+        )
 
     def _build_section_content(self, value: str, value_color: str | None = None) -> str:
         """Build a section content row."""
@@ -152,34 +160,45 @@ class IDCardModal(ModalScreen[None]):
         inner_width = self.config.width - 6
         color = value_color or c.value_fg
         content_width = inner_width - 5  # Account for │ ► and │
-        return f"[bold {c.border}]║[/]  [dim {c.section_border}]│[/] [{c.accent}]►[/] [bold {color}]{value:<{content_width}}[/] [dim {c.section_border}]│[/]  [bold {c.border}]║[/]"
+        return (
+            f"[bold {c.border}]║[/]  [dim {c.section_border}]│[/] "
+            f"[{c.accent}]►[/] [bold {color}]{value:<{content_width}}[/] "
+            f"[dim {c.section_border}]│[/]  [bold {c.border}]║[/]"
+        )
 
     def _build_section_footer(self) -> str:
         """Build a section footer with inner borders."""
         c = self.config.colors
         inner_width = self.config.width - 6
-        return f"[bold {c.border}]║[/]  [dim {c.section_border}]└{'─' * (inner_width - 1)}┘[/]  [bold {c.border}]║[/]"
+        return (
+            f"[bold {c.border}]║[/]  [dim {c.section_border}]"
+            f"└{'─' * (inner_width - 1)}┘[/]  [bold {c.border}]║[/]"
+        )
 
     def _build_footer_row(self) -> str:
         """Build the footer row with left and right content."""
         c = self.config.colors
         inner_width = self.config.width - 2
-        left = f"  [dim {c.section_border}]ID:[/] [{c.muted}]{self.config.footer_left}[/]"
+        left = (
+            f"  [dim {c.section_border}]ID:[/] [{c.muted}]{self.config.footer_left}[/]"
+        )
         right = f"[dim {c.section_border}]ISSUED:[/] [{c.muted}]{self.config.footer_right}[/]"
         # Calculate padding between left and right
         left_visible = len(f"  ID: {self.config.footer_left}")
         right_visible = len(f"ISSUED: {self.config.footer_right}")
         padding = inner_width - left_visible - right_visible - 3
-        return f"[bold {c.border}]║[/]{left}{' ' * padding}{right}  [bold {c.border}]║[/]"
+        return (
+            f"[bold {c.border}]║[/]{left}{' ' * padding}{right}  [bold {c.border}]║[/]"
+        )
 
     def _build_security_row(self) -> str:
         """Build the security bar row."""
         c = self.config.colors
         inner_width = self.config.width - 2
-        bar = self.config.security_bar or ""
+        security_bar = self.config.security_bar or ""
         label = self.config.security_label or ""
         color = self.config.security_color or c.accent
-        content = f"  [dim {c.label_dim}]SECURITY:[/] {bar} [{color}]{label}"
+        content = f"  [dim {c.label_dim}]SECURITY:[/] {security_bar} [{color}]{label}"
         # Rough padding calculation
         visible_len = len(f"  SECURITY:  {label}") + 5  # 5 for bar blocks
         padding = inner_width - visible_len - 10
@@ -205,7 +224,9 @@ class IDCardModal(ModalScreen[None]):
                         yield Static(self._build_empty_row(), classes="id-card-line")
 
                     # Section with box
-                    yield Static(self._build_section_header(fld.label), classes="id-card-line")
+                    yield Static(
+                        self._build_section_header(fld.label), classes="id-card-line"
+                    )
                     yield Static(
                         self._build_section_content(fld.value, fld.value_color),
                         classes="id-card-line",
@@ -227,7 +248,9 @@ class IDCardModal(ModalScreen[None]):
             # Buttons
             with Horizontal(id=self.config.buttons_id):
                 for btn in self.config.buttons:
-                    classes = "modal-btn-primary" if btn.is_primary else "modal-btn-secondary"
+                    classes = (
+                        "modal-btn-primary" if btn.is_primary else "modal-btn-secondary"
+                    )
                     yield Button(btn.label, id=btn.id, classes=classes)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

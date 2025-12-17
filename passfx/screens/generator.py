@@ -1,14 +1,15 @@
 """Password Generator Screen for PassFX."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
-from rich.text import Text
 from textual.widgets import (
     Button,
     Checkbox,
@@ -189,7 +190,8 @@ class GeneratorScreen(Screen):
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]TOOLS[/] [#475569]>[/] [bold #00d4ff]GENERATOR[/]",
+                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]TOOLS[/] "
+                "[#475569]>[/] [bold #00d4ff]GENERATOR[/]",
                 id="header-branding",
             )
             yield Static(":: CRYPTO_GENERATOR ::", id="header-status")
@@ -353,7 +355,7 @@ class GeneratorScreen(Screen):
         elif event.button.id == "save-button":
             self.action_save_to_vault()
 
-    def action_generate(self) -> None:
+    def action_generate(self) -> None:  # pylint: disable=too-many-locals
         """Generate based on current mode and options."""
         result_display = self.query_one("#result-display", Static)
         strength_bar = self.query_one("#strength-bar", Static)

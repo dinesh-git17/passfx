@@ -49,7 +49,7 @@ class SystemTerminal(Vertical, can_focus=True):
                 id="terminal-input",
             )
 
-    def log(self, content: str) -> None:
+    def write_log(self, content: str) -> None:
         """Append timestamped text to the terminal output.
 
         Args:

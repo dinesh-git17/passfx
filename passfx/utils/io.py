@@ -9,8 +9,6 @@ from io import StringIO
 from pathlib import Path
 from typing import Any
 
-from passfx.core.models import CreditCard, EmailCredential, PhoneCredential
-
 
 class ImportExportError(Exception):
     """Error during import/export operations."""
@@ -19,7 +17,7 @@ class ImportExportError(Exception):
 def export_vault(
     data: dict[str, list[dict[str, Any]]],
     path: Path,
-    format: str = "json",
+    fmt: str = "json",
     include_sensitive: bool = True,
 ) -> int:
     """Export vault data to a file.
@@ -27,7 +25,7 @@ def export_vault(
     Args:
         data: Vault data with 'emails', 'phones', 'cards' keys.
         path: Output file path.
-        format: Export format ('json' or 'csv').
+        fmt: Export format ('json' or 'csv').
         include_sensitive: Whether to include passwords/CVV (CSV only).
 
     Returns:
@@ -39,7 +37,7 @@ def export_vault(
     try:
         count = 0
 
-        if format == "json":
+        if fmt == "json":
             export_data = {
                 "version": "1.0",
                 "exported_at": datetime.now().isoformat(),
@@ -48,11 +46,11 @@ def export_vault(
             path.write_text(json.dumps(export_data, indent=2))
             count = sum(len(v) for v in data.values())
 
-        elif format == "csv":
+        elif fmt == "csv":
             count = _export_csv(data, path, include_sensitive)
 
         else:
-            raise ImportExportError(f"Unknown format: {format}")
+            raise ImportExportError(f"Unknown format: {fmt}")
 
         return count
 
@@ -172,13 +170,13 @@ def _export_csv(
 
 def import_vault(
     path: Path,
-    format: str | None = None,
+    fmt: str | None = None,
 ) -> tuple[dict[str, list[dict[str, Any]]], int]:
     """Import vault data from a file.
 
     Args:
         path: Input file path.
-        format: Import format ('json' or 'csv'). Auto-detected if None.
+        fmt: Import format ('json' or 'csv'). Auto-detected if None.
 
     Returns:
         Tuple of (data dict, count of entries).
@@ -190,22 +188,21 @@ def import_vault(
         raise ImportExportError(f"File not found: {path}")
 
     # Auto-detect format
-    if format is None:
+    if fmt is None:
         suffix = path.suffix.lower()
         if suffix == ".json":
-            format = "json"
+            fmt = "json"
         elif suffix == ".csv":
-            format = "csv"
+            fmt = "csv"
         else:
             raise ImportExportError(f"Unknown file type: {suffix}")
 
     try:
-        if format == "json":
+        if fmt == "json":
             return _import_json(path)
-        elif format == "csv":
+        if fmt == "csv":
             return _import_csv(path)
-        else:
-            raise ImportExportError(f"Unknown format: {format}")
+        raise ImportExportError(f"Unknown format: {fmt}")
 
     except ImportExportError:
         raise
@@ -308,18 +305,18 @@ def _import_csv(path: Path) -> tuple[dict[str, list[dict[str, Any]]], int]:
 
 def export_to_string(
     data: dict[str, list[dict[str, Any]]],
-    format: str = "json",
+    fmt: str = "json",
 ) -> str:
     """Export vault data to a string.
 
     Args:
         data: Vault data.
-        format: Export format.
+        fmt: Export format.
 
     Returns:
         Exported data as string.
     """
-    if format == "json":
+    if fmt == "json":
         export_data = {
             "version": "1.0",
             "exported_at": datetime.now().isoformat(),
@@ -327,11 +324,19 @@ def export_to_string(
         }
         return json.dumps(export_data, indent=2)
 
-    elif format == "csv":
+    if fmt == "csv":
         output = StringIO()
         headers = [
-            "type", "label", "email", "phone", "password",
-            "card_number", "expiry", "cvv", "cardholder_name", "notes",
+            "type",
+            "label",
+            "email",
+            "phone",
+            "password",
+            "card_number",
+            "expiry",
+            "cvv",
+            "cardholder_name",
+            "notes",
         ]
         writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
         writer.writeheader()
@@ -345,5 +350,4 @@ def export_to_string(
 
         return output.getvalue()
 
-    else:
-        raise ImportExportError(f"Unknown format: {format}")
+    raise ImportExportError(f"Unknown format: {fmt}")

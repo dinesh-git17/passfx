@@ -1,4 +1,5 @@
 """Recovery Codes Screen for PassFX - Fail-Safe Protocol."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+# pylint: disable=too-many-return-statements
 def _get_relative_time(iso_timestamp: str | None) -> str:
     """Convert ISO timestamp to relative time string."""
     if not iso_timestamp:
@@ -97,6 +99,7 @@ class ViewRecoveryModal(ModalScreen[None]):
         super().__init__()
         self.recovery = recovery
 
+    # pylint: disable=too-many-locals,too-many-statements
     def compose(self) -> ComposeResult:
         """Create the recovery codes visualization layout."""
         c = self.COLORS
@@ -114,22 +117,30 @@ class ViewRecoveryModal(ModalScreen[None]):
         content_width = section_inner - 5
 
         # Truncate title if needed
-        title_display = self.recovery.title[:content_width] if len(self.recovery.title) > content_width else self.recovery.title
+        title_display = (
+            self.recovery.title[:content_width]
+            if len(self.recovery.title) > content_width
+            else self.recovery.title
+        )
 
         # Get content preview (first 5 lines for recovery codes)
-        content_lines = self.recovery.content.split('\n')[:5] if self.recovery.content else []
+        content_lines = (
+            self.recovery.content.split("\n")[:5] if self.recovery.content else []
+        )
         preview_lines = []
         for line in content_lines:
             # Mask recovery codes for security (show first 4 and last 4 chars)
             line = line.strip()
-            if line and not line.startswith('#'):
+            if line and not line.startswith("#"):
                 if len(line) > 8:
-                    masked = line[:4] + '•' * (len(line) - 8) + line[-4:]
+                    masked = line[:4] + "•" * (len(line) - 8) + line[-4:]
                 else:
                     masked = line
                 preview_lines.append(masked[:content_width])
             else:
-                preview_lines.append(line[:content_width] if len(line) > content_width else line)
+                preview_lines.append(
+                    line[:content_width] if len(line) > content_width else line
+                )
 
         with Vertical(id="recovery-modal"):
             with Vertical(id="physical-recovery-card"):
@@ -139,41 +150,74 @@ class ViewRecoveryModal(ModalScreen[None]):
                 # Title row
                 title = " FAIL-SAFE PROTOCOL "
                 title_pad = inner - len(title) - 2
-                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  "
+                    f"[on {c['title_bg']}][bold {c['title_fg']}]{title}[/]"
+                    f"{' ' * title_pad}[bold {c['border']}]║[/]"
+                )
 
                 # Divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Service label
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SERVICE:[/] [bold {c['value_fg']}]{title_display:<{inner - 13}}[/] [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SERVICE:[/] "
+                    f"[bold {c['value_fg']}]{title_display:<{inner - 13}}[/] "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Stats section
-                stats = f"[{c['accent']}]{self.recovery.line_count}[/] lines  [{c['accent']}]{self.recovery.code_count}[/] codes"
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/]   {stats:<{inner - 13}}[bold {c['border']}]║[/]")
+                stats = (
+                    f"[{c['accent']}]{self.recovery.line_count}[/] lines  "
+                    f"[{c['accent']}]{self.recovery.code_count}[/] codes"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/]   "
+                    f"{stats:<{inner - 13}}[bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Content section
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ RECOVERY CODES {'─' * (section_inner - 19)}┐[/]  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"┌─ RECOVERY CODES {'─' * (section_inner - 19)}┐[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Show preview lines (masked codes)
                 for line in preview_lines:
-                    if line and not line.startswith('#'):
+                    if line and not line.startswith("#"):
                         # Recovery code - show masked
-                        yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['accent']}]{line:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                        yield Static(
+                            f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                            f"[{c['accent']}]►[/] [{c['accent']}]{line:<{content_width}}[/] "
+                            f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
+                        )
                     else:
                         # Comment or empty
-                        yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['muted']}]{line:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                        yield Static(
+                            f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                            f"[{c['accent']}]►[/] [{c['muted']}]{line:<{content_width}}[/] "
+                            f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
+                        )
 
                 # If less than 5 lines, pad with empty lines
                 for _ in range(5 - len(preview_lines)):
-                    yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   {' ' * content_width} [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                    yield Static(
+                        f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   "
+                        f"{' ' * content_width} [dim {c['section_border']}]│[/]  "
+                        f"[bold {c['border']}]║[/]"
+                    )
 
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
@@ -182,10 +226,18 @@ class ViewRecoveryModal(ModalScreen[None]):
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Footer row
-                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.recovery.id[:8]}[/]"
-                footer_right = f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
+                footer_left = (
+                    f"  [dim {c['section_border']}]ID:[/] "
+                    f"[{c['muted']}]{self.recovery.id[:8]}[/]"
+                )
+                footer_right = (
+                    f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
+                )
                 footer_pad = inner - 32 - len(created)
-                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}"
+                    f"{footer_right}  [bold {c['border']}]║[/]"
+                )
 
                 # Bottom border
                 yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
@@ -241,7 +293,10 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
                 yield Input(placeholder="e.g. GitHub 2FA Backup", id="title-input")
 
                 # Content TextArea
-                yield Label("[#f43f5e]RECOVERY_CODES[/]  [dim #64748b]paste or import[/]", classes="recovery-input-label")
+                yield Label(
+                    "[#f43f5e]RECOVERY_CODES[/]  [dim #64748b]paste or import[/]",
+                    classes="recovery-input-label",
+                )
                 yield TextArea(
                     "",
                     id="content-area",
@@ -291,7 +346,7 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
             text_area.load_text(content)
 
             self.notify(f"Imported {len(content)} chars from {path.name}", title="Imported")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.notify(f"Failed to read file: {e}", severity="error")
 
     def _save(self) -> None:
@@ -337,9 +392,16 @@ class EditRecoveryModal(ModalScreen[dict | None]):
             # Form
             with Vertical(id="recovery-form"):
                 yield Label("[#f43f5e]PROTOCOL_NAME[/]", classes="recovery-input-label")
-                yield Input(value=self.recovery.title, placeholder="e.g. GitHub 2FA Backup", id="title-input")
+                yield Input(
+                    value=self.recovery.title,
+                    placeholder="e.g. GitHub 2FA Backup",
+                    id="title-input",
+                )
 
-                yield Label("[#f43f5e]RECOVERY_CODES[/]  [dim #64748b]paste or import[/]", classes="recovery-input-label")
+                yield Label(
+                    "[#f43f5e]RECOVERY_CODES[/]  [dim #64748b]paste or import[/]",
+                    classes="recovery-input-label",
+                )
                 yield TextArea(
                     self.recovery.content,
                     id="content-area",
@@ -384,7 +446,7 @@ class EditRecoveryModal(ModalScreen[dict | None]):
             text_area = self.query_one("#content-area", TextArea)
             text_area.load_text(content)
             self.notify(f"Imported {len(content)} chars from {path.name}", title="Imported")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.notify(f"Failed to read file: {e}", severity="error")
 
     def _save(self) -> None:
@@ -442,7 +504,7 @@ class ImportRecoveryPathModal(ModalScreen[str | None]):
         elif event.button.id == "do-import-button":
             self._import()
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
+    def on_input_submitted(self, _event: Input.Submitted) -> None:
         """Handle enter key in input."""
         self._import()
 
@@ -484,7 +546,11 @@ class ConfirmDeleteRecoveryModal(ModalScreen[bool]):
                 yield Static("[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning")
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[Y] CONFIRM DELETE", id="delete-button", classes="recovery-delete-btn")
+                yield Button(
+                    "[Y] CONFIRM DELETE",
+                    id="delete-button",
+                    classes="recovery-delete-btn",
+                )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -529,7 +595,8 @@ class RecoveryScreen(Screen):
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] [#475569]>[/] [bold #f43f5e]RECOVERY[/]",
+                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] "
+                "[#475569]>[/] [bold #f43f5e]RECOVERY[/]",
                 id="header-branding",
             )
             yield Static("░░ FAIL-SAFE PROTOCOL ░░", id="header-status")
@@ -598,6 +665,7 @@ class RecoveryScreen(Screen):
         else:
             self._update_inspector(None)
 
+    # pylint: disable=too-many-locals
     def _refresh_table(self) -> None:
         """Refresh the data table."""
         app: PassFXApp = self.app  # type: ignore
@@ -655,13 +723,13 @@ class RecoveryScreen(Screen):
         if old_key and old_key in entry_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
         if new_key and new_key in entry_map:
             try:
                 table.update_cell(new_key, indicator_col, "[bold #f43f5e]▍[/]")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
     def _get_selected_entry(self) -> RecoveryEntry | None:
@@ -754,6 +822,7 @@ class RecoveryScreen(Screen):
         self._update_inspector(key_value)
         self._update_row_indicators(old_key, key_value)
 
+    # pylint: disable=too-many-locals
     def _update_inspector(self, row_key: Any) -> None:
         """Update the inspector panel with recovery details."""
         inspector = self.query_one("#inspector-content", Vertical)
@@ -791,7 +860,7 @@ class RecoveryScreen(Screen):
                     ),
                     Vertical(
                         Static(f"[bold #f8fafc]{entry.title}[/]", classes="id-label-text"),
-                        Static(f"[dim #94a3b8]Emergency Backup Codes[/]", classes="id-email-text"),
+                        Static("[dim #94a3b8]Emergency Backup Codes[/]", classes="id-email-text"),
                         classes="id-details-stack",
                     ),
                     classes="id-card-header",
@@ -805,7 +874,8 @@ class RecoveryScreen(Screen):
             Vertical(
                 Static("[dim #6b7280]▸ FAIL-SAFE STATS[/]", classes="section-label"),
                 Static(
-                    f"[#f43f5e]LINES:[/] {entry.line_count}    [#f43f5e]CODES:[/] {entry.code_count}",
+                    f"[#f43f5e]LINES:[/] {entry.line_count}    "
+                    f"[#f43f5e]CODES:[/] {entry.code_count}",
                     classes="strength-bar-widget",
                 ),
                 classes="security-widget",
@@ -821,14 +891,26 @@ class RecoveryScreen(Screen):
                 if line.strip() and not line.strip().startswith("#"):
                     # Mask part of the code for security
                     if len(line_preview) > 8:
-                        masked = line_preview[:4] + "•" * (len(line_preview) - 8) + line_preview[-4:]
-                        preview_lines.append(f"[dim #475569]{i:2}[/] │ [#f43f5e]{masked}[/]")
+                        masked = (
+                            line_preview[:4]
+                            + "•" * (len(line_preview) - 8)
+                            + line_preview[-4:]
+                        )
+                        preview_lines.append(
+                            f"[dim #475569]{i:2}[/] │ [#f43f5e]{masked}[/]"
+                        )
                     else:
-                        preview_lines.append(f"[dim #475569]{i:2}[/] │ [#f43f5e]{line_preview}[/]")
+                        preview_lines.append(
+                            f"[dim #475569]{i:2}[/] │ [#f43f5e]{line_preview}[/]"
+                        )
                 else:
-                    preview_lines.append(f"[dim #475569]{i:2}[/] │ [dim #64748b]{line_preview}[/]")
+                    preview_lines.append(
+                        f"[dim #475569]{i:2}[/] │ [dim #64748b]{line_preview}[/]"
+                    )
             if len(entry.content.split("\n")) > 8:
-                preview_lines.append("[dim #475569]   [/]   [dim #64748b]... more codes[/]")
+                preview_lines.append(
+                    "[dim #475569]   [/]   [dim #64748b]... more codes[/]"
+                )
         else:
             preview_lines.append("[dim #64748b] 1[/] │ [dim #555555]// EMPTY[/]")
 
@@ -849,14 +931,21 @@ class RecoveryScreen(Screen):
 
         # Section 4: Footer
         try:
-            updated_full = datetime.fromisoformat(entry.updated_at).strftime("%Y-%m-%d %H:%M")
+            updated_full = datetime.fromisoformat(entry.updated_at).strftime(
+                "%Y-%m-%d %H:%M"
+            )
         except (ValueError, TypeError):
             updated_full = entry.updated_at or "Unknown"
 
         inspector.mount(
             Horizontal(
-                Static(f"[dim #475569]ID:[/] [#64748b]{entry.id[:8]}[/]", classes="meta-id"),
-                Static(f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]", classes="meta-updated"),
+                Static(
+                    f"[dim #475569]ID:[/] [#64748b]{entry.id[:8]}[/]", classes="meta-id"
+                ),
+                Static(
+                    f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
+                    classes="meta-updated",
+                ),
                 classes="inspector-footer-bar",
             )
         )

@@ -1,4 +1,5 @@
 """Login Screen for PassFX."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
@@ -168,6 +169,7 @@ class LoginScreen(Screen):
 
         if app.unlock_vault(password):
             # Success - go to main menu
+            # pylint: disable=import-outside-toplevel
             from passfx.screens.main_menu import MainMenuScreen
             self.app.switch_screen(MainMenuScreen())
         else:
@@ -210,6 +212,7 @@ class LoginScreen(Screen):
 
         if app.create_vault(password):
             # Success - go to main menu
+            # pylint: disable=import-outside-toplevel
             from passfx.screens.main_menu import MainMenuScreen
             self.app.switch_screen(MainMenuScreen())
         else:

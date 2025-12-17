@@ -131,7 +131,7 @@ class PhoneCredential:
 
 
 @dataclass
-class CreditCard:
+class CreditCard:  # pylint: disable=too-many-instance-attributes
     """Credit card information storage.
 
     Attributes:
@@ -428,15 +428,14 @@ def credential_from_dict(data: dict[str, Any]) -> Credential:
 
     if cred_type == "email":
         return EmailCredential.from_dict(data)
-    elif cred_type == "phone":
+    if cred_type == "phone":
         return PhoneCredential.from_dict(data)
-    elif cred_type == "card":
+    if cred_type == "card":
         return CreditCard.from_dict(data)
-    elif cred_type == "env":
+    if cred_type == "env":
         return EnvEntry.from_dict(data)
-    elif cred_type == "recovery":
+    if cred_type == "recovery":
         return RecoveryEntry.from_dict(data)
-    elif cred_type == "note":
+    if cred_type == "note":
         return NoteEntry.from_dict(data)
-    else:
-        raise ValueError(f"Unknown credential type: {cred_type}")
+    raise ValueError(f"Unknown credential type: {cred_type}")

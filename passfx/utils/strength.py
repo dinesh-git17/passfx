@@ -8,7 +8,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from rich.text import Text
 
@@ -60,7 +60,7 @@ def check_strength(password: str) -> StrengthResult:
         return _simple_strength_check(password)
 
     try:
-        from zxcvbn import zxcvbn
+        from zxcvbn import zxcvbn  # pylint: disable=import-outside-toplevel
 
         result = zxcvbn(password)
 
@@ -68,7 +68,9 @@ def check_strength(password: str) -> StrengthResult:
         label, color = STRENGTH_LABELS.get(score, ("Unknown", "white"))
 
         # Get crack time display
-        crack_time = result["crack_times_display"]["offline_slow_hashing_1e4_per_second"]
+        crack_time = result["crack_times_display"][
+            "offline_slow_hashing_1e4_per_second"
+        ]
 
         # Get suggestions
         suggestions = result["feedback"].get("suggestions", [])
@@ -90,11 +92,12 @@ def check_strength(password: str) -> StrengthResult:
     except ImportError:
         # Fallback to simple analysis if zxcvbn not available
         return _simple_strength_check(password)
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         # Fallback for any other zxcvbn errors
         return _simple_strength_check(password)
 
 
+# pylint: disable=too-many-branches
 def _simple_strength_check(password: str) -> StrengthResult:
     """Simple password strength check without zxcvbn.
 
@@ -187,13 +190,13 @@ def get_strength_bar(score: int, width: int = 10) -> Text:
 
     _, color = STRENGTH_LABELS.get(score, ("", "white"))
 
-    bar = Text()
-    bar.append("[")
-    bar.append("█" * filled, style=color)
-    bar.append("░" * empty, style="dim")
-    bar.append("]")
+    strength_bar = Text()
+    strength_bar.append("[")
+    strength_bar.append("█" * filled, style=color)
+    strength_bar.append("░" * empty, style="dim")
+    strength_bar.append("]")
 
-    return bar
+    return strength_bar
 
 
 def get_strength_display(password: str, show_suggestions: bool = True) -> Text:
@@ -211,8 +214,8 @@ def get_strength_display(password: str, show_suggestions: bool = True) -> Text:
     display = Text()
 
     # Strength bar
-    bar = get_strength_bar(result.score)
-    display.append_text(bar)
+    strength_bar = get_strength_bar(result.score)
+    display.append_text(strength_bar)
     display.append(" ")
     display.append(result.label, style=result.color)
     display.append("\n")
@@ -256,7 +259,8 @@ def meets_requirements(
     result = check_strength(password)
 
     if result.score < min_score:
-        issues.append(f"Password strength is {result.label}, need at least {STRENGTH_LABELS[min_score][0]}")
+        min_label = STRENGTH_LABELS[min_score][0]
+        issues.append(f"Password strength is {result.label}, need at least {min_label}")
         issues.extend(result.suggestions[:2])
 
     return len(issues) == 0, issues
@@ -267,13 +271,72 @@ PASSWORD_AGE_THRESHOLD_DAYS = 90
 
 # Common weak PINs to check against
 WEAK_PINS = {
-    "0000", "1111", "2222", "3333", "4444", "5555", "6666", "7777", "8888", "9999",
-    "1234", "4321", "1212", "2121", "1122", "2211", "0123", "3210", "9876", "6789",
-    "1010", "2020", "1357", "2468", "1379", "2580", "0852", "1590", "7531", "8642",
-    "0001", "0002", "0007", "0011", "0069", "0420", "1004", "1007", "2000", "2001",
-    "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011",
-    "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021",
-    "2022", "2023", "2024", "2025", "6969", "4200", "1337",
+    "0000",
+    "1111",
+    "2222",
+    "3333",
+    "4444",
+    "5555",
+    "6666",
+    "7777",
+    "8888",
+    "9999",
+    "1234",
+    "4321",
+    "1212",
+    "2121",
+    "1122",
+    "2211",
+    "0123",
+    "3210",
+    "9876",
+    "6789",
+    "1010",
+    "2020",
+    "1357",
+    "2468",
+    "1379",
+    "2580",
+    "0852",
+    "1590",
+    "7531",
+    "8642",
+    "0001",
+    "0002",
+    "0007",
+    "0011",
+    "0069",
+    "0420",
+    "1004",
+    "1007",
+    "2000",
+    "2001",
+    "2002",
+    "2003",
+    "2004",
+    "2005",
+    "2006",
+    "2007",
+    "2008",
+    "2009",
+    "2010",
+    "2011",
+    "2012",
+    "2013",
+    "2014",
+    "2015",
+    "2016",
+    "2017",
+    "2018",
+    "2019",
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+    "2025",
+    "6969",
+    "4200",
+    "1337",
 }
 
 
@@ -300,6 +363,7 @@ class VaultHealthResult:
     issues: list[str]
 
 
+# pylint: disable=too-many-locals
 def analyze_vault(credentials: list[Credential]) -> VaultHealthResult:
     """Analyze vault security health across all credentials.
 
@@ -315,6 +379,7 @@ def analyze_vault(credentials: list[Credential]) -> VaultHealthResult:
     Returns:
         VaultHealthResult with detailed analysis data.
     """
+    # pylint: disable=import-outside-toplevel
     from passfx.core.models import EmailCredential, PhoneCredential
 
     if not credentials:

@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines,duplicate-code
 """Credit Cards Screen for PassFX."""
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+# pylint: disable=too-many-return-statements
 def _get_relative_time(iso_timestamp: str | None) -> str:
     """Convert ISO timestamp to relative time string.
 
@@ -91,11 +93,10 @@ def _get_avatar_initials(label: str) -> str:
     if len(words) >= 2:
         # First letter of first two words
         return (words[0][0] + words[1][0]).upper()
-    elif len(label) >= 2:
+    if len(label) >= 2:
         # First two characters
         return label[:2].upper()
-    else:
-        return (label[0] + label[0]).upper() if label else "??"
+    return (label[0] + label[0]).upper() if label else "??"
 
 
 def _get_avatar_bg_color(label: str) -> str:
@@ -140,14 +141,13 @@ def _get_card_type_icon(card_number: str) -> str:
     # Simple prefix detection
     if digits.startswith("4"):
         return "💳"  # Visa
-    elif digits.startswith(("51", "52", "53", "54", "55")):
+    if digits.startswith(("51", "52", "53", "54", "55")):
         return "💳"  # Mastercard
-    elif digits.startswith(("34", "37")):
+    if digits.startswith(("34", "37")):
         return "💳"  # Amex
-    elif digits.startswith("6"):
+    if digits.startswith("6"):
         return "💳"  # Discover
-    else:
-        return "💳"
+    return "💳"
 
 
 def _format_card_number(card_number: str) -> str:
@@ -182,10 +182,9 @@ def _validate_card_number(number: str) -> tuple[bool, str]:
         return False, "Invalid card number format"
 
     # Check length (13-19 digits for most cards)
-    if not (13 <= len(cleaned) <= 19):
-        return False, "Invalid card number format"
-
-    return True, cleaned
+    if 13 <= len(cleaned) <= 19:
+        return True, cleaned
+    return False, "Invalid card number format"
 
 
 def _validate_expiry(expiry: str) -> tuple[bool, str]:
@@ -217,12 +216,11 @@ def _validate_expiry(expiry: str) -> tuple[bool, str]:
     year = digits[2:4]
 
     # Validate month range
-    if not (1 <= month <= 12):
-        return False, "Expiry must be MM/YY"
-
-    # Format as MM/YY
-    normalized = f"{month:02d}/{year}"
-    return True, normalized
+    if 1 <= month <= 12:
+        # Format as MM/YY
+        normalized = f"{month:02d}/{year}"
+        return True, normalized
+    return False, "Expiry must be MM/YY"
 
 
 def _validate_cvv(cvv: str) -> tuple[bool, str]:
@@ -523,57 +521,122 @@ class ViewCardModal(ModalScreen[None]):
                 # Title row
                 title = " FINANCIAL ASSET TOKEN "
                 title_pad = inner - len(title) - 2
-                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  "
+                    f"[on {c['title_bg']}][bold {c['title_fg']}]{title}[/]"
+                    f"{' ' * title_pad}[bold {c['border']}]║[/]"
+                )
 
                 # Divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Card label
                 label_val = self.card.label.upper()
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]ISSUER:[/] [bold {c['value_fg']}]{label_val:<{inner - 12}}[/] [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  "
+                    f"[dim {c['label_dim']}]ISSUER:[/] "
+                    f"[bold {c['value_fg']}]{label_val:<{inner - 12}}[/] "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Chip visualization
-                yield Static(f"[bold {c['border']}]║[/]  [bold {c['chip']}]▄▄▄▄▄▄▄[/]{' ' * (inner - 11)}[bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [bold {c['chip']}]███████[/]{' ' * (inner - 11)}[bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [bold {c['chip']}]▀▀▀▀▀▀▀[/]{' ' * (inner - 11)}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [bold {c['chip']}]▄▄▄▄▄▄▄[/]"
+                    f"{' ' * (inner - 11)}[bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [bold {c['chip']}]███████[/]"
+                    f"{' ' * (inner - 11)}[bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [bold {c['chip']}]▀▀▀▀▀▀▀[/]"
+                    f"{' ' * (inner - 11)}[bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Card Number section
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ CARD NUMBER {'─' * (section_inner - 16)}┐[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [bold {c['accent']}]{formatted_number:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  "
+                    f"[dim {c['section_border']}]┌─ CARD NUMBER {'─' * (section_inner - 16)}┐[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                    f"[{c['accent']}]►[/] [bold {c['accent']}]"
+                    f"{formatted_number:<{content_width}}[/] "
+                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  "
+                    f"[dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Expiry and CVV section
-                expiry_cvv = f"VALID THRU: [bold {c['value_fg']}]{self.card.expiry}[/]     CVV: [bold {c['value_fg']}]{self.card.cvv}[/]"
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ SECURITY INFO {'─' * (section_inner - 18)}┐[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [dim {c['label_dim']}]{expiry_cvv}{' ' * (content_width - 32)}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+                expiry_cvv = (
+                    f"VALID THRU: [bold {c['value_fg']}]{self.card.expiry}[/]     "
+                    f"CVV: [bold {c['value_fg']}]{self.card.cvv}[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  "
+                    f"[dim {c['section_border']}]┌─ SECURITY INFO "
+                    f"{'─' * (section_inner - 18)}┐[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                    f"[{c['accent']}]►[/] [dim {c['label_dim']}]{expiry_cvv}"
+                    f"{' ' * (content_width - 32)}[/] [dim {c['section_border']}]│[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  "
+                    f"[dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Cardholder section
                 holder_name = self.card.cardholder_name.upper()
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ CARDHOLDER {'─' * (section_inner - 15)}┐[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [bold {c['value_fg']}]{holder_name:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  "
+                    f"[dim {c['section_border']}]┌─ CARDHOLDER {'─' * (section_inner - 15)}┐[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                    f"[{c['accent']}]►[/] [bold {c['value_fg']}]{holder_name:<{content_width}}[/] "
+                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  "
+                    f"[dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Footer divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Footer row with ID
-                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.card.id[:8]}[/]"
+                footer_left = (
+                    f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.card.id[:8]}[/]"
+                )
                 footer_right = f"[dim {c['section_border']}]STATUS:[/] [{c['accent']}]ACTIVE[/]"
                 footer_pad = inner - 32
-                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Bottom border
                 yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
@@ -675,7 +738,8 @@ class CardsScreen(Screen):
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]›[/] [dim #64748b]VAULT[/] [#475569]›[/] [bold #10b981]CARDS[/]",
+                "[dim #64748b]HOME[/] [#475569]›[/] "
+                "[dim #64748b]VAULT[/] [#475569]›[/] [bold #10b981]CARDS[/]",
                 id="header-branding",
             )
             yield Static("░░ FINANCIAL VAULT ░░", id="header-status")
@@ -686,7 +750,9 @@ class CardsScreen(Screen):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
                 # Inverted Block Header
-                yield Static(" ≡ FINANCIAL_DATABASE ", classes="pane-header-block-green")
+                yield Static(
+                    " ≡ FINANCIAL_DATABASE ", classes="pane-header-block-green"
+                )
                 yield DataTable(id="cards-table", cursor_type="row")
                 # Empty state placeholder (hidden by default)
                 with Center(id="empty-state"):
@@ -701,19 +767,24 @@ class CardsScreen(Screen):
                         id="empty-state-text",
                     )
                 # Footer with object count
-                yield Static(" └── SYSTEM_READY", classes="pane-footer", id="grid-footer")
+                yield Static(
+                    " └── SYSTEM_READY", classes="pane-footer", id="grid-footer"
+                )
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
                 # Inverted Block Header
-                yield Static(" ≡ ASSET_INSPECTOR ", classes="pane-header-block-green")
+                yield Static(
+                    " ≡ ASSET_INSPECTOR ", classes="pane-header-block-green"
+                )
                 yield Vertical(id="inspector-content")  # Dynamic content here
 
         # 3. Global Footer
         with Horizontal(id="app-footer"):
             yield Static(" VAULT ", id="footer-version")
             yield Static(
-                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  \\[V] View  \\[ESC] Back",
+                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  "
+                "\\[V] View  \\[ESC] Back",
                 id="footer-keys-static",
             )
 
@@ -751,6 +822,7 @@ class CardsScreen(Screen):
         else:
             self._update_inspector(None)
 
+    # pylint: disable=too-many-locals
     def _refresh_table(self) -> None:
         """Refresh the data table with cards."""
         app: PassFXApp = self.app  # type: ignore
@@ -798,7 +870,10 @@ class CardsScreen(Screen):
             updated = _get_relative_time(card.updated_at)
             updated_text = f"[dim]{updated}[/]"
 
-            table.add_row(indicator, label_text, number_text, expiry_text, holder_text, updated_text, key=card.id)
+            table.add_row(
+                indicator, label_text, number_text, expiry_text,
+                holder_text, updated_text, key=card.id
+            )
 
         # Update the grid footer with object count
         footer = self.query_one("#grid-footer", Static)
@@ -826,14 +901,14 @@ class CardsScreen(Screen):
         if old_key and old_key in card_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass  # Row may not exist
 
         # Set new selection indicator
         if new_key and new_key in card_map:
             try:
                 table.update_cell(new_key, indicator_col, "[bold #10b981]▍[/]")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass  # Row may not exist
 
     def _get_selected_card(self) -> CreditCard | None:
@@ -929,6 +1004,7 @@ class CardsScreen(Screen):
         # Update only the indicator cells instead of rebuilding entire table
         self._update_row_indicators(old_key, key_value)
 
+    # pylint: disable=too-many-locals
     def _update_inspector(self, row_key: Any) -> None:
         """Update the inspector panel with card details.
 
@@ -1056,8 +1132,14 @@ class CardsScreen(Screen):
 
         inspector.mount(
             Horizontal(
-                Static(f"[dim #475569]ID:[/] [#64748b]{card.id[:8]}[/]", classes="meta-id"),
-                Static(f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]", classes="meta-updated"),
+                Static(
+                    f"[dim #475569]ID:[/] [#64748b]{card.id[:8]}[/]",
+                    classes="meta-id"
+                ),
+                Static(
+                    f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
+                    classes="meta-updated"
+                ),
                 classes="inspector-footer-bar",
             )
         )

@@ -1,4 +1,5 @@
 """Passwords Screen for PassFX."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+# pylint: disable=too-many-return-statements
 def _get_relative_time(iso_timestamp: str | None) -> str:
     """Convert ISO timestamp to relative time string.
 
@@ -91,11 +93,10 @@ def _get_avatar_initials(label: str) -> str:
     if len(words) >= 2:
         # First letter of first two words
         return (words[0][0] + words[1][0]).upper()
-    elif len(label) >= 2:
+    if len(label) >= 2:
         # First two characters
         return label[:2].upper()
-    else:
-        return (label[0] + label[0]).upper() if label else "??"
+    return (label[0] + label[0]).upper() if label else "??"
 
 
 def _get_strength_color(score: int) -> str:
@@ -370,6 +371,7 @@ class ViewPasswordModal(ModalScreen[None]):
         super().__init__()
         self.credential = credential
 
+    # pylint: disable=too-many-locals
     def compose(self) -> ComposeResult:
         """Create the identity access token layout."""
         c = self.COLORS
@@ -405,47 +407,92 @@ class ViewPasswordModal(ModalScreen[None]):
                 # Title row
                 title = " IDENTITY ACCESS TOKEN "
                 title_pad = inner - len(title) - 2
-                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold "
+                    f"{c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]"
+                )
 
                 # Divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # System label
                 system_val = self.credential.label.upper()
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SYSTEM:[/] [bold {c['value_fg']}]{system_val:<{inner - 12}}[/] [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SYSTEM:[/] "
+                    f"[bold {c['value_fg']}]{system_val:<{inner - 12}}[/] "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # User Identity section
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ USER IDENTITY {'─' * (section_inner - 17)}┐[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [bold {c['value_fg']}]{self.credential.email:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"┌─ USER IDENTITY {'─' * (section_inner - 17)}┐[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                    f"[{c['accent']}]►[/] [bold {c['value_fg']}]"
+                    f"{self.credential.email:<{content_width}}[/] "
+                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Access Key section
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ ACCESS KEY {'─' * (section_inner - 14)}┐[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [bold {c['accent']}]{self.credential.password:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"┌─ ACCESS KEY {'─' * (section_inner - 14)}┐[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                    f"[{c['accent']}]►[/] [bold {c['accent']}]"
+                    f"{self.credential.password:<{content_width}}[/] "
+                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Security bar
-                sec_content = f"  [dim {c['label_dim']}]SECURITY:[/] {security_bars} [{strength_color}]{strength.label.upper():<12}[/]"
+                sec_content = (
+                    f"  [dim {c['label_dim']}]SECURITY:[/] {security_bars} "
+                    f"[{strength_color}]{strength.label.upper():<12}[/]"
+                )
                 sec_pad = inner - 35
-                yield Static(f"[bold {c['border']}]║[/]{sec_content}{' ' * sec_pad}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{sec_content}{' ' * sec_pad}"
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Footer divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Footer row
-                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.credential.id[:8]}[/]"
-                footer_right = f"[dim {c['section_border']}]ISSUED:[/] [{c['muted']}]{created}[/]"
+                footer_left = (
+                    f"  [dim {c['section_border']}]ID:[/] "
+                    f"[{c['muted']}]{self.credential.id[:8]}[/]"
+                )
+                footer_right = (
+                    f"[dim {c['section_border']}]ISSUED:[/] [{c['muted']}]{created}[/]"
+                )
                 footer_pad = inner - 30 - len(created)
-                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}"
+                    f"{footer_right}  [bold {c['border']}]║[/]"
+                )
 
                 # Bottom border
                 yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
@@ -500,12 +547,14 @@ class PasswordsScreen(Screen):
         self._selected_row_key: str | None = None
         self._pulse_state: bool = True
 
+    # pylint: disable=too-many-locals
     def compose(self) -> ComposeResult:
         """Create the passwords screen layout."""
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]›[/] [dim #64748b]VAULT[/] [#475569]›[/] [bold #00d4ff]PASSWORDS[/]",
+                "[dim #64748b]HOME[/] [#475569]›[/] [dim #64748b]VAULT[/] "
+                "[#475569]›[/] [bold #00d4ff]PASSWORDS[/]",
                 id="header-branding",
             )
             yield Static("░░ SECURE DATA BANK ░░", id="header-status")
@@ -581,6 +630,7 @@ class PasswordsScreen(Screen):
         else:
             self._update_inspector(None)
 
+    # pylint: disable=too-many-locals
     def _refresh_table(self) -> None:
         """Refresh the data table with credentials."""
         app: PassFXApp = self.app  # type: ignore
@@ -629,10 +679,16 @@ class PasswordsScreen(Screen):
             updated_text = f"[dim]{updated}[/]"
 
             # Notes preview (dim)
-            notes = (cred.notes[:16] + "…") if cred.notes and len(cred.notes) > 16 else (cred.notes or "-")
+            notes = (
+                (cred.notes[:16] + "…")
+                if cred.notes and len(cred.notes) > 16
+                else (cred.notes or "-")
+            )
             notes_text = f"[dim #64748b]{notes}[/]"
 
-            table.add_row(indicator, label_text, email_text, status, updated_text, notes_text, key=cred.id)
+            table.add_row(
+                indicator, label_text, email_text, status, updated_text, notes_text, key=cred.id
+            )
 
         # Update the grid footer with object count
         footer = self.query_one("#grid-footer", Static)
@@ -660,14 +716,14 @@ class PasswordsScreen(Screen):
         if old_key and old_key in cred_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass  # Row may not exist
 
         # Set new selection indicator
         if new_key and new_key in cred_map:
             try:
                 table.update_cell(new_key, indicator_col, "[bold #00d4ff]▍[/]")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass  # Row may not exist
 
     def _get_selected_credential(self) -> EmailCredential | None:
@@ -763,6 +819,7 @@ class PasswordsScreen(Screen):
         # Update only the indicator cells instead of rebuilding entire table
         self._update_row_indicators(old_key, key_value)
 
+    # pylint: disable=too-many-locals
     def _update_inspector(self, row_key: Any) -> None:
         """Update the inspector panel with credential details.
 
@@ -896,8 +953,13 @@ class PasswordsScreen(Screen):
 
         inspector.mount(
             Horizontal(
-                Static(f"[dim #475569]ID:[/] [#64748b]{cred.id[:8]}[/]", classes="meta-id"),
-                Static(f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]", classes="meta-updated"),
+                Static(
+                    f"[dim #475569]ID:[/] [#64748b]{cred.id[:8]}[/]", classes="meta-id"
+                ),
+                Static(
+                    f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
+                    classes="meta-updated",
+                ),
                 classes="inspector-footer-bar",
             )
         )

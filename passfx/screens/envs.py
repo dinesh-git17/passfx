@@ -1,4 +1,5 @@
 """Environment Variables Screen for PassFX - Config Vault."""
+# pylint: disable=duplicate-code,too-many-lines
 
 from __future__ import annotations
 
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+# pylint: disable=too-many-return-statements
 def _get_relative_time(iso_timestamp: str | None) -> str:
     """Convert ISO timestamp to relative time string."""
     if not iso_timestamp:
@@ -97,6 +99,7 @@ class ViewEnvModal(ModalScreen[None]):
         super().__init__()
         self.env = env
 
+    # pylint: disable=too-many-locals,too-many-statements
     def compose(self) -> ComposeResult:
         """Create the config visualization layout."""
         c = self.COLORS
@@ -114,7 +117,11 @@ class ViewEnvModal(ModalScreen[None]):
         content_width = section_inner - 5
 
         # Truncate title if needed
-        title_display = self.env.title[:content_width] if len(self.env.title) > content_width else self.env.title
+        title_display = (
+            self.env.title[:content_width]
+            if len(self.env.title) > content_width
+            else self.env.title
+        )
 
         # Get content preview (first 5 lines for env files)
         content_lines = self.env.content.split('\n')[:5] if self.env.content else []
@@ -137,45 +144,87 @@ class ViewEnvModal(ModalScreen[None]):
                 # Title row
                 title = " CONFIG INJECTOR "
                 title_pad = inner - len(title) - 2
-                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [on {c['title_bg']}]"
+                    f"[bold {c['title_fg']}]{title}[/]{' ' * title_pad}"
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Config label
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]CONFIG:[/] [bold {c['value_fg']}]{title_display:<{inner - 12}}[/] [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]CONFIG:[/] "
+                    f"[bold {c['value_fg']}]{title_display:<{inner - 12}}[/] "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Filename row
-                filename_display = self.env.filename[:content_width] if len(self.env.filename) > content_width else self.env.filename
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]FILE:[/]   [{c['accent']}]{filename_display:<{inner - 12}}[/] [bold {c['border']}]║[/]")
+                filename_display = (
+                    self.env.filename[:content_width]
+                    if len(self.env.filename) > content_width
+                    else self.env.filename
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]FILE:[/]   "
+                    f"[{c['accent']}]{filename_display:<{inner - 12}}[/] "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Stats section
-                stats = f"[{c['accent']}]{self.env.line_count}[/] lines  [{c['accent']}]{self.env.var_count}[/] vars"
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/]  {stats:<{inner - 12}}[bold {c['border']}]║[/]")
+                stats = (
+                    f"[{c['accent']}]{self.env.line_count}[/] lines  "
+                    f"[{c['accent']}]{self.env.var_count}[/] vars"
+                )
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/]  "
+                    f"{stats:<{inner - 12}}[bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Content section
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ CONTENT PREVIEW {'─' * (section_inner - 20)}┐[/]  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"┌─ CONTENT PREVIEW {'─' * (section_inner - 20)}┐[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
 
                 # Show preview lines (masked values)
                 for line in preview_lines:
                     if '=' in line and not line.strip().startswith('#'):
                         # Highlight env var keys
                         key = line.split('=', 1)[0]
-                        yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['accent']}]{key}[/][{c['muted']}]=***{' ' * (content_width - len(key) - 4)}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                        yield Static(
+                            f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                            f"[{c['accent']}]►[/] [{c['accent']}]{key}[/][{c['muted']}]=***"
+                            f"{' ' * (content_width - len(key) - 4)}[/] "
+                            f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
+                        )
                     else:
-                        yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['muted']}]{line:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                        yield Static(
+                            f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                            f"[{c['accent']}]►[/] [{c['muted']}]{line:<{content_width}}[/] "
+                            f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
+                        )
 
                 # If less than 5 lines, pad with empty lines
                 for _ in range(5 - len(preview_lines)):
-                    yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   {' ' * content_width} [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                    yield Static(
+                        f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   "
+                        f"{' ' * content_width} [dim {c['section_border']}]│[/]  "
+                        f"[bold {c['border']}]║[/]"
+                    )
 
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
+                )
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
@@ -184,10 +233,19 @@ class ViewEnvModal(ModalScreen[None]):
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Footer row
-                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.env.id[:8]}[/]"
-                footer_right = f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
+                footer_left = (
+                    f"  [dim {c['section_border']}]ID:[/] "
+                    f"[{c['muted']}]{self.env.id[:8]}[/]"
+                )
+                footer_right = (
+                    f"[dim {c['section_border']}]CREATED:[/] "
+                    f"[{c['muted']}]{created}[/]"
+                )
                 footer_pad = inner - 32 - len(created)
-                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}"
+                    f"{footer_right}  [bold {c['border']}]║[/]"
+                )
 
                 # Bottom border
                 yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
@@ -247,7 +305,10 @@ class AddEnvModal(ModalScreen[EnvEntry | None]):
                 yield Input(placeholder="e.g. .env.production", id="filename-input")
 
                 # Content TextArea
-                yield Label("[#f59e0b]CONTENT[/]  [dim #64748b]paste or drop file[/]", classes="env-input-label")
+                yield Label(
+                    "[#f59e0b]CONTENT[/]  [dim #64748b]paste or drop file[/]",
+                    classes="env-input-label",
+                )
                 yield TextArea(
                     "",
                     id="content-area",
@@ -309,8 +370,11 @@ class AddEnvModal(ModalScreen[EnvEntry | None]):
             if not filename_input.value:
                 filename_input.value = path.name
 
-            self.notify(f"Imported {len(content)} chars from {path.name}", title="Imported")
-        except Exception as e:
+            self.notify(
+                f"Imported {len(content)} chars from {path.name}",
+                title="Imported",
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.notify(f"Failed to read file: {e}", severity="error")
 
     def _save(self) -> None:
@@ -362,12 +426,23 @@ class EditEnvModal(ModalScreen[dict | None]):
             # Form
             with Vertical(id="env-form"):
                 yield Label("[#f59e0b]CONFIG_TITLE[/]", classes="env-input-label")
-                yield Input(value=self.env.title, placeholder="e.g. Project X Production", id="title-input")
+                yield Input(
+                    value=self.env.title,
+                    placeholder="e.g. Project X Production",
+                    id="title-input",
+                )
 
                 yield Label("[#f59e0b]FILENAME[/]", classes="env-input-label")
-                yield Input(value=self.env.filename, placeholder="e.g. .env.production", id="filename-input")
+                yield Input(
+                    value=self.env.filename,
+                    placeholder="e.g. .env.production",
+                    id="filename-input",
+                )
 
-                yield Label("[#f59e0b]CONTENT[/]  [dim #64748b]paste or drop file[/]", classes="env-input-label")
+                yield Label(
+                    "[#f59e0b]CONTENT[/]  [dim #64748b]paste or drop file[/]",
+                    classes="env-input-label",
+                )
                 yield TextArea(
                     self.env.content,
                     id="content-area",
@@ -418,8 +493,11 @@ class EditEnvModal(ModalScreen[dict | None]):
             content = path.read_text(encoding="utf-8")
             text_area = self.query_one("#content-area", TextArea)
             text_area.load_text(content)
-            self.notify(f"Imported {len(content)} chars from {path.name}", title="Imported")
-        except Exception as e:
+            self.notify(
+                f"Imported {len(content)} chars from {path.name}",
+                title="Imported",
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
             self.notify(f"Failed to read file: {e}", severity="error")
 
     def _save(self) -> None:
@@ -483,7 +561,7 @@ class ImportPathModal(ModalScreen[str | None]):
         elif event.button.id == "do-import-button":
             self._import()
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
+    def on_input_submitted(self, _event: Input.Submitted) -> None:
         """Handle enter key in input."""
         self._import()
 
@@ -570,7 +648,8 @@ class EnvsScreen(Screen):
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] [#475569]>[/] [bold #6366f1]ENV VARS[/]",
+                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] "
+                "[#475569]>[/] [bold #6366f1]ENV VARS[/]",
                 id="header-branding",
             )
             yield Static("░░ CONFIG INJECTOR ░░", id="header-status")
@@ -605,7 +684,8 @@ class EnvsScreen(Screen):
         with Horizontal(id="app-footer"):
             yield Static(" VAULT ", id="footer-version")
             yield Static(
-                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  \\[V] View  \\[ESC] Back",
+                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  "
+                "\\[V] View  \\[ESC] Back",
                 id="footer-keys-static",
             )
 
@@ -639,6 +719,7 @@ class EnvsScreen(Screen):
         else:
             self._update_inspector(None)
 
+    # pylint: disable=too-many-locals
     def _refresh_table(self) -> None:
         """Refresh the data table."""
         app: PassFXApp = self.app  # type: ignore
@@ -677,7 +758,15 @@ class EnvsScreen(Screen):
                 notes_preview = notes_preview + "..."
             notes_text = f"[dim #64748b]{notes_preview}[/]"
 
-            table.add_row(indicator, title_text, filename_text, vars_text, updated_text, notes_text, key=env.id)
+            table.add_row(
+                indicator,
+                title_text,
+                filename_text,
+                vars_text,
+                updated_text,
+                notes_text,
+                key=env.id,
+            )
 
         footer = self.query_one("#grid-footer", Static)
         count = len(envs)
@@ -697,13 +786,13 @@ class EnvsScreen(Screen):
         if old_key and old_key in env_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
         if new_key and new_key in env_map:
             try:
                 table.update_cell(new_key, indicator_col, "[bold #6366f1]▍[/]")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
     def _get_selected_env(self) -> EnvEntry | None:
@@ -796,6 +885,7 @@ class EnvsScreen(Screen):
         self._update_inspector(key_value)
         self._update_row_indicators(old_key, key_value)
 
+    # pylint: disable=too-many-locals
     def _update_inspector(self, row_key: Any) -> None:
         """Update the inspector panel with env details."""
         inspector = self.query_one("#inspector-content", Vertical)
@@ -827,8 +917,8 @@ class EnvsScreen(Screen):
             Vertical(
                 Horizontal(
                     Vertical(
-                        Static(f"[on #f59e0b][bold #000000] ENV [/][/]", classes="avatar-char"),
-                        Static(f"[on #f59e0b]     [/]", classes="avatar-char"),
+                        Static("[on #f59e0b][bold #000000] ENV [/][/]", classes="avatar-char"),
+                        Static("[on #f59e0b]     [/]", classes="avatar-char"),
                         classes="avatar-box",
                     ),
                     Vertical(
@@ -862,11 +952,17 @@ class EnvsScreen(Screen):
                 line_preview = line[:35] if len(line) > 35 else line
                 if "=" in line and not line.strip().startswith("#"):
                     parts = line_preview.split("=", 1)
-                    preview_lines.append(f"[dim #475569]{i:2}[/] │ [#f59e0b]{parts[0]}[/]=[dim]...[/]")
+                    preview_lines.append(
+                        f"[dim #475569]{i:2}[/] │ [#f59e0b]{parts[0]}[/]=[dim]...[/]"
+                    )
                 else:
-                    preview_lines.append(f"[dim #475569]{i:2}[/] │ [dim #64748b]{line_preview}[/]")
+                    preview_lines.append(
+                        f"[dim #475569]{i:2}[/] │ [dim #64748b]{line_preview}[/]"
+                    )
             if len(env.content.split("\n")) > 8:
-                preview_lines.append(f"[dim #475569]   [/]   [dim #64748b]... more lines[/]")
+                preview_lines.append(
+                    "[dim #475569]   [/]   [dim #64748b]... more lines[/]"
+                )
         else:
             preview_lines.append("[dim #64748b] 1[/] │ [dim #555555]// EMPTY[/]")
 
@@ -893,8 +989,14 @@ class EnvsScreen(Screen):
 
         inspector.mount(
             Horizontal(
-                Static(f"[dim #475569]ID:[/] [#64748b]{env.id[:8]}[/]", classes="meta-id"),
-                Static(f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]", classes="meta-updated"),
+                Static(
+                    f"[dim #475569]ID:[/] [#64748b]{env.id[:8]}[/]",
+                    classes="meta-id",
+                ),
+                Static(
+                    f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
+                    classes="meta-updated",
+                ),
                 classes="inspector-footer-bar",
             )
         )

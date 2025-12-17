@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import os
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
-from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 from simple_term_menu import TerminalMenu
 
 from passfx.ui.styles import console, print_error
@@ -22,20 +19,15 @@ THEME = {
     # Cursor - clean arrow
     "cursor": "  › ",
     "cursor_style": ("fg_cyan", "bold"),
-
     # Selection highlight - subtle but visible
     "highlight_style": ("fg_cyan", "bold"),
-
     # Search
     "search_highlight": ("fg_black", "bg_cyan", "bold"),
-
     # Shortcuts
     "shortcut_style": ("fg_cyan",),
     "shortcut_bracket_style": ("fg_gray",),
-
     # Status bar - minimal
     "status_style": ("fg_gray",),
-
     # Multi-select
     "multi_cursor": "  ◆ ",
     "multi_cursor_style": ("fg_green", "bold"),
@@ -77,6 +69,7 @@ class MenuItem:
 class Menu:
     """Beautiful interactive terminal menu with simple-term-menu."""
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         title: str,
@@ -93,6 +86,7 @@ class Menu:
         self._items: list[MenuItem] = []
         self._running: bool = False
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def add_item(
         self,
         key: str,
@@ -101,14 +95,14 @@ class Menu:
         icon: str = "",
         description: str = "",
         preview: str = "",
-    ) -> "Menu":
+    ) -> Menu:
+        """Add a menu item with optional action and metadata."""
         self._items.append(MenuItem(key, label, action, icon, description, preview))
         return self
 
     def _build_entries(self) -> list[str]:
         """Build menu entry strings - clean and aligned."""
         entries = []
-        max_label_len = max(len(item.label) for item in self._items) if self._items else 0
 
         for item in self._items:
             # Clean format: just the label, padded for alignment
@@ -144,12 +138,22 @@ class Menu:
 
         # Title centered
         padding = (width - len(title)) // 2
-        console.print(f"    [cyan]│[/cyan][bold bright_white]{' ' * padding}{title}{' ' * (width - padding - len(title))}[/bold bright_white][cyan]│[/cyan]")
+        title_pad_right = width - padding - len(title)
+        console.print(
+            f"    [cyan]│[/cyan][bold bright_white]"
+            f"{' ' * padding}{title}{' ' * title_pad_right}"
+            f"[/bold bright_white][cyan]│[/cyan]"
+        )
 
         # Subtitle if present
         if self.subtitle:
             sub_padding = (width - len(self.subtitle)) // 2
-            console.print(f"    [cyan]│[/cyan][dim]{' ' * sub_padding}{self.subtitle}{' ' * (width - sub_padding - len(self.subtitle))}[/dim][cyan]│[/cyan]")
+            sub_pad_right = width - sub_padding - len(self.subtitle)
+            console.print(
+                f"    [cyan]│[/cyan][dim]"
+                f"{' ' * sub_padding}{self.subtitle}{' ' * sub_pad_right}"
+                f"[/dim][cyan]│[/cyan]"
+            )
 
         # Bottom border
         console.print(f"    [cyan]╰{'─' * width}╯[/cyan]")
@@ -170,7 +174,7 @@ class Menu:
                     selected_item.action()
                 except KeyboardInterrupt:
                     console.print("\n[dim]↩ Interrupted[/dim]")
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     print_error(f"Action failed: {e}")
 
     def _run_selection(self) -> MenuItem | None:
@@ -192,7 +196,7 @@ class Menu:
                 status_bar_style=THEME["status_style"],
             )
             selected_index = menu.show()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print_error(f"Menu error: {e}")
             return None
 
@@ -246,8 +250,8 @@ def prompt_input(
 
             return value
 
-        except (EOFError, KeyboardInterrupt):
-            raise KeyboardInterrupt("Input cancelled")
+        except (EOFError, KeyboardInterrupt) as exc:
+            raise KeyboardInterrupt("Input cancelled") from exc
 
 
 def prompt_confirm(message: str, default: bool = False) -> bool:
@@ -374,14 +378,18 @@ def display_table(
     console.print()
 
 
-def display_empty_message(message: str = "Your vault is emptier than /dev/null") -> None:
+def display_empty_message(
+    message: str = "Your vault is emptier than /dev/null",
+) -> None:
     """Display a styled empty state message."""
     console.print()
-    console.print(Panel(
-        f"[dim italic]{message}[/dim italic]",
-        border_style="dim",
-        padding=(1, 4),
-    ))
+    console.print(
+        Panel(
+            f"[dim italic]{message}[/dim italic]",
+            border_style="dim",
+            padding=(1, 4),
+        )
+    )
     console.print()
 
 
@@ -403,10 +411,12 @@ def display_warning(message: str) -> None:
 def display_box(title: str, content: str, style: str = "cyan") -> None:
     """Display content in a beautiful box."""
     console.print()
-    console.print(Panel(
-        content,
-        title=f"[bold]{title}[/bold]",
-        border_style=style,
-        padding=(1, 2),
-    ))
+    console.print(
+        Panel(
+            content,
+            title=f"[bold]{title}[/bold]",
+            border_style=style,
+            padding=(1, 2),
+        )
+    )
     console.print()

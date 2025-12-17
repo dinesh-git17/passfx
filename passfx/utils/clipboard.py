@@ -2,12 +2,12 @@
 
 Provides secure clipboard operations with auto-clear functionality.
 """
+# pylint: disable=import-outside-toplevel
 
 from __future__ import annotations
 
 import threading
-import time
-from typing import Callable
+from collections.abc import Callable
 
 # Track active clipboard timers
 _active_timer: threading.Timer | None = None
@@ -34,7 +34,7 @@ def copy_to_clipboard(
     Returns:
         True if successful, False otherwise.
     """
-    global _active_timer
+    global _active_timer  # pylint: disable=global-statement
 
     try:
         import pyperclip
@@ -62,7 +62,7 @@ def copy_to_clipboard(
     except ImportError:
         # pyperclip not installed, try platform-specific fallback
         return _fallback_copy(text)
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return False
 
 
@@ -72,7 +72,7 @@ def clear_clipboard() -> bool:
     Returns:
         True if successful, False otherwise.
     """
-    global _active_timer
+    global _active_timer  # pylint: disable=global-statement
 
     with _clipboard_lock:
         if _active_timer is not None:
@@ -86,7 +86,7 @@ def clear_clipboard() -> bool:
         return True
     except ImportError:
         return _fallback_clear()
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return False
 
 
@@ -100,13 +100,13 @@ def get_clipboard() -> str | None:
         import pyperclip
 
         return pyperclip.paste()
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return None
 
 
 def cancel_auto_clear() -> None:
     """Cancel any pending auto-clear timer."""
-    global _active_timer
+    global _active_timer  # pylint: disable=global-statement
 
     with _clipboard_lock:
         if _active_timer is not None:
@@ -129,35 +129,35 @@ def _fallback_copy(text: str) -> bool:
     try:
         if sys.platform == "darwin":
             # macOS
-            process = subprocess.Popen(
+            with subprocess.Popen(
                 ["pbcopy"],
                 stdin=subprocess.PIPE,
                 close_fds=True,
-            )
-            process.communicate(text.encode("utf-8"))
-            return process.returncode == 0
+            ) as process:
+                process.communicate(text.encode("utf-8"))
+                return process.returncode == 0
 
-        elif sys.platform.startswith("linux"):
+        if sys.platform.startswith("linux"):
             # Linux with xclip
             try:
-                process = subprocess.Popen(
+                with subprocess.Popen(
                     ["xclip", "-selection", "clipboard"],
                     stdin=subprocess.PIPE,
                     close_fds=True,
-                )
-                process.communicate(text.encode("utf-8"))
-                return process.returncode == 0
+                ) as process:
+                    process.communicate(text.encode("utf-8"))
+                    return process.returncode == 0
             except FileNotFoundError:
                 # Try xsel
-                process = subprocess.Popen(
+                with subprocess.Popen(
                     ["xsel", "--clipboard", "--input"],
                     stdin=subprocess.PIPE,
                     close_fds=True,
-                )
-                process.communicate(text.encode("utf-8"))
-                return process.returncode == 0
+                ) as process:
+                    process.communicate(text.encode("utf-8"))
+                    return process.returncode == 0
 
-        elif sys.platform == "win32":
+        if sys.platform == "win32":
             # Windows
             import ctypes
 
@@ -177,7 +177,7 @@ def _fallback_copy(text: str) -> bool:
             user32.CloseClipboard()
             return True
 
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         pass
 
     return False
@@ -220,7 +220,7 @@ class ClipboardManager:
         self._clear_after = clear_after
         self._success = False
 
-    def __enter__(self) -> "ClipboardManager":
+    def __enter__(self) -> ClipboardManager:
         """Copy text to clipboard on enter."""
         self._success = copy_to_clipboard(
             self._text,

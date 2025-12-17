@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +17,6 @@ from passfx.core.models import (
     NoteEntry,
     PhoneCredential,
     RecoveryEntry,
-    credential_from_dict,
 )
 
 # Default vault location
@@ -38,7 +38,7 @@ class VaultCorruptedError(VaultError):
     """Raised when vault data is corrupted."""
 
 
-class Vault:
+class Vault:  # pylint: disable=too-many-public-methods
     """Manages encrypted credential storage.
 
     The vault stores credentials in an encrypted JSON file. The encryption
@@ -126,7 +126,10 @@ class Vault:
         self._crypto = CryptoManager(master_password, salt)
 
         # Initialize empty data
-        self._data = {"emails": [], "phones": [], "cards": [], "envs": [], "recovery": [], "notes": []}
+        self._data = {
+            "emails": [], "phones": [], "cards": [],
+            "envs": [], "recovery": [], "notes": [],
+        }
 
         # Save empty vault
         self._save()
@@ -178,7 +181,10 @@ class Vault:
         if self._crypto:
             self._crypto.wipe()
             self._crypto = None
-        self._data = {"emails": [], "phones": [], "cards": [], "envs": [], "recovery": [], "notes": []}
+        self._data = {
+            "emails": [], "phones": [], "cards": [],
+            "envs": [], "recovery": [], "notes": [],
+        }
 
     def _save(self) -> None:
         """Save the vault to disk."""
@@ -195,8 +201,6 @@ class Vault:
 
     def _update_activity(self) -> None:
         """Update last activity timestamp."""
-        import time
-
         self._last_activity = time.time()
 
     def check_timeout(self) -> bool:
@@ -205,8 +209,6 @@ class Vault:
         Returns:
             True if vault should be locked, False otherwise.
         """
-        import time
-
         if self._lock_timeout <= 0:
             return False
         return time.time() - self._last_activity > self._lock_timeout
@@ -591,7 +593,10 @@ class Vault:
         counts = {"emails": 0, "phones": 0, "cards": 0, "envs": 0, "recovery": 0, "notes": 0}
 
         if not merge:
-            self._data = {"emails": [], "phones": [], "cards": [], "envs": [], "recovery": [], "notes": []}
+            self._data = {
+                "emails": [], "phones": [], "cards": [],
+                "envs": [], "recovery": [], "notes": [],
+            }
 
         # Get existing IDs to avoid duplicates
         existing_ids = set()

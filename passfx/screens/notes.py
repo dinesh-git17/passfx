@@ -1,4 +1,5 @@
 """Secure Notes Screen for PassFX - Encrypted Data Shards."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def _get_relative_time(iso_timestamp: str | None) -> str:
+def _get_relative_time(iso_timestamp: str | None) -> str:  # pylint: disable=too-many-return-statements
     """Convert ISO timestamp to relative time string."""
     if not iso_timestamp:
         return "-"
@@ -96,7 +97,7 @@ class ViewNoteModal(ModalScreen[None]):
         super().__init__()
         self.note = note
 
-    def compose(self) -> ComposeResult:
+    def compose(self) -> ComposeResult:  # pylint: disable=too-many-locals,too-many-statements
         """Create the secure note visualization layout."""
         c = self.COLORS
 
@@ -113,7 +114,10 @@ class ViewNoteModal(ModalScreen[None]):
         content_width = section_inner - 5
 
         # Truncate title if needed
-        title_display = self.note.title[:content_width] if len(self.note.title) > content_width else self.note.title
+        if len(self.note.title) > content_width:
+            title_display = self.note.title[:content_width]
+        else:
+            title_display = self.note.title
 
         # Get content preview (first 80 chars per line, max 3 lines)
         content_lines = self.note.content.split('\n')[:3]
@@ -130,36 +134,72 @@ class ViewNoteModal(ModalScreen[None]):
                 # Title row
                 title = " ENCRYPTED DATA SHARD "
                 title_pad = inner - len(title) - 2
-                yield Static(f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold {c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]")
+                title_line = (
+                    f"[bold {c['border']}]║[/]  "
+                    f"[on {c['title_bg']}][bold {c['title_fg']}]{title}[/]"
+                    f"{' ' * title_pad}[bold {c['border']}]║[/]"
+                )
+                yield Static(title_line)
 
                 # Divider
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Shard label
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SHARD:[/] [bold {c['value_fg']}]{title_display:<{inner - 11}}[/] [bold {c['border']}]║[/]")
+                shard_line = (
+                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SHARD:[/] "
+                    f"[bold {c['value_fg']}]{title_display:<{inner - 11}}[/] "
+                    f"[bold {c['border']}]║[/]"
+                )
+                yield Static(shard_line)
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Stats section
-                stats = f"[{c['accent']}]{self.note.line_count}[/] lines  [{c['accent']}]{self.note.char_count}[/] chars"
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/] {stats:<{inner - 11}}[bold {c['border']}]║[/]")
+                stats = (
+                    f"[{c['accent']}]{self.note.line_count}[/] lines  "
+                    f"[{c['accent']}]{self.note.char_count}[/] chars"
+                )
+                stats_line = (
+                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/] "
+                    f"{stats:<{inner - 11}}[bold {c['border']}]║[/]"
+                )
+                yield Static(stats_line)
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
 
                 # Content section
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]┌─ CONTENT PREVIEW {'─' * (section_inner - 20)}┐[/]  [bold {c['border']}]║[/]")
+                content_header = (
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"┌─ CONTENT PREVIEW {'─' * (section_inner - 20)}┐[/]  "
+                    f"[bold {c['border']}]║[/]"
+                )
+                yield Static(content_header)
 
                 # Show preview lines
                 for line in preview_lines:
-                    yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] [{c['accent']}]►[/] [{c['value_fg']}]{line:<{content_width}}[/] [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                    preview_line = (
+                        f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
+                        f"[{c['accent']}]►[/] [{c['value_fg']}]{line:<{content_width}}[/] "
+                        f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
+                    )
+                    yield Static(preview_line)
 
                 # If less than 3 lines, pad with empty lines
                 for _ in range(3 - len(preview_lines)):
-                    yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   {' ' * content_width} [dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]")
+                    empty_line = (
+                        f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   "
+                        f"{' ' * content_width} [dim {c['section_border']}]│[/]  "
+                        f"[bold {c['border']}]║[/]"
+                    )
+                    yield Static(empty_line)
 
-                yield Static(f"[bold {c['border']}]║[/]  [dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]")
+                content_footer = (
+                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
+                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
+                )
+                yield Static(content_footer)
 
                 # Spacer
                 yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
@@ -168,10 +208,18 @@ class ViewNoteModal(ModalScreen[None]):
                 yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
 
                 # Footer row
-                footer_left = f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.note.id[:8]}[/]"
-                footer_right = f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
+                footer_left = (
+                    f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.note.id[:8]}[/]"
+                )
+                footer_right = (
+                    f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
+                )
                 footer_pad = inner - 32 - len(created)
-                yield Static(f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  [bold {c['border']}]║[/]")
+                footer_full = (
+                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}"
+                    f"{footer_right}  [bold {c['border']}]║[/]"
+                )
+                yield Static(footer_full)
 
                 # Bottom border
                 yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
@@ -227,7 +275,10 @@ class AddNoteModal(ModalScreen[NoteEntry | None]):
                 yield Input(placeholder="e.g. Office Wi-Fi Password", id="title-input")
 
                 # Content TextArea
-                yield Label("[#94a3b8]CONTENT[/]  [dim #64748b]secure text[/]", classes="note-input-label")
+                yield Label(
+                    "[#94a3b8]CONTENT[/]  [dim #64748b]secure text[/]",
+                    classes="note-input-label",
+                )
                 yield TextArea(
                     "",
                     id="content-area",
@@ -293,9 +344,16 @@ class EditNoteModal(ModalScreen[dict | None]):
             # Form
             with Vertical(id="note-form"):
                 yield Label("[#94a3b8]MEMO_TITLE[/]", classes="note-input-label")
-                yield Input(value=self.note.title, placeholder="e.g. Office Wi-Fi Password", id="title-input")
+                yield Input(
+                    value=self.note.title,
+                    placeholder="e.g. Office Wi-Fi Password",
+                    id="title-input",
+                )
 
-                yield Label("[#94a3b8]CONTENT[/]  [dim #64748b]secure text[/]", classes="note-input-label")
+                yield Label(
+                    "[#94a3b8]CONTENT[/]  [dim #64748b]secure text[/]",
+                    classes="note-input-label",
+                )
                 yield TextArea(
                     self.note.content,
                     id="content-area",
@@ -403,10 +461,11 @@ class NotesScreen(Screen):
         """Create the notes screen layout."""
         # 1. Global Header with Breadcrumbs
         with Horizontal(id="app-header"):
-            yield Static(
-                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] [#475569]>[/] [bold #f59e0b]NOTES[/]",
-                id="header-branding",
+            breadcrumb = (
+                "[dim #64748b]HOME[/] [#475569]>[/] "
+                "[dim #64748b]VAULT[/] [#475569]>[/] [bold #f59e0b]NOTES[/]"
             )
+            yield Static(breadcrumb, id="header-branding")
             yield Static("░░ ENCRYPTED DATA SHARDS ░░", id="header-status")
             yield Static("", id="header-lock")
 
@@ -473,7 +532,7 @@ class NotesScreen(Screen):
         else:
             self._update_inspector(None)
 
-    def _refresh_table(self) -> None:
+    def _refresh_table(self) -> None:  # pylint: disable=too-many-locals
         """Refresh the data table."""
         app: PassFXApp = self.app  # type: ignore
         table = self.query_one("#notes-table", DataTable)
@@ -486,7 +545,8 @@ class NotesScreen(Screen):
         table.add_column("Lines", width=8)  # Lines
         table.add_column("Chars", width=10)  # Chars
         table.add_column("Updated", width=12)  # Updated - fixed width
-        table.add_column("Preview", width=60)  # Content preview to fill remaining space
+        # Content preview to fill remaining space
+        table.add_column("Preview", width=60)
 
         entries = app.vault.get_notes()
 
@@ -506,12 +566,25 @@ class NotesScreen(Screen):
             updated = _get_relative_time(entry.updated_at)
             updated_text = f"[dim]{updated}[/]"
             # Truncate content preview to first 50 characters
-            notes_preview = entry.content[:50] if len(entry.content) > 50 else entry.content
+            notes_preview = (
+                entry.content[:50] if len(entry.content) > 50 else entry.content
+            )
             if len(entry.content) > 50:
                 notes_preview += "…"
-            notes_text = f"[dim #94a3b8]{notes_preview}[/]" if notes_preview else "[dim #555555]// EMPTY[/]"
+            if notes_preview:
+                notes_text = f"[dim #94a3b8]{notes_preview}[/]"
+            else:
+                notes_text = "[dim #555555]// EMPTY[/]"
 
-            table.add_row(indicator, title_text, lines_text, chars_text, updated_text, notes_text, key=entry.id)
+            table.add_row(
+                indicator,
+                title_text,
+                lines_text,
+                chars_text,
+                updated_text,
+                notes_text,
+                key=entry.id,
+            )
 
         footer = self.query_one("#grid-footer", Static)
         count = len(entries)
@@ -531,13 +604,13 @@ class NotesScreen(Screen):
         if old_key and old_key in entry_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
         if new_key and new_key in entry_map:
             try:
                 table.update_cell(new_key, indicator_col, "[bold #f59e0b]▍[/]")
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
     def _get_selected_entry(self) -> NoteEntry | None:
@@ -624,12 +697,16 @@ class NotesScreen(Screen):
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update inspector when row is highlighted."""
-        key_value = event.row_key.value if hasattr(event.row_key, "value") else str(event.row_key)
+        if hasattr(event.row_key, "value"):
+            key_value = event.row_key.value
+        else:
+            key_value = str(event.row_key)
         old_key = self._selected_row_key
         self._selected_row_key = key_value
         self._update_inspector(key_value)
         self._update_row_indicators(old_key, key_value)
 
+    # pylint: disable=too-many-locals
     def _update_inspector(self, row_key: Any) -> None:
         """Update the inspector panel with note details."""
         inspector = self.query_one("#inspector-content", Vertical)
@@ -666,8 +743,13 @@ class NotesScreen(Screen):
                         classes="avatar-box",
                     ),
                     Vertical(
-                        Static(f"[bold #f8fafc]{entry.title}[/]", classes="id-label-text"),
-                        Static("[dim #94a3b8]Encrypted Data Shard[/]", classes="id-email-text"),
+                        Static(
+                            f"[bold #f8fafc]{entry.title}[/]", classes="id-label-text"
+                        ),
+                        Static(
+                            "[dim #94a3b8]Encrypted Data Shard[/]",
+                            classes="id-email-text",
+                        ),
                         classes="id-details-stack",
                     ),
                     classes="id-card-header",
@@ -677,13 +759,14 @@ class NotesScreen(Screen):
         )
 
         # Section 2: Stats Widget
+        stats_text = (
+            f"[#94a3b8]LINES:[/] {entry.line_count}    "
+            f"[#94a3b8]CHARS:[/] {entry.char_count}"
+        )
         inspector.mount(
             Vertical(
                 Static("[dim #6b7280]▸ SHARD STATS[/]", classes="section-label"),
-                Static(
-                    f"[#94a3b8]LINES:[/] {entry.line_count}    [#94a3b8]CHARS:[/] {entry.char_count}",
-                    classes="strength-bar-widget",
-                ),
+                Static(stats_text, classes="strength-bar-widget"),
                 classes="security-widget",
             )
         )
@@ -694,9 +777,13 @@ class NotesScreen(Screen):
             lines = entry.content.split("\n")[:8]
             for i, line in enumerate(lines, 1):
                 line_preview = line[:35] if len(line) > 35 else line
-                preview_lines.append(f"[dim #475569]{i:2}[/] │ [#94a3b8]{line_preview}[/]")
+                formatted_line = (
+                    f"[dim #475569]{i:2}[/] │ [#94a3b8]{line_preview}[/]"
+                )
+                preview_lines.append(formatted_line)
             if len(entry.content.split("\n")) > 8:
-                preview_lines.append("[dim #475569]   [/]   [dim #64748b]... more content[/]")
+                more_text = "[dim #475569]   [/]   [dim #64748b]... more content[/]"
+                preview_lines.append(more_text)
         else:
             preview_lines.append("[dim #64748b] 1[/] │ [dim #555555]// EMPTY[/]")
 
@@ -723,8 +810,14 @@ class NotesScreen(Screen):
 
         inspector.mount(
             Horizontal(
-                Static(f"[dim #475569]ID:[/] [#64748b]{entry.id[:8]}[/]", classes="meta-id"),
-                Static(f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]", classes="meta-updated"),
+                Static(
+                    f"[dim #475569]ID:[/] [#64748b]{entry.id[:8]}[/]",
+                    classes="meta-id",
+                ),
+                Static(
+                    f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
+                    classes="meta-updated",
+                ),
                 classes="inspector-footer-bar",
             )
         )

@@ -1,4 +1,5 @@
 """Settings Screen for PassFX."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
@@ -134,7 +135,7 @@ class ImportModal(ModalScreen[None]):
             return
 
         try:
-            data, count = import_vault(path)
+            data, _ = import_vault(path)
             imported = app.vault.import_data(data, merge=True)
             total = sum(imported.values())
             status.update(f"[success]Imported {total} entries[/success]")
@@ -160,9 +161,9 @@ class SettingsScreen(Screen):
 
         with Vertical():
             yield Static(
-                "[bold #8b949e]╔══════════════════════════════════════╗[/]\n"
-                "[bold #8b949e]║[/]          [bold #8b949e]SETTINGS[/]          [bold #8b949e]║[/]\n"
-                "[bold #8b949e]╚══════════════════════════════════════╝[/]",
+                "[bold #8b949e]╔════════════════════════════════════╗[/]\n"
+                "[bold #8b949e]║[/]         [bold #8b949e]SETTINGS[/]         [bold #8b949e]║[/]\n"
+                "[bold #8b949e]╚════════════════════════════════════╝[/]",
                 classes="title",
             )
 
@@ -191,7 +192,7 @@ class SettingsScreen(Screen):
         app: PassFXApp = self.app  # type: ignore
         stats_display = self.query_one("#stats-display", Static)
 
-        if not app._unlocked:
+        if not app._unlocked:  # pylint: disable=protected-access
             stats_display.update("Vault is locked")
             return
 

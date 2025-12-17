@@ -1,4 +1,5 @@
 """Main Menu Screen for PassFX - Security Command Center."""
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
@@ -87,12 +88,11 @@ class SecurityScore(Static):
         """Get color based on security score."""
         if score >= 80:
             return "#22c55e"
-        elif score >= 60:
+        if score >= 60:
             return "#60a5fa"
-        elif score >= 40:
+        if score >= 40:
             return "#f59e0b"
-        else:
-            return "#ef4444"
+        return "#ef4444"
 
     def _build_histogram(self, health: VaultHealthResult) -> list[str]:
         """Build strength distribution histogram."""
@@ -118,8 +118,8 @@ class SecurityScore(Static):
             count = strength_counts.get(level, 0)
             if count > 0 or level in (0, 4):
                 bar_len = int((count / max_count) * bar_width) if max_count > 0 else 0
-                bar = "█" * bar_len + "░" * (bar_width - bar_len)
-                lines.append(f"[{color}]{label}[/] [{color}]{bar}[/] {count}")
+                progress_bar = "█" * bar_len + "░" * (bar_width - bar_len)
+                lines.append(f"[{color}]{label}[/] [{color}]{progress_bar}[/] {count}")
 
         return lines
 
@@ -152,7 +152,7 @@ class MainMenuScreen(Screen):
         Binding("slash", "focus_terminal", "Terminal", show=False),
     ]
 
-    def compose(self) -> ComposeResult:
+    def compose(self) -> ComposeResult:  # pylint: disable=too-many-statements
         """Create the command center layout."""
         # Custom header - System Status Bar with live telemetry
         with Horizontal(id="app-header"):
@@ -282,7 +282,7 @@ class MainMenuScreen(Screen):
 
         # Get vault file size if available
         vault_size = ""
-        if app._unlocked and app.vault.path.exists():
+        if app._unlocked and app.vault.path.exists():  # pylint: disable=protected-access
             size_bytes = app.vault.path.stat().st_size
             if size_bytes < 1024:
                 vault_size = f"{size_bytes}B"
@@ -318,7 +318,7 @@ class MainMenuScreen(Screen):
         Terminal logs are handled separately in _log_startup_sequence.
         """
         app: PassFXApp = self.app  # type: ignore
-        stats = app.vault.get_stats() if app._unlocked else {}
+        stats = app.vault.get_stats() if app._unlocked else {}  # pylint: disable=protected-access
 
         email_count = stats.get("emails", 0)
         phone_count = stats.get("phones", 0)
@@ -339,7 +339,7 @@ class MainMenuScreen(Screen):
 
         # Run security analysis using the new analyze_vault function
         credentials: list = []
-        if app._unlocked:
+        if app._unlocked:  # pylint: disable=protected-access
             credentials.extend(app.vault.get_emails())
             credentials.extend(app.vault.get_phones())
 
@@ -358,19 +358,19 @@ class MainMenuScreen(Screen):
             if widget.id == "segment-passwords":
                 self.action_passwords()
                 return
-            elif widget.id == "segment-phones":
+            if widget.id == "segment-phones":
                 self.action_phones()
                 return
-            elif widget.id == "segment-cards":
+            if widget.id == "segment-cards":
                 self.action_cards()
                 return
-            elif widget.id == "segment-notes":
+            if widget.id == "segment-notes":
                 self.action_notes()
                 return
-            elif widget.id == "segment-envs":
+            if widget.id == "segment-envs":
                 self.action_envs()
                 return
-            elif widget.id == "segment-recovery":
+            if widget.id == "segment-recovery":
                 self.action_recovery()
                 return
             widget = widget.parent
@@ -416,7 +416,7 @@ class MainMenuScreen(Screen):
             return
 
         # Echo the command to the log
-        terminal.log(f"[bold #a78bfa]>[/] {raw_command}")
+        terminal.write_log(f"[bold #a78bfa]>[/] {raw_command}")
 
         # Normalize command: remove leading slash, uppercase for matching
         command = raw_command.lstrip("/").upper()
@@ -454,63 +454,63 @@ class MainMenuScreen(Screen):
 
         # Execute navigation command
         if command in commands:
-            terminal.log("[bold #8b5cf6]⟩[/] Executing navigation protocol...")
+            terminal.write_log("[bold #8b5cf6]⟩[/] Executing navigation protocol...")
             commands[command]()
         else:
-            terminal.log("[bold #ef4444]✗[/] Command not recognized. Try [bold]/help[/]")
+            terminal.write_log("[bold #ef4444]✗[/] Command not recognized. Try [bold]/help[/]")
 
     def action_passwords(self) -> None:
         """Go to passwords screen."""
+        # pylint: disable=import-outside-toplevel
         from passfx.screens.passwords import PasswordsScreen
-
         self.app.push_screen(PasswordsScreen())
 
     def action_phones(self) -> None:
         """Go to phones screen."""
+        # pylint: disable=import-outside-toplevel
         from passfx.screens.phones import PhonesScreen
-
         self.app.push_screen(PhonesScreen())
 
     def action_cards(self) -> None:
         """Go to cards screen."""
+        # pylint: disable=import-outside-toplevel
         from passfx.screens.cards import CardsScreen
-
         self.app.push_screen(CardsScreen())
 
     def action_notes(self) -> None:
         """Go to secure notes screen."""
+        # pylint: disable=import-outside-toplevel
         from passfx.screens.notes import NotesScreen
-
         self.app.push_screen(NotesScreen())
 
     def action_envs(self) -> None:
         """Go to env vars screen."""
+        # pylint: disable=import-outside-toplevel
         from passfx.screens.envs import EnvsScreen
-
         self.app.push_screen(EnvsScreen())
 
     def action_recovery(self) -> None:
         """Go to recovery codes screen."""
+        # pylint: disable=import-outside-toplevel
         from passfx.screens.recovery import RecoveryScreen
-
         self.app.push_screen(RecoveryScreen())
 
     def action_generator(self) -> None:
         """Go to password generator screen."""
+        # pylint: disable=import-outside-toplevel
         from passfx.screens.generator import GeneratorScreen
-
         self.app.push_screen(GeneratorScreen())
 
     def action_settings(self) -> None:
         """Go to settings screen."""
+        # pylint: disable=import-outside-toplevel
         from passfx.screens.settings import SettingsScreen
-
         self.app.push_screen(SettingsScreen())
 
     def action_help(self) -> None:
         """Show the help screen."""
+        # pylint: disable=import-outside-toplevel
         from passfx.screens.help import HelpScreen
-
         self.app.push_screen(HelpScreen())
 
     def action_quit(self) -> None:
