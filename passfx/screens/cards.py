@@ -286,7 +286,9 @@ class AddCardModal(ModalScreen[CreditCard | None]):
             # Footer Actions
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
+                yield Button(
+                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                )
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -366,7 +368,9 @@ class EditCardModal(ModalScreen[dict | None]):
     def compose(self) -> ComposeResult:
         """Create the modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            yield Static(f":: MODIFY_ASSET // {self.card.label.upper()} ::", id="modal-title")
+            yield Static(
+                f":: MODIFY_ASSET // {self.card.label.upper()} ::", id="modal-title"
+            )
 
             with Vertical(id="pwd-form"):
                 yield Label("ISSUER_LABEL", classes="input-label")
@@ -386,7 +390,9 @@ class EditCardModal(ModalScreen[dict | None]):
                     id="expiry-input",
                 )
 
-                yield Label("SECURITY_CODE [BLANK = KEEP CURRENT]", classes="input-label")
+                yield Label(
+                    "SECURITY_CODE [BLANK = KEEP CURRENT]", classes="input-label"
+                )
                 yield Input(placeholder="•••", password=True, id="cvv-input")
 
                 yield Label("CARDHOLDER", classes="input-label")
@@ -405,7 +411,9 @@ class EditCardModal(ModalScreen[dict | None]):
 
             with Horizontal(id="modal-buttons"):
                 yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button")
+                yield Button(
+                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -540,7 +548,9 @@ class ViewCardModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Chip visualization
                 yield Static(
@@ -557,7 +567,9 @@ class ViewCardModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Card Number section
                 yield Static(
@@ -578,7 +590,9 @@ class ViewCardModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Expiry and CVV section
                 expiry_cvv = (
@@ -604,7 +618,9 @@ class ViewCardModal(ModalScreen[None]):
                 )
 
                 # Spacer
-                yield Static(f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]")
+                yield Static(
+                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                )
 
                 # Cardholder section
                 holder_name = self.card.cardholder_name.upper()
@@ -629,9 +645,12 @@ class ViewCardModal(ModalScreen[None]):
 
                 # Footer row with ID
                 footer_left = (
-                    f"  [dim {c['section_border']}]ID:[/] [{c['muted']}]{self.card.id[:8]}[/]"
+                    f"  [dim {c['section_border']}]ID:[/] "
+                    f"[{c['muted']}]{self.card.id[:8]}[/]"
                 )
-                footer_right = f"[dim {c['section_border']}]STATUS:[/] [{c['accent']}]ACTIVE[/]"
+                footer_right = (
+                    f"[dim {c['section_border']}]STATUS:[/] [{c['accent']}]ACTIVE[/]"
+                )
                 footer_pad = inner - 32
                 yield Static(
                     f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  "
@@ -774,9 +793,7 @@ class CardsScreen(Screen):
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
                 # Inverted Block Header
-                yield Static(
-                    " ≡ ASSET_INSPECTOR ", classes="pane-header-block-green"
-                )
+                yield Static(" ≡ ASSET_INSPECTOR ", classes="pane-header-block-green")
                 yield Vertical(id="inspector-content")  # Dynamic content here
 
         # 3. Global Footer
@@ -871,8 +888,13 @@ class CardsScreen(Screen):
             updated_text = f"[dim]{updated}[/]"
 
             table.add_row(
-                indicator, label_text, number_text, expiry_text,
-                holder_text, updated_text, key=card.id
+                indicator,
+                label_text,
+                number_text,
+                expiry_text,
+                holder_text,
+                updated_text,
+                key=card.id,
             )
 
         # Update the grid footer with object count
@@ -997,7 +1019,11 @@ class CardsScreen(Screen):
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Update inspector panel when a row is highlighted."""
         # row_key is a RowKey object, get its value
-        key_value = event.row_key.value if hasattr(event.row_key, "value") else str(event.row_key)
+        key_value = (
+            event.row_key.value
+            if hasattr(event.row_key, "value")
+            else str(event.row_key)
+        )
         old_key = self._selected_row_key
         self._selected_row_key = key_value
         self._update_inspector(key_value)
@@ -1060,8 +1086,13 @@ class CardsScreen(Screen):
                         classes="avatar-box",
                     ),
                     Vertical(
-                        Static(f"[bold #f8fafc]{card.label}[/]", classes="id-label-text"),
-                        Static(f"[dim #94a3b8]{card.cardholder_name}[/]", classes="id-email-text"),
+                        Static(
+                            f"[bold #f8fafc]{card.label}[/]", classes="id-label-text"
+                        ),
+                        Static(
+                            f"[dim #94a3b8]{card.cardholder_name}[/]",
+                            classes="id-email-text",
+                        ),
                         classes="id-details-stack",
                     ),
                     classes="id-card-header",
@@ -1085,8 +1116,12 @@ class CardsScreen(Screen):
                 Static("[dim #6b7280]▸ PAYMENT DETAILS[/]", classes="section-label"),
                 Static(f"{icon} {card_number_display}", classes="strength-bar-widget"),
                 Horizontal(
-                    Static(f"[dim #475569]EXPIRY:[/] {expiry_display}", classes="meta-id"),
-                    Static(f"[dim #475569]CVV:[/] {cvv_display}", classes="meta-updated"),
+                    Static(
+                        f"[dim #475569]EXPIRY:[/] {expiry_display}", classes="meta-id"
+                    ),
+                    Static(
+                        f"[dim #475569]CVV:[/] {cvv_display}", classes="meta-updated"
+                    ),
                     classes="inspector-footer-bar",
                 ),
                 classes="security-widget",
@@ -1126,19 +1161,20 @@ class CardsScreen(Screen):
         # SECTION 4: Footer Metadata Bar (ID + Updated)
         # ═══════════════════════════════════════════════════════════════
         try:
-            updated_full = datetime.fromisoformat(card.updated_at).strftime("%Y-%m-%d %H:%M")
+            updated_full = datetime.fromisoformat(card.updated_at).strftime(
+                "%Y-%m-%d %H:%M"
+            )
         except (ValueError, TypeError):
             updated_full = card.updated_at or "Unknown"
 
         inspector.mount(
             Horizontal(
                 Static(
-                    f"[dim #475569]ID:[/] [#64748b]{card.id[:8]}[/]",
-                    classes="meta-id"
+                    f"[dim #475569]ID:[/] [#64748b]{card.id[:8]}[/]", classes="meta-id"
                 ),
                 Static(
                     f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
-                    classes="meta-updated"
+                    classes="meta-updated",
                 ),
                 classes="inspector-footer-bar",
             )
