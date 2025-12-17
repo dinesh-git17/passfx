@@ -1,0 +1,81 @@
+# Pre-commit hooks for PassFX
+# Enforces formatting, linting, compilation safety, and attribution guards
+
+default_language_version:
+  python: python3
+
+# Skip these paths globally
+exclude: |
+  (?x)^(
+    __pycache__/.*|
+    \.venv/.*|
+    venv/.*|
+    \.git/.*|
+    \.pytest_cache/.*|
+    \.mypy_cache/.*|
+    \.ruff_cache/.*|
+    dist/.*|
+    build/.*|
+    .*\.egg-info/.*|
+    \.passfx/.*
+  )$
+
+repos:
+  # Basic hygiene hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: debug-statements
+
+  # Black formatting (line-length 88)
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=88]
+
+  # isort for import sorting (black-compatible)
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=88]
+
+  # Local hooks for custom checks
+  - repo: local
+    hooks:
+      # Pylint linting - requires score 10.0
+      - id: pylint
+        name: pylint (score >= 10.0)
+        entry: pylint
+        language: system
+        types: [python]
+        args:
+          - --rcfile=.pylintrc
+          - --fail-under=10.0
+        files: ^passfx/.*\.py$
+
+      # Python compilation check
+      - id: py-compile
+        name: python compile check
+        entry: python -m py_compile
+        language: system
+        types: [python]
+        files: ^passfx/.*\.py$
+
+      # Attribution guard - blocks AI/Claude references
+      - id: attribution-guard
+        name: attribution guard (no AI references)
+        entry: python scripts/attribution_guard.py
+        language: system
+        types_or: [python, markdown, text, yaml, toml]
+        pass_filenames: true

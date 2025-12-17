@@ -1,4 +1,5 @@
 """Secure Notes Screen for PassFX - Encrypted Data Shards."""
+
 # pylint: disable=duplicate-code
 
 from __future__ import annotations
@@ -10,14 +11,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Center, Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
-from textual.widgets import (
-    Button,
-    DataTable,
-    Input,
-    Label,
-    Static,
-    TextArea,
-)
+from textual.widgets import Button, DataTable, Input, Label, Static, TextArea
 
 from passfx.core.models import NoteEntry
 from passfx.utils.clipboard import copy_to_clipboard
@@ -31,7 +25,9 @@ if TYPE_CHECKING:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def _get_relative_time(iso_timestamp: str | None) -> str:  # pylint: disable=too-many-return-statements
+def _get_relative_time(
+    iso_timestamp: str | None,
+) -> str:  # pylint: disable=too-many-return-statements
     """Convert ISO timestamp to relative time string."""
     if not iso_timestamp:
         return "-"
@@ -97,7 +93,9 @@ class ViewNoteModal(ModalScreen[None]):
         super().__init__()
         self.note = note
 
-    def compose(self) -> ComposeResult:  # pylint: disable=too-many-locals,too-many-statements
+    def compose(
+        self,
+    ) -> ComposeResult:  # pylint: disable=too-many-locals,too-many-statements
         """Create the secure note visualization layout."""
         c = self.COLORS
 

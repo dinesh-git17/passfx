@@ -1,4 +1,5 @@
 """Main Menu Screen for PassFX - Security Command Center."""
+
 # pylint: disable=duplicate-code
 
 from __future__ import annotations
@@ -280,7 +281,9 @@ class MainMenuScreen(Screen):
 
         # Get vault file size if available
         vault_size = ""
-        if app._unlocked and app.vault.path.exists():  # pylint: disable=protected-access
+        if (
+            app._unlocked and app.vault.path.exists()
+        ):  # pylint: disable=protected-access
             size_bytes = app.vault.path.stat().st_size
             if size_bytes < 1024:
                 vault_size = f"{size_bytes}B"
@@ -316,7 +319,9 @@ class MainMenuScreen(Screen):
         Terminal logs are handled separately in _log_startup_sequence.
         """
         app: PassFXApp = self.app  # type: ignore
-        stats = app.vault.get_stats() if app._unlocked else {}  # pylint: disable=protected-access
+        stats = (
+            app.vault.get_stats() if app._unlocked else {}
+        )  # pylint: disable=protected-access
 
         email_count = stats.get("emails", 0)
         phone_count = stats.get("phones", 0)

@@ -2,6 +2,7 @@
 
 Provides secure clipboard operations with auto-clear functionality.
 """
+
 # pylint: disable=import-outside-toplevel
 
 from __future__ import annotations

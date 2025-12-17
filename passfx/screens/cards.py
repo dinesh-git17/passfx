@@ -11,13 +11,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Center, Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
-from textual.widgets import (
-    Button,
-    DataTable,
-    Input,
-    Label,
-    Static,
-)
+from textual.widgets import Button, DataTable, Input, Label, Static
 
 from passfx.core.models import CreditCard
 from passfx.utils.clipboard import copy_to_clipboard

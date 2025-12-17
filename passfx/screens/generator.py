@@ -1,4 +1,5 @@
 """Password Generator Screen for PassFX."""
+
 # pylint: disable=duplicate-code
 
 from __future__ import annotations
@@ -10,14 +11,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
-from textual.widgets import (
-    Button,
-    Checkbox,
-    Input,
-    Label,
-    OptionList,
-    Static,
-)
+from textual.widgets import Button, Checkbox, Input, Label, OptionList, Static
 from textual.widgets.option_list import Option
 
 from passfx.core.models import EmailCredential

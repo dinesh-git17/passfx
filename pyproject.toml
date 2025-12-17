@@ -51,5 +51,29 @@ target-version = ["py310", "py311", "py312"]
 
 [tool.ruff]
 line-length = 88
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 ignore = ["E501"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip_gitignore = true
+skip = [".venv", "venv", "__pycache__", ".git", "dist", "build"]
+
+[tool.pylint.main]
+fail-under = 10.0
+jobs = 0
+
+[tool.pylint."messages control"]
+disable = [
+    "line-too-long",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "protected-access",
+    "import-error",
+    "logging-fstring-interpolation",
+]

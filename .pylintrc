@@ -1,0 +1,151 @@
+# Pylint configuration for PassFX
+# Enforces strict code quality for a security-critical application
+
+[MAIN]
+# Use multiple processes for speed
+jobs=0
+
+# Pickle collected data for later comparisons
+persistent=yes
+
+# Minimum Python version
+py-version=3.10
+
+# Files or directories to be skipped
+ignore=CVS,.git,__pycache__,.venv,venv,.pytest_cache,.mypy_cache,.ruff_cache,dist,build
+
+# Patterns for files/dirs to ignore
+ignore-patterns=test_.*\.py,conftest\.py
+
+# List of plugins
+load-plugins=
+
+[MESSAGES CONTROL]
+# Disable specific messages
+disable=
+    # Let black/isort handle formatting
+    line-too-long,
+    wrong-import-order,
+    ungrouped-imports,
+    wrong-import-position,
+    # Allow reasonable flexibility
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-instance-attributes,
+    too-many-locals,
+    too-many-branches,
+    too-many-statements,
+    too-many-return-statements,
+    # Textual framework patterns
+    no-member,
+    # Allow protected access in tests and same-class
+    protected-access,
+    # Import checks handled by other tools
+    import-error,
+    # Logging format style preference
+    logging-fstring-interpolation,
+
+[REPORTS]
+# Set the output format
+output-format=text
+
+# Include message IDs in output
+msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
+
+# Activate the evaluation score
+score=yes
+
+[BASIC]
+# Naming conventions
+good-names=i,j,k,e,f,fd,_,db,id,pk,ui,io
+
+# Regular expression for valid module names
+module-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression for valid class names
+class-rgx=[A-Z_][a-zA-Z0-9]+$
+
+# Regular expression for valid function names
+function-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression for valid method names
+method-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression for valid variable names
+variable-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression for valid constant names
+const-rgx=(([A-Z_][A-Z0-9_]*)|(__.*__))$
+
+# Regular expression for valid attribute names
+attr-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression for valid argument names
+argument-rgx=[a-z_][a-z0-9_]*$
+
+# Regular expression for valid class attribute names
+class-attribute-rgx=([A-Za-z_][A-Za-z0-9_]*|(__.*__))$
+
+[FORMAT]
+# Maximum line length (let black handle this)
+max-line-length=120
+
+# Expected indentation
+indent-string='    '
+
+[DESIGN]
+# Maximum number of arguments for function/method
+max-args=10
+
+# Maximum number of locals for function/method body
+max-locals=20
+
+# Maximum number of return/yield for function/method body
+max-returns=10
+
+# Maximum number of branch for function/method body
+max-branches=15
+
+# Maximum number of statements in function/method body
+max-statements=60
+
+# Maximum number of attributes for a class
+max-attributes=15
+
+# Maximum number of public methods for a class
+max-public-methods=25
+
+[SIMILARITIES]
+# Minimum lines of similarity
+min-similarity-lines=6
+
+# Ignore comments when computing similarities
+ignore-comments=yes
+
+# Ignore docstrings when computing similarities
+ignore-docstrings=yes
+
+# Ignore imports when computing similarities
+ignore-imports=yes
+
+[TYPECHECK]
+# List of module names to ignore for member checks
+ignored-modules=cryptography,textual,pyperclip,zxcvbn
+
+# List of classes to ignore for member checks
+ignored-classes=SQLObject,optparse.Values,thread._local,_thread._local
+
+[VARIABLES]
+# List of additional names supposed to be defined in builtins
+additional-builtins=
+
+# Tells whether unused global variables should be treated as a violation
+allow-global-unused-variables=yes
+
+[LOGGING]
+# Format style used to check logging format string
+logging-format-style=new
+
+[EXCEPTIONS]
+# Exceptions that will emit a warning when caught
+overgeneral-exceptions=builtins.BaseException,builtins.Exception

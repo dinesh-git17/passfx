@@ -1,4 +1,5 @@
 """Environment Variables Screen for PassFX - Config Vault."""
+
 # pylint: disable=duplicate-code,too-many-lines
 
 from __future__ import annotations
@@ -11,14 +12,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Center, Horizontal, Vertical
 from textual.screen import ModalScreen, Screen
-from textual.widgets import (
-    Button,
-    DataTable,
-    Input,
-    Label,
-    Static,
-    TextArea,
-)
+from textual.widgets import Button, DataTable, Input, Label, Static, TextArea
 
 from passfx.core.models import EnvEntry
 from passfx.utils.clipboard import copy_to_clipboard
