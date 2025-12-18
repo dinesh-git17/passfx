@@ -43,7 +43,7 @@ def copy_to_clipboard(
     global _active_timer  # pylint: disable=global-statement
 
     try:
-        import pyperclip  # type: ignore[import-untyped]
+        import pyperclip
 
         pyperclip.copy(text)
 
