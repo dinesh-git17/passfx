@@ -102,9 +102,14 @@ Claude must **ALWAYS** follow this exact workflow — no deviations:
    - If the current branch is `main` or `develop`, **ABORT COMMIT IMMEDIATELY**
 
 5. **Before committing**
+
    - Show the proposed commit message
    - Wait for explicit user approval
    - Only then proceed with `git commit`
+
+6. **After committing**
+   - Always create a PR
+   - Use the github PR template and fill it out
 
 🚫 **Hard Rules**
 
