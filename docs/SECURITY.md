@@ -52,6 +52,99 @@ To help you focus your research, here is what we consider in-scope and out-of-sc
 - **Weak Master Passwords:** We enforce complexity rules, but we cannot stop a user from using "Password123!" if they really try.
 - **Social Engineering:** Phishing attacks against the user.
 
+---
+
+## 🖥️ Platform-Specific Security
+
+PassFX implements platform-specific security measures. Users should be aware of the following platform differences and limitations.
+
+### File Permission Enforcement
+
+| Platform | Mechanism | Vault/Salt Files | Exported Files |
+| -------- | --------- | ---------------- | -------------- |
+| **Linux/macOS** | Unix mode bits | `0600` (owner rw) | `0600` (owner rw) |
+| **Windows** | DACL (ACLs) | Current user only | Current user only |
+
+**Windows Implementation Details:**
+
+PassFX uses native Windows Security APIs via `ctypes` to set Discretionary Access Control Lists (DACLs) on sensitive files. This restricts access to the current user only, providing equivalent protection to Unix `0600` permissions.
+
+- Vault file (`vault.enc`): Restricted to current user
+- Salt file (`salt`): Restricted to current user
+- Backup file (`vault.enc.bak`): Restricted to current user
+- Exported files (JSON/CSV): Restricted to current user
+
+### Known Platform Limitations
+
+#### All Platforms (Python Runtime Constraints)
+
+| Limitation | Impact | Mitigation |
+| ---------- | ------ | ---------- |
+| **Python strings are immutable** | Sensitive data (passwords, keys) cannot be reliably overwritten in memory | Best-effort memory wiping attempted via `ctypes.memset`; consider using a compiled language for higher security requirements |
+| **Garbage collection timing** | Memory containing secrets may persist until GC runs | Explicit cleanup calls made; GC is triggered on vault lock |
+| **No memory locking** | Python cannot prevent memory from being swapped to disk | Users with high security requirements should use encrypted swap or disable swap entirely |
+
+#### Windows-Specific
+
+| Limitation | Impact | Mitigation |
+| ---------- | ------ | ---------- |
+| **No native mlock()** | Memory cannot be locked to prevent swapping | Use Windows with BitLocker or disable pagefile for sensitive machines |
+| **Admin/Debug privilege escalation** | Users with `SeDebugPrivilege` can read process memory | Run on machines where admin access is controlled |
+| **ACL propagation on file rename** | ACLs may not persist through atomic rename operations | PassFX re-applies ACLs after each rename operation |
+
+#### Linux-Specific
+
+| Limitation | Impact | Mitigation |
+| ---------- | ------ | ---------- |
+| **Root bypass** | Root user can read any file regardless of permissions | Standard Unix security model; use disk encryption |
+| **ptrace attacks** | Processes with `CAP_SYS_PTRACE` can read memory | Run with Yama ptrace restrictions enabled |
+| **Core dumps** | Crashes may write memory to disk | PassFX does not enable core dumps; ensure `ulimit -c 0` |
+
+#### macOS-Specific
+
+| Limitation | Impact | Mitigation |
+| ---------- | ------ | ---------- |
+| **No Keychain integration** | Secrets stored in encrypted file, not system keychain | File encryption provides equivalent security |
+| **Transparency, Consent, and Control (TCC)** | May require folder access permissions | Grant PassFX access to `~/.passfx` if prompted |
+
+### Security Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    PassFX Security Layers                        │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 1: Encryption at Rest                                     │
+│  ├── AES-256-CBC (Fernet)                                       │
+│  ├── PBKDF2-HMAC-SHA256 (480,000 iterations)                    │
+│  └── 32-byte cryptographic salt                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 2: File System Protection                                 │
+│  ├── Unix: Mode 0600/0700 (owner only)                          │
+│  ├── Windows: DACL (current user only)                          │
+│  └── Symlink attack prevention                                  │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 3: Runtime Protection                                     │
+│  ├── Auto-lock on inactivity                                    │
+│  ├── Memory wiping on lock (best-effort)                        │
+│  ├── No secrets in logs or error messages                       │
+│  └── Clipboard auto-clear                                       │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 4: Integrity Protection                                   │
+│  ├── Salt integrity verification                                │
+│  ├── Atomic file writes (crash safety)                          │
+│  └── Concurrent access locking                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Recommendations for High-Security Environments
+
+1. **Use encrypted swap** (Linux: `cryptswap`, macOS: FileVault, Windows: BitLocker)
+2. **Disable core dumps**: `ulimit -c 0` on Unix systems
+3. **Use full-disk encryption** for additional protection at rest
+4. **Restrict admin/root access** to the machine running PassFX
+5. **Keep the system updated** with security patches
+6. **Use a strong master password** (PassFX enforces minimum requirements)
+
 ## ⏳ Response Timeline
 
 We are committed to the following response timeline:
