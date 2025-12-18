@@ -40,14 +40,14 @@ def _graceful_shutdown(_signum: int, _frame: Any) -> None:
         try:
             if _app_instance.vault and _app_instance._unlocked:
                 _app_instance.vault.lock()
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass  # Fail silently during shutdown
+        except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+            pass  # Intentional: shutdown must not raise
 
     # Clear clipboard - critical for security
     try:
         emergency_cleanup()
-    except Exception:  # pylint: disable=broad-exception-caught
-        pass  # Fail silently during shutdown
+    except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+        pass  # Intentional: shutdown must not raise
 
     # Exit cleanly
     sys.exit(0)
@@ -79,14 +79,14 @@ def _cleanup_on_exit() -> None:
         try:
             if _app_instance.vault and _app_instance._unlocked:
                 _app_instance.vault.lock()
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass
+        except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+            pass  # Intentional: atexit must not raise
 
     # Clear clipboard
     try:
         clear_clipboard()
-    except Exception:  # pylint: disable=broad-exception-caught
-        pass
+    except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+        pass  # Intentional: atexit must not raise
 
 
 class PassFXApp(App):

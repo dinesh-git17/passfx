@@ -752,14 +752,14 @@ class RecoveryScreen(Screen):
         if old_key and old_key in entry_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+            except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+                pass  # Row may not exist during rapid navigation
 
         if new_key and new_key in entry_map:
             try:
                 table.update_cell(new_key, indicator_col, "[bold #f43f5e]▍[/]")
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+            except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+                pass  # Row may not exist during rapid navigation
 
     def _get_selected_entry(self) -> RecoveryEntry | None:
         """Get the currently selected recovery entry."""

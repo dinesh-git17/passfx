@@ -40,8 +40,8 @@ def _signal_handler(signum: int, _frame: FrameType | None) -> None:
         try:
             if _app.vault and _app._unlocked:
                 _app.vault.lock()
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass  # Fail silently during shutdown
+        except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+            pass  # Intentional: signal handler must not raise
 
     # Exit with appropriate code
     # SIGINT (Ctrl-C) = 130, SIGTERM = 143
@@ -78,8 +78,8 @@ def main() -> int:
         if _app.vault and _app._unlocked:
             try:
                 _app.vault.lock()
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass
+            except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+                pass  # Intentional: cleanup must not raise
 
     return 0
 

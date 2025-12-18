@@ -70,7 +70,7 @@ class LoginScreen(Screen):
             with Vertical(id="login-content"):
                 yield Static(LOGO, id="logo")
                 yield Static(
-                    f'[italic #8b5cf6]"{random.choice(TAGLINES)}"[/]',
+                    f'[italic #8b5cf6]"{random.choice(TAGLINES)}"[/]',  # nosec B311 - cosmetic UI only
                     id="tagline",
                 )
 

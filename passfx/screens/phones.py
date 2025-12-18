@@ -773,15 +773,15 @@ class PhonesScreen(Screen):
         if old_key and old_key in cred_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass  # Row may not exist
+            except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+                pass  # Row may not exist during rapid navigation
 
         # Set new selection indicator
         if new_key and new_key in cred_map:
             try:
                 table.update_cell(new_key, indicator_col, "[bold #8b5cf6]▍[/]")
-            except Exception:  # pylint: disable=broad-exception-caught
-                pass  # Row may not exist
+            except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+                pass  # Row may not exist during rapid navigation
 
     def _get_selected_credential(self) -> PhoneCredential | None:
         """Get the currently selected credential."""
