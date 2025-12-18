@@ -42,6 +42,11 @@ dev = [
     "mypy>=1.19.0,<2.0.0",
     "ruff>=0.14.0,<1.0.0",
     "bandit>=1.9.0,<2.0.0",
+    "pytest>=8.0.0,<9.0.0",
+    "pytest-cov>=6.0.0,<7.0.0",
+    "pytest-xdist>=3.5.0,<4.0.0",
+    "pytest-timeout>=2.3.0,<3.0.0",
+    "textual-dev>=1.0.0,<2.0.0",
 ]
 
 [project.scripts]
@@ -82,6 +87,11 @@ disallow_untyped_defs = true
 module = "simple_term_menu.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+
 [tool.pylint.main]
 fail-under = 10.0
 jobs = 0
@@ -97,3 +107,61 @@ disable = [
     "import-error",
     "logging-fstring-interpolation",
 ]
+
+# Pytest Configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+markers = [
+    "unit: Unit tests - isolated tests with no I/O",
+    "integration: Integration tests - component interaction verification",
+    "security: Security tests - threat model and invariant validation",
+    "slow: Slow tests (>1s) - excluded from fast runs",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning:textual.*",
+    "ignore::DeprecationWarning:rich.*",
+]
+timeout = 30
+
+# Coverage Configuration
+[tool.coverage.run]
+source = ["passfx"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+]
+
+[tool.coverage.report]
+# Phase 0: Set to 0 for infrastructure-only (no tests yet)
+# Phase 1+: Increase to 90% as tests are added
+# Target: 90% overall, 100% for core/crypto.py and core/vault.py
+fail_under = 0
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "@abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# Per-module coverage overrides (enforced in CI)
+# core/crypto.py: 100%
+# core/vault.py: 100%
