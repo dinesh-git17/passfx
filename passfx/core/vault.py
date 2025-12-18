@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import contextlib
+import hashlib
 import json
 import os
 import shutil
+import sys
 import tempfile
 import time
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
+
+# Cross-platform file locking
+if sys.platform == "win32":
+    import msvcrt
+else:
+    import fcntl
 
 from passfx.core.crypto import CryptoManager, DecryptionError, generate_salt
 from passfx.core.models import (
@@ -40,6 +50,21 @@ class VaultCorruptedError(VaultError):
     """Raised when vault data is corrupted."""
 
 
+class VaultLockError(VaultError):
+    """Raised when vault file lock cannot be acquired."""
+
+
+class SaltIntegrityError(VaultError):
+    """Raised when salt file integrity check fails."""
+
+
+# Lock file path for preventing concurrent access
+LOCK_FILE_SUFFIX = ".lock"
+
+# Timeout for acquiring file lock (seconds)
+LOCK_TIMEOUT_SECONDS = 5.0
+
+
 class Vault:  # pylint: disable=too-many-public-methods
     """Manages encrypted credential storage.
 
@@ -64,6 +89,7 @@ class Vault:  # pylint: disable=too-many-public-methods
         """
         self.path = vault_path or DEFAULT_VAULT_FILE
         self._salt_path = salt_path or SALT_FILE
+        self._lock_path = self.path.with_suffix(self.path.suffix + LOCK_FILE_SUFFIX)
         self._crypto: CryptoManager | None = None
         self._data: dict[str, list[dict[str, Any]]] = {
             "emails": [],
@@ -75,6 +101,8 @@ class Vault:  # pylint: disable=too-many-public-methods
         }
         self._last_activity: float = 0
         self._lock_timeout: int = 300  # 5 minutes default
+        self._lock_fd: int | None = None
+        self._cached_salt_hash: str | None = None  # For salt integrity checking
 
     @property
     def is_locked(self) -> bool:
@@ -93,6 +121,88 @@ class Vault:  # pylint: disable=too-many-public-methods
         if os.name != "nt":
             os.chmod(self.path.parent, 0o700)
 
+    def _acquire_lock(self) -> None:
+        """Acquire exclusive file lock on the vault.
+
+        Prevents concurrent access from multiple PassFX instances.
+        Uses fcntl on Unix, msvcrt on Windows.
+
+        Raises:
+            VaultLockError: If lock cannot be acquired within timeout.
+        """
+        self._ensure_vault_dir()
+
+        # Create lock file if it doesn't exist
+        self._lock_fd = os.open(
+            str(self._lock_path),
+            os.O_CREAT | os.O_RDWR,
+            0o600,
+        )
+
+        start_time = time.time()
+        while True:
+            try:
+                if sys.platform == "win32":
+                    # Windows: lock first byte of file
+                    msvcrt.locking(self._lock_fd, msvcrt.LK_NBLCK, 1)
+                else:
+                    # Unix: non-blocking exclusive lock
+                    fcntl.flock(self._lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return  # Lock acquired
+            except OSError as exc:
+                # Check timeout
+                elapsed = time.time() - start_time
+                if elapsed >= LOCK_TIMEOUT_SECONDS:
+                    # Clean up fd before raising
+                    os.close(self._lock_fd)
+                    self._lock_fd = None
+                    raise VaultLockError(
+                        "Cannot acquire vault lock. "
+                        "Another PassFX instance may be running."
+                    ) from exc
+                # Brief sleep before retry
+                time.sleep(0.1)
+
+    def _release_lock(self) -> None:
+        """Release the vault file lock.
+
+        Safe to call even if lock is not held.
+        """
+        if self._lock_fd is None:
+            return
+
+        try:
+            if sys.platform == "win32":
+                try:
+                    msvcrt.locking(self._lock_fd, msvcrt.LK_UNLCK, 1)
+                except OSError:
+                    pass  # Already unlocked
+            else:
+                fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
+        finally:
+            try:
+                os.close(self._lock_fd)
+            except OSError:
+                pass
+            self._lock_fd = None
+
+    @contextlib.contextmanager
+    def _vault_lock(self) -> Generator[None, None, None]:
+        """Context manager for exclusive vault access.
+
+        Acquires lock on entry, releases on exit. Ensures lock is released
+        even if an exception occurs.
+
+        Usage:
+            with self._vault_lock():
+                # Vault operations here
+        """
+        self._acquire_lock()
+        try:
+            yield
+        finally:
+            self._release_lock()
+
     def _load_salt(self) -> bytes | None:
         """Load salt from file if it exists."""
         if self._salt_path.exists():
@@ -100,11 +210,92 @@ class Vault:  # pylint: disable=too-many-public-methods
         return None
 
     def _save_salt(self, salt: bytes) -> None:
-        """Save salt to file."""
+        """Save salt to file (legacy method - prefer _save_salt_atomic)."""
         self._ensure_vault_dir()
         self._salt_path.write_bytes(salt)
         if os.name != "nt":
             os.chmod(self._salt_path, 0o600)
+
+    def _save_salt_atomic(self, salt: bytes) -> None:
+        """Save salt atomically with secure permissions.
+
+        Uses atomic write pattern to prevent partial writes.
+        Sets owner-only permissions (0600) before rename.
+
+        Args:
+            salt: Salt bytes to save.
+        """
+        self._ensure_vault_dir()
+        salt_dir = self._salt_path.parent
+
+        # Create temp file with secure permissions
+        fd, temp_path = tempfile.mkstemp(
+            dir=salt_dir,
+            prefix=".salt_",
+            suffix=".tmp",
+        )
+        try:
+            os.write(fd, salt)
+            os.fsync(fd)
+            os.close(fd)
+
+            # Set secure permissions before rename
+            if os.name != "nt":
+                os.chmod(temp_path, 0o600)
+
+            # Atomic rename
+            os.replace(temp_path, self._salt_path)
+
+            # Sync directory
+            self._fsync_directory(salt_dir)
+
+        except Exception:
+            # Clean up on failure
+            if not self._is_fd_closed(fd):
+                os.close(fd)
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+            raise
+
+    @staticmethod
+    def _hash_salt(salt: bytes) -> str:
+        """Create SHA-256 hash of salt for integrity checking.
+
+        Args:
+            salt: Salt bytes to hash.
+
+        Returns:
+            Hex-encoded hash string.
+        """
+        return hashlib.sha256(salt).hexdigest()
+
+    def _verify_salt_integrity(self) -> None:
+        """Verify that salt file has not been modified since unlock.
+
+        Raises:
+            SaltIntegrityError: If salt has been modified or replaced.
+        """
+        if self._cached_salt_hash is None:
+            # No cached hash means vault was never properly unlocked
+            return
+
+        # Check for symlink attack
+        if self._salt_path.is_symlink():
+            raise SaltIntegrityError(
+                "Salt file is a symlink. Potential security attack detected."
+            )
+
+        # Load current salt and compare hash
+        current_salt = self._load_salt()
+        if current_salt is None:
+            raise SaltIntegrityError("Salt file has been deleted. Cannot save vault.")
+
+        current_hash = self._hash_salt(current_salt)
+        if current_hash != self._cached_salt_hash:
+            raise SaltIntegrityError(
+                "Salt file has been modified. Refusing to overwrite vault. "
+                "This may indicate a security attack."
+            )
 
     def create(self, master_password: str) -> None:
         """Create a new vault with the given master password.
@@ -114,32 +305,37 @@ class Vault:  # pylint: disable=too-many-public-methods
 
         Raises:
             VaultError: If vault already exists.
+            VaultLockError: If vault lock cannot be acquired.
         """
         if self.exists:
             raise VaultError("Vault already exists. Use unlock() instead.")
 
-        self._ensure_vault_dir()
+        with self._vault_lock():
+            self._ensure_vault_dir()
 
-        # Generate and save salt
-        salt = generate_salt()
-        self._save_salt(salt)
+            # Generate and save salt atomically
+            salt = generate_salt()
+            self._save_salt_atomic(salt)
 
-        # Initialize crypto with new salt
-        self._crypto = CryptoManager(master_password, salt)
+            # Initialize crypto with new salt
+            self._crypto = CryptoManager(master_password, salt)
 
-        # Initialize empty data
-        self._data = {
-            "emails": [],
-            "phones": [],
-            "cards": [],
-            "envs": [],
-            "recovery": [],
-            "notes": [],
-        }
+            # Cache salt hash for integrity checking
+            self._cached_salt_hash = self._hash_salt(salt)
 
-        # Save empty vault
-        self._save()
-        self._update_activity()
+            # Initialize empty data
+            self._data = {
+                "emails": [],
+                "phones": [],
+                "cards": [],
+                "envs": [],
+                "recovery": [],
+                "notes": [],
+            }
+
+            # Save empty vault
+            self._save_unlocked()
+            self._update_activity()
 
     def unlock(self, master_password: str) -> None:
         """Unlock an existing vault.
@@ -149,38 +345,51 @@ class Vault:  # pylint: disable=too-many-public-methods
 
         Raises:
             VaultNotFoundError: If vault doesn't exist.
+            VaultLockError: If vault lock cannot be acquired.
+            SaltIntegrityError: If salt has been tampered with.
             DecryptionError: If password is wrong.
         """
         if not self.exists:
             raise VaultNotFoundError("No vault found. Create one first.")
 
-        salt = self._load_salt()
-        if salt is None:
-            raise VaultCorruptedError("Salt file missing. Vault may be corrupted.")
+        with self._vault_lock():
+            salt = self._load_salt()
+            if salt is None:
+                raise VaultCorruptedError("Salt file missing. Vault may be corrupted.")
 
-        self._crypto = CryptoManager(master_password, salt)
+            # Check for symlink attack on salt file
+            if self._salt_path.is_symlink():
+                raise SaltIntegrityError(
+                    "Salt file is a symlink. Potential security attack detected."
+                )
 
-        # Try to decrypt and load data
-        try:
-            encrypted_data = self.path.read_bytes()
-            decrypted = self._crypto.decrypt(encrypted_data)
-            self._data = json.loads(decrypted.decode("utf-8"))
-            # Migrate older vaults that don't have "envs" key
-            if "envs" not in self._data:
-                self._data["envs"] = []
-            # Migrate older vaults that don't have "recovery" key
-            if "recovery" not in self._data:
-                self._data["recovery"] = []
-            # Migrate older vaults that don't have "notes" key
-            if "notes" not in self._data:
-                self._data["notes"] = []
-            self._update_activity()
-        except DecryptionError:
-            self._crypto = None
-            raise
-        except json.JSONDecodeError as e:
-            self._crypto = None
-            raise VaultCorruptedError("Vault data is corrupted.") from e
+            self._crypto = CryptoManager(master_password, salt)
+
+            # Try to decrypt and load data
+            try:
+                encrypted_data = self.path.read_bytes()
+                decrypted = self._crypto.decrypt(encrypted_data)
+                self._data = json.loads(decrypted.decode("utf-8"))
+
+                # Cache salt hash for future integrity checks
+                self._cached_salt_hash = self._hash_salt(salt)
+
+                # Migrate older vaults that don't have "envs" key
+                if "envs" not in self._data:
+                    self._data["envs"] = []
+                # Migrate older vaults that don't have "recovery" key
+                if "recovery" not in self._data:
+                    self._data["recovery"] = []
+                # Migrate older vaults that don't have "notes" key
+                if "notes" not in self._data:
+                    self._data["notes"] = []
+                self._update_activity()
+            except DecryptionError:
+                self._crypto = None
+                raise
+            except json.JSONDecodeError as e:
+                self._crypto = None
+                raise VaultCorruptedError("Vault data is corrupted.") from e
 
     def lock(self) -> None:
         """Lock the vault and wipe sensitive data from memory."""
@@ -195,13 +404,33 @@ class Vault:  # pylint: disable=too-many-public-methods
             "recovery": [],
             "notes": [],
         }
+        # Clear cached salt hash
+        self._cached_salt_hash = None
 
     def _save(self) -> None:
-        """Save the vault to disk with atomic write and backup.
+        """Save the vault to disk with atomic write, backup, and locking.
 
         Uses temp file + fsync + atomic rename pattern to prevent data loss
         on crash or power failure. Creates a backup of the existing vault
-        before overwriting.
+        before overwriting. Acquires exclusive lock during save.
+
+        Raises:
+            VaultError: If vault is locked.
+            VaultLockError: If vault file lock cannot be acquired.
+            SaltIntegrityError: If salt has been modified since unlock.
+        """
+        if self._crypto is None:
+            raise VaultError("Vault is locked. Unlock first.")
+
+        with self._vault_lock():
+            # Verify salt integrity before saving
+            self._verify_salt_integrity()
+            self._save_unlocked()
+
+    def _save_unlocked(self) -> None:
+        """Internal save method - called when lock is already held.
+
+        Does NOT acquire lock - caller must hold the vault lock.
         """
         if self._crypto is None:
             raise VaultError("Vault is locked. Unlock first.")

@@ -14,7 +14,12 @@ from textual.screen import ModalScreen, Screen
 from textual.widgets import Button, Footer, Header, Input, Label, OptionList, Static
 from textual.widgets.option_list import Option
 
-from passfx.utils.io import ImportExportError, export_vault, import_vault
+from passfx.utils.io import (
+    ImportExportError,
+    PathValidationError,
+    export_vault,
+    import_vault,
+)
 
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
@@ -85,6 +90,8 @@ class ExportModal(ModalScreen[None]):
             count = export_vault(data, path, fmt=fmt, include_sensitive=True)
             status.update(f"[success]Exported {count} entries to {path}[/success]")
             self.notify(f"Exported {count} entries", title="Success")
+        except PathValidationError as e:
+            status.update(f"[error]Invalid path: {e}[/error]")
         except ImportExportError as e:
             status.update(f"[error]{e}[/error]")
 
@@ -131,9 +138,6 @@ class ImportModal(ModalScreen[None]):
             return
 
         path = Path(path_str).expanduser()
-        if not path.exists():
-            status.update(f"[error]File not found: {path}[/error]")
-            return
 
         try:
             data, _ = import_vault(path)
@@ -141,6 +145,8 @@ class ImportModal(ModalScreen[None]):
             total = sum(imported.values())
             status.update(f"[success]Imported {total} entries[/success]")
             self.notify(f"Imported {total} entries", title="Success")
+        except PathValidationError as e:
+            status.update(f"[error]Invalid path: {e}[/error]")
         except ImportExportError as e:
             status.update(f"[error]{e}[/error]")
 
