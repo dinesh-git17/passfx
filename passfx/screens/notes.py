@@ -242,9 +242,9 @@ class ViewNoteModal(ModalScreen[None]):
             self._copy_content()
 
     def _copy_content(self) -> None:
-        """Copy content to clipboard."""
-        if copy_to_clipboard(self.note.content, auto_clear=False):
-            self.notify("Note copied to clipboard", title="Copied")
+        """Copy content to clipboard with auto-clear for security."""
+        if copy_to_clipboard(self.note.content, auto_clear=True):
+            self.notify("Note copied! Clears in 15s", title="Copied")
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 
@@ -652,14 +652,14 @@ class NotesScreen(Screen):
         self.app.push_screen(AddNoteModal(), handle_result)
 
     def action_copy(self) -> None:
-        """Copy content to clipboard."""
+        """Copy content to clipboard with auto-clear for security."""
         entry = self._get_selected_entry()
         if not entry:
             self.notify("No note selected", severity="warning")
             return
 
-        if copy_to_clipboard(entry.content, auto_clear=False):
-            self.notify("Note copied to clipboard", title=entry.title)
+        if copy_to_clipboard(entry.content, auto_clear=True):
+            self.notify("Note copied! Clears in 15s", title=entry.title)
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 

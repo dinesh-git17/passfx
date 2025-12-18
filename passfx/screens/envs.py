@@ -264,9 +264,9 @@ class ViewEnvModal(ModalScreen[None]):
             self._copy_content()
 
     def _copy_content(self) -> None:
-        """Copy content to clipboard."""
-        if copy_to_clipboard(self.env.content, auto_clear=False):
-            self.notify("Config copied to clipboard", title="Copied")
+        """Copy content to clipboard with auto-clear for security."""
+        if copy_to_clipboard(self.env.content, auto_clear=True):
+            self.notify("Config copied! Clears in 15s", title="Copied")
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 
@@ -832,14 +832,14 @@ class EnvsScreen(Screen):
         self.app.push_screen(AddEnvModal(), handle_result)
 
     def action_copy(self) -> None:
-        """Copy content to clipboard."""
+        """Copy content to clipboard with auto-clear for security."""
         env = self._get_selected_env()
         if not env:
             self.notify("No config selected", severity="warning")
             return
 
-        if copy_to_clipboard(env.content, auto_clear=False):
-            self.notify("Config copied to clipboard", title=env.title)
+        if copy_to_clipboard(env.content, auto_clear=True):
+            self.notify("Config copied! Clears in 15s", title=env.title)
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 
