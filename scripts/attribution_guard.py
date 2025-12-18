@@ -33,6 +33,7 @@ EXCLUDED_FILES = {
     "CLAUDE.md",
     ".claude/settings.json",
     "attribution_guard.py",
+    "commit_msg_guard.py",
     ".pre-commit-config.yaml",
     "code-quality.yml",
     "docs/ARCHITECTURE.md",
