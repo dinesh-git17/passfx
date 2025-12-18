@@ -327,7 +327,7 @@ class AddEnvModal(ModalScreen[EnvEntry | None]):
         """Focus first input."""
         self.query_one("#title-input", Input).focus()
 
-    def on_drop(self, event) -> None:
+    def on_drop(self, event: Any) -> None:
         """Handle file drop events."""
         if hasattr(event, "paths") and event.paths:
             # Get the first dropped file
@@ -457,7 +457,7 @@ class EditEnvModal(ModalScreen[dict | None]):
                 yield Button("ABORT", id="cancel-button")
                 yield Button("SAVE", id="save-button", classes="env-save-btn")
 
-    def on_drop(self, event) -> None:
+    def on_drop(self, event: Any) -> None:
         """Handle file drop events."""
         if hasattr(event, "paths") and event.paths:
             file_path = event.paths[0]
@@ -866,7 +866,7 @@ class EnvsScreen(Screen):
             self.notify("No config selected", severity="warning")
             return
 
-        def handle_result(confirmed: bool) -> None:
+        def handle_result(confirmed: bool | None) -> None:
             if confirmed:
                 app: PassFXApp = self.app  # type: ignore
                 app.vault.delete_env(env.id)

@@ -203,7 +203,8 @@ class Menu:
         if selected_index is None:
             return None
 
-        return self._items[selected_index]
+        item: MenuItem = self._items[selected_index]
+        return item
 
     def stop(self) -> None:
         """Stop the menu loop."""

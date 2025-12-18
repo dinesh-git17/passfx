@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -195,17 +197,98 @@ class Vault:  # pylint: disable=too-many-public-methods
         }
 
     def _save(self) -> None:
-        """Save the vault to disk."""
+        """Save the vault to disk with atomic write and backup.
+
+        Uses temp file + fsync + atomic rename pattern to prevent data loss
+        on crash or power failure. Creates a backup of the existing vault
+        before overwriting.
+        """
         if self._crypto is None:
             raise VaultError("Vault is locked. Unlock first.")
 
         self._ensure_vault_dir()
         data_json = json.dumps(self._data, indent=2)
         encrypted = self._crypto.encrypt(data_json.encode("utf-8"))
-        self.path.write_bytes(encrypted)
 
+        # Create backup of existing vault before overwriting
+        if self.path.exists():
+            self._create_backup()
+
+        # Atomic write: temp file -> fsync -> rename
+        self._atomic_write(encrypted)
+
+    def _create_backup(self) -> None:
+        """Create a backup copy of the vault before overwriting.
+
+        Backup is stored as vault.enc.bak with preserved permissions.
+        """
+        backup_path = self.path.with_suffix(".enc.bak")
+        # Use shutil.copy2 to preserve metadata, then enforce permissions
+        shutil.copy2(self.path, backup_path)
         if os.name != "nt":
-            os.chmod(self.path, 0o600)
+            os.chmod(backup_path, 0o600)
+
+    def _atomic_write(self, data: bytes) -> None:
+        """Write data atomically using temp file + fsync + rename.
+
+        This pattern ensures that a crash at any point leaves either
+        the old vault intact or the new vault fully written.
+        """
+        vault_dir = self.path.parent
+
+        # Create temp file in same directory for atomic rename
+        fd, temp_path = tempfile.mkstemp(
+            dir=vault_dir,
+            prefix=".vault_",
+            suffix=".tmp",
+        )
+        try:
+            # Write and sync data to temp file
+            os.write(fd, data)
+            os.fsync(fd)
+            os.close(fd)
+
+            # Set permissions before rename (temp file inherits umask)
+            if os.name != "nt":
+                os.chmod(temp_path, 0o600)
+
+            # Atomic rename - replaces target atomically on POSIX
+            os.replace(temp_path, self.path)
+
+            # Sync directory to ensure rename is persisted
+            self._fsync_directory(vault_dir)
+
+        except Exception:
+            # Clean up temp file on failure
+            if not self._is_fd_closed(fd):
+                os.close(fd)
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+            raise
+
+    def _fsync_directory(self, directory: Path) -> None:
+        """Sync directory to ensure file renames are persisted.
+
+        On POSIX systems, fsync on the directory ensures that directory
+        entries are written to disk. No-op on Windows.
+        """
+        if os.name == "nt":
+            return
+
+        dir_fd = os.open(str(directory), os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)
+
+    @staticmethod
+    def _is_fd_closed(fd: int) -> bool:
+        """Check if a file descriptor is already closed."""
+        try:
+            os.fstat(fd)
+            return False
+        except OSError:
+            return True
 
     def _update_activity(self) -> None:
         """Update last activity timestamp."""

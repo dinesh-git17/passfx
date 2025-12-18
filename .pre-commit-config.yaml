@@ -72,10 +72,19 @@ repos:
         types: [python]
         files: ^passfx/.*\.py$
 
-      # Attribution guard - blocks AI/Claude references
+      # Attribution guard - blocks AI/Claude references in source files
       - id: attribution-guard
         name: attribution guard (no AI references)
         entry: python scripts/attribution_guard.py
         language: system
         types_or: [python, markdown, text, yaml, toml]
+        pass_filenames: true
+
+      # Attribution guard - blocks AI/Claude references in commit messages
+      - id: commit-msg-guard
+        name: commit message guard (no AI references)
+        entry: python scripts/commit_msg_guard.py
+        language: system
+        stages: [commit-msg]
+        always_run: true
         pass_filenames: true
