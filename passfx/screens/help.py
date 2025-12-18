@@ -84,7 +84,7 @@ SYSTEM_CONTENT = """\
   [bold #8b5cf6]LOGS[/]         [#f8fafc]~/.passfx/logs/[/]
 
 [bold #00d4ff]> SECURITY FEATURES[/]
-  [#22c55e]+[/] [#94a3b8]Auto-clear clipboard (30s)[/]
+  [#22c55e]+[/] [#94a3b8]Auto-clear clipboard (15s default)[/]
   [#22c55e]+[/] [#94a3b8]No password recovery (by design)[/]
   [#22c55e]+[/] [#94a3b8]Zero-knowledge architecture[/]
   [#22c55e]+[/] [#94a3b8]Memory wiping for secrets[/]
