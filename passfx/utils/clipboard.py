@@ -1,12 +1,14 @@
 """Clipboard utilities for PassFX.
 
 Provides secure clipboard operations with auto-clear functionality.
+Includes emergency cleanup for signal-based shutdown scenarios.
 """
 
 # pylint: disable=import-outside-toplevel
 
 from __future__ import annotations
 
+import atexit
 import threading
 from collections.abc import Callable
 
@@ -14,8 +16,11 @@ from collections.abc import Callable
 _active_timer: threading.Timer | None = None  # pylint: disable=invalid-name
 _clipboard_lock = threading.Lock()
 
-# Default clear timeout in seconds
-DEFAULT_CLEAR_TIMEOUT = 30
+# Flag to prevent double-cleanup
+_cleanup_done: bool = False  # pylint: disable=invalid-name
+
+# Default clear timeout in seconds (reduced from 30s for security)
+DEFAULT_CLEAR_TIMEOUT = 15
 
 
 def copy_to_clipboard(
@@ -240,3 +245,36 @@ class ClipboardManager:
     def success(self) -> bool:
         """Return whether copy was successful."""
         return self._success
+
+
+def emergency_cleanup() -> None:
+    """Perform emergency clipboard cleanup on shutdown.
+
+    Called by signal handlers or atexit to ensure clipboard is cleared
+    even during abnormal termination. Safe to call multiple times.
+    """
+    global _cleanup_done  # pylint: disable=global-statement
+
+    with _clipboard_lock:
+        if _cleanup_done:
+            return
+        _cleanup_done = True
+
+    # Cancel any pending timer
+    cancel_auto_clear()
+
+    # Clear clipboard - fail silently on errors
+    try:
+        clear_clipboard()
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
+
+
+def reset_cleanup_flag() -> None:
+    """Reset cleanup flag for testing purposes only."""
+    global _cleanup_done  # pylint: disable=global-statement
+    _cleanup_done = False
+
+
+# Register atexit handler for normal exit cleanup
+atexit.register(emergency_cleanup)

@@ -667,9 +667,9 @@ class ViewCardModal(ModalScreen[None]):
             self._copy_number()
 
     def _copy_number(self) -> None:
-        """Copy card number to clipboard."""
-        if copy_to_clipboard(self.card.card_number, auto_clear=True, clear_after=30):
-            self.notify("Card number copied! Clears in 30s", title="Copied")
+        """Copy card number to clipboard with auto-clear for security."""
+        if copy_to_clipboard(self.card.card_number, auto_clear=True):
+            self.notify("Card number copied! Clears in 15s", title="Copied")
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 
@@ -954,14 +954,14 @@ class CardsScreen(Screen):
         self.app.push_screen(AddCardModal(), handle_result)
 
     def action_copy(self) -> None:
-        """Copy card number to clipboard."""
+        """Copy card number to clipboard with auto-clear for security."""
         card = self._get_selected_card()
         if not card:
             self.notify("No card selected", severity="warning")
             return
 
-        if copy_to_clipboard(card.card_number, auto_clear=True, clear_after=30):
-            self.notify("Card number copied! Clears in 30s", title=card.label)
+        if copy_to_clipboard(card.card_number, auto_clear=True):
+            self.notify("Card number copied! Clears in 15s", title=card.label)
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 

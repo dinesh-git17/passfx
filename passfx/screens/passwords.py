@@ -528,9 +528,9 @@ class ViewPasswordModal(ModalScreen[None]):
             self._copy_password()
 
     def _copy_password(self) -> None:
-        """Copy password to clipboard."""
-        if copy_to_clipboard(self.credential.password, auto_clear=True, clear_after=30):
-            self.notify("Password copied! Clears in 30s", title="Copied")
+        """Copy password to clipboard with auto-clear for security."""
+        if copy_to_clipboard(self.credential.password, auto_clear=True):
+            self.notify("Password copied! Clears in 15s", title="Copied")
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 
@@ -779,14 +779,14 @@ class PasswordsScreen(Screen):
         self.app.push_screen(AddPasswordModal(), handle_result)
 
     def action_copy(self) -> None:
-        """Copy password to clipboard."""
+        """Copy password to clipboard with auto-clear for security."""
         cred = self._get_selected_credential()
         if not cred:
             self.notify("No credential selected", severity="warning")
             return
 
-        if copy_to_clipboard(cred.password, auto_clear=True, clear_after=30):
-            self.notify("Password copied! Clears in 30s", title=cred.label)
+        if copy_to_clipboard(cred.password, auto_clear=True):
+            self.notify("Password copied! Clears in 15s", title=cred.label)
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 

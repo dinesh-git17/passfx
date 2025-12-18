@@ -17,6 +17,7 @@ class PassFXApp(App):
     TITLE = "◀ PASSFX ▶ Your passwords. Offline. Encrypted."
 
     BINDINGS = [
+        Binding("ctrl+c", "quit", "Quit", priority=True),
         Binding("q", "quit", "Quit", show=True),
         Binding("escape", "back", "Back", show=True),
     ]
