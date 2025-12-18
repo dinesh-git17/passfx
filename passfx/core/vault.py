@@ -35,7 +35,6 @@ from passfx.core.models import (
 DEFAULT_VAULT_DIR = Path.home() / ".passfx"
 DEFAULT_VAULT_FILE = DEFAULT_VAULT_DIR / "vault.enc"
 SALT_FILE = DEFAULT_VAULT_DIR / "salt"
-CONFIG_FILE = DEFAULT_VAULT_DIR / "config.json"
 
 
 class VaultError(Exception):

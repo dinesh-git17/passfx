@@ -34,7 +34,7 @@ def copy_to_clipboard(
     Args:
         text: Text to copy to clipboard.
         auto_clear: Whether to automatically clear after timeout.
-        clear_after: Seconds before auto-clearing (default 30).
+        clear_after: Seconds before auto-clearing (default 15).
         on_clear: Optional callback when clipboard is cleared.
 
     Returns:
