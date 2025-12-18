@@ -4,14 +4,33 @@ from __future__ import annotations
 
 import csv
 import json
+import os
+import stat
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
 from typing import Any
 
+# Secure file permissions: owner read/write only (0600)
+_SECURE_FILE_MODE = stat.S_IRUSR | stat.S_IWUSR
+
 
 class ImportExportError(Exception):
     """Error during import/export operations."""
+
+
+def _secure_write_text(path: Path, content: str, encoding: str = "utf-8") -> None:
+    """Write text to a file with secure permissions (0600).
+
+    Creates the file with owner-only read/write permissions to prevent
+    other users from reading exported secrets.
+    """
+    # Open with O_CREAT | O_WRONLY | O_TRUNC, mode 0600
+    fd = os.open(str(path), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, _SECURE_FILE_MODE)
+    with os.fdopen(fd, "w", encoding=encoding) as f:
+        f.write(content)
+    # Ensure permissions are correct even if umask was permissive
+    os.chmod(str(path), _SECURE_FILE_MODE)
 
 
 def export_vault(
@@ -43,7 +62,7 @@ def export_vault(
                 "exported_at": datetime.now().isoformat(),
                 "data": data,
             }
-            path.write_text(json.dumps(export_data, indent=2))
+            _secure_write_text(path, json.dumps(export_data, indent=2))
             count = sum(len(v) for v in data.values())
 
         elif fmt == "csv":
@@ -159,11 +178,12 @@ def _export_csv(
         rows.append(row)
         count += 1
 
-    # Write CSV
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=headers, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
+    # Write CSV with secure permissions (0600)
+    output = StringIO()
+    writer = csv.DictWriter(output, fieldnames=headers, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(rows)
+    _secure_write_text(path, output.getvalue())
 
     return count
 

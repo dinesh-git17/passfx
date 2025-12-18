@@ -25,7 +25,7 @@ class EmailCredential:
     Attributes:
         label: Human-readable name for this credential (e.g., 'GitHub').
         email: Email address or username.
-        password: The password.
+        password: The password (redacted in repr for security).
         notes: Optional notes about this credential.
         id: Unique identifier.
         created_at: ISO timestamp of creation.
@@ -34,11 +34,18 @@ class EmailCredential:
 
     label: str
     email: str
-    password: str
+    password: str = field(repr=False)
     notes: str | None = None
     id: str = field(default_factory=_generate_id)
     created_at: str = field(default_factory=_now_iso)
     updated_at: str = field(default_factory=_now_iso)
+
+    def __repr__(self) -> str:
+        """Return a safe representation with password redacted."""
+        return (
+            f"EmailCredential(id={self.id!r}, label={self.label!r}, "
+            f"email={self.email!r}, password='[REDACTED]')"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -81,7 +88,7 @@ class PhoneCredential:
     Attributes:
         label: Human-readable name (e.g., 'Bank Phone PIN').
         phone: Phone number.
-        password: PIN or password associated with the phone.
+        password: PIN or password associated with the phone (redacted in repr).
         notes: Optional notes.
         id: Unique identifier.
         created_at: ISO timestamp of creation.
@@ -90,11 +97,18 @@ class PhoneCredential:
 
     label: str
     phone: str
-    password: str
+    password: str = field(repr=False)
     notes: str | None = None
     id: str = field(default_factory=_generate_id)
     created_at: str = field(default_factory=_now_iso)
     updated_at: str = field(default_factory=_now_iso)
+
+    def __repr__(self) -> str:
+        """Return a safe representation with password redacted."""
+        return (
+            f"PhoneCredential(id={self.id!r}, label={self.label!r}, "
+            f"phone={self.phone!r}, password='[REDACTED]')"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -136,9 +150,9 @@ class CreditCard:  # pylint: disable=too-many-instance-attributes
 
     Attributes:
         label: Human-readable name (e.g., 'Chase Sapphire').
-        card_number: Full card number.
+        card_number: Full card number (redacted in repr).
         expiry: Expiration date (MM/YY format).
-        cvv: Card security code.
+        cvv: Card security code (redacted in repr).
         cardholder_name: Name on the card.
         notes: Optional notes.
         id: Unique identifier.
@@ -147,14 +161,22 @@ class CreditCard:  # pylint: disable=too-many-instance-attributes
     """
 
     label: str
-    card_number: str
+    card_number: str = field(repr=False)
     expiry: str
-    cvv: str
+    cvv: str = field(repr=False)
     cardholder_name: str
     notes: str | None = None
     id: str = field(default_factory=_generate_id)
     created_at: str = field(default_factory=_now_iso)
     updated_at: str = field(default_factory=_now_iso)
+
+    def __repr__(self) -> str:
+        """Return a safe representation with card_number and cvv redacted."""
+        return (
+            f"CreditCard(id={self.id!r}, label={self.label!r}, "
+            f"card_number='[REDACTED]', expiry={self.expiry!r}, "
+            f"cvv='[REDACTED]', cardholder_name={self.cardholder_name!r})"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -209,7 +231,7 @@ class EnvEntry:
     Attributes:
         title: Human-readable name (e.g., 'Project X Production').
         filename: Original filename (e.g., '.env.production').
-        content: Full text content of the env file.
+        content: Full text content of the env file (redacted in repr).
         notes: Optional notes.
         id: Unique identifier.
         created_at: ISO timestamp of creation.
@@ -218,11 +240,18 @@ class EnvEntry:
 
     title: str
     filename: str
-    content: str
+    content: str = field(repr=False)
     notes: str | None = None
     id: str = field(default_factory=_generate_id)
     created_at: str = field(default_factory=_now_iso)
     updated_at: str = field(default_factory=_now_iso)
+
+    def __repr__(self) -> str:
+        """Return a safe representation with content redacted."""
+        return (
+            f"EnvEntry(id={self.id!r}, title={self.title!r}, "
+            f"filename={self.filename!r}, content='[REDACTED]')"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -282,7 +311,7 @@ class RecoveryEntry:
 
     Attributes:
         title: Human-readable name (e.g., 'GitHub 2FA').
-        content: Full text content of the recovery codes.
+        content: Full text content of the recovery codes (redacted in repr).
         notes: Optional notes.
         id: Unique identifier.
         created_at: ISO timestamp of creation.
@@ -290,11 +319,18 @@ class RecoveryEntry:
     """
 
     title: str
-    content: str
+    content: str = field(repr=False)
     notes: str | None = None
     id: str = field(default_factory=_generate_id)
     created_at: str = field(default_factory=_now_iso)
     updated_at: str = field(default_factory=_now_iso)
+
+    def __repr__(self) -> str:
+        """Return a safe representation with content redacted."""
+        return (
+            f"RecoveryEntry(id={self.id!r}, title={self.title!r}, "
+            f"content='[REDACTED]')"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -352,7 +388,7 @@ class NoteEntry:
 
     Attributes:
         title: Human-readable name (e.g., 'Office Wi-Fi').
-        content: Free text content of the note.
+        content: Free text content of the note (redacted in repr).
         notes: Optional additional notes.
         id: Unique identifier.
         created_at: ISO timestamp of creation.
@@ -360,11 +396,17 @@ class NoteEntry:
     """
 
     title: str
-    content: str
+    content: str = field(repr=False)
     notes: str | None = None
     id: str = field(default_factory=_generate_id)
     created_at: str = field(default_factory=_now_iso)
     updated_at: str = field(default_factory=_now_iso)
+
+    def __repr__(self) -> str:
+        """Return a safe representation with content redacted."""
+        return (
+            f"NoteEntry(id={self.id!r}, title={self.title!r}, " f"content='[REDACTED]')"
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
