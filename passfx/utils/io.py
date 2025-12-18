@@ -11,6 +11,8 @@ from io import StringIO
 from pathlib import Path
 from typing import Any
 
+from passfx.utils.platform_security import secure_file_permissions
+
 # Secure file permissions: owner read/write only (0600)
 _SECURE_FILE_MODE = stat.S_IRUSR | stat.S_IWUSR
 
@@ -89,13 +91,17 @@ def _secure_write_text(path: Path, content: str, encoding: str = "utf-8") -> Non
 
     Creates the file with owner-only read/write permissions to prevent
     other users from reading exported secrets.
+
+    Platform behavior:
+    - Unix: Sets mode to 0600 via chmod
+    - Windows: Sets DACL to allow only current user full control
     """
-    # Open with O_CREAT | O_WRONLY | O_TRUNC, mode 0600
+    # Open with O_CREAT | O_WRONLY | O_TRUNC, mode 0600 (for Unix)
     fd = os.open(str(path), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, _SECURE_FILE_MODE)
     with os.fdopen(fd, "w", encoding=encoding) as f:
         f.write(content)
-    # Ensure permissions are correct even if umask was permissive
-    os.chmod(str(path), _SECURE_FILE_MODE)
+    # Apply cross-platform secure permissions (0600 on Unix, DACL on Windows)
+    secure_file_permissions(path)
 
 
 def export_vault(

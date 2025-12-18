@@ -30,6 +30,10 @@ from passfx.core.models import (
     PhoneCredential,
     RecoveryEntry,
 )
+from passfx.utils.platform_security import (
+    secure_directory_permissions,
+    secure_file_permissions,
+)
 
 # Default vault location
 DEFAULT_VAULT_DIR = Path.home() / ".passfx"
@@ -114,11 +118,13 @@ class Vault:  # pylint: disable=too-many-public-methods
         return self.path.exists()
 
     def _ensure_vault_dir(self) -> None:
-        """Ensure the vault directory exists with proper permissions."""
+        """Ensure the vault directory exists with proper permissions.
+
+        Sets directory permissions to owner-only (0700 on Unix, DACL on Windows).
+        """
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        # Set directory permissions to owner-only on Unix
-        if os.name != "nt":
-            os.chmod(self.path.parent, 0o700)
+        # Set directory permissions to owner-only (cross-platform)
+        secure_directory_permissions(self.path.parent)
 
     def _acquire_lock(self) -> None:
         """Acquire exclusive file lock on the vault.
@@ -212,8 +218,8 @@ class Vault:  # pylint: disable=too-many-public-methods
         """Save salt to file (legacy method - prefer _save_salt_atomic)."""
         self._ensure_vault_dir()
         self._salt_path.write_bytes(salt)
-        if os.name != "nt":
-            os.chmod(self._salt_path, 0o600)
+        # Set file permissions to owner-only (cross-platform)
+        secure_file_permissions(self._salt_path)
 
     def _save_salt_atomic(self, salt: bytes) -> None:
         """Save salt atomically with secure permissions.
@@ -238,12 +244,14 @@ class Vault:  # pylint: disable=too-many-public-methods
             os.fsync(fd)
             os.close(fd)
 
-            # Set secure permissions before rename
-            if os.name != "nt":
-                os.chmod(temp_path, 0o600)
+            # Set secure permissions before rename (cross-platform)
+            secure_file_permissions(Path(temp_path))
 
             # Atomic rename
             os.replace(temp_path, self._salt_path)
+
+            # Re-apply permissions after rename (Windows ACLs don't persist through rename)
+            secure_file_permissions(self._salt_path)
 
             # Sync directory
             self._fsync_directory(salt_dir)
@@ -448,13 +456,13 @@ class Vault:  # pylint: disable=too-many-public-methods
     def _create_backup(self) -> None:
         """Create a backup copy of the vault before overwriting.
 
-        Backup is stored as vault.enc.bak with preserved permissions.
+        Backup is stored as vault.enc.bak with owner-only permissions.
         """
         backup_path = self.path.with_suffix(".enc.bak")
         # Use shutil.copy2 to preserve metadata, then enforce permissions
         shutil.copy2(self.path, backup_path)
-        if os.name != "nt":
-            os.chmod(backup_path, 0o600)
+        # Set file permissions to owner-only (cross-platform)
+        secure_file_permissions(backup_path)
 
     def _atomic_write(self, data: bytes) -> None:
         """Write data atomically using temp file + fsync + rename.
@@ -476,12 +484,14 @@ class Vault:  # pylint: disable=too-many-public-methods
             os.fsync(fd)
             os.close(fd)
 
-            # Set permissions before rename (temp file inherits umask)
-            if os.name != "nt":
-                os.chmod(temp_path, 0o600)
+            # Set permissions before rename (cross-platform)
+            secure_file_permissions(Path(temp_path))
 
             # Atomic rename - replaces target atomically on POSIX
             os.replace(temp_path, self.path)
+
+            # Re-apply permissions after rename (Windows ACLs don't persist through rename)
+            secure_file_permissions(self.path)
 
             # Sync directory to ensure rename is persisted
             self._fsync_directory(vault_dir)
