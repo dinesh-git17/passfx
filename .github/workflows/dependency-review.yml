@@ -45,6 +45,10 @@ jobs:
             WTFPL,
             CC0-1.0
 
+          # Allow packages with SPDX expressions that scanners misparse
+          # cryptography: Apache-2.0 OR BSD-3-Clause (scanner shows "Null")
+          allow-packages: 'pkg:pypi/cryptography'
+
           # Fail if dependencies with GHSA advisories are added
           fail-on-scopes: runtime, development
 
