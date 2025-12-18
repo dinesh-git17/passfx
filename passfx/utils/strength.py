@@ -60,7 +60,8 @@ def check_strength(password: str) -> StrengthResult:
         return _simple_strength_check(password)
 
     try:
-        from zxcvbn import zxcvbn  # pylint: disable=import-outside-toplevel
+        # pylint: disable-next=import-outside-toplevel
+        from zxcvbn import zxcvbn  # type: ignore[import-untyped]
 
         result = zxcvbn(password)
 

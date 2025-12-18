@@ -43,7 +43,7 @@ def copy_to_clipboard(
     global _active_timer  # pylint: disable=global-statement
 
     try:
-        import pyperclip
+        import pyperclip  # type: ignore[import-untyped]
 
         pyperclip.copy(text)
 
@@ -130,13 +130,13 @@ def _fallback_copy(text: str) -> bool:
     Returns:
         True if successful, False otherwise.
     """
-    import subprocess
+    import subprocess  # nosec B404 - Required for clipboard fallback
     import sys
 
     try:
         if sys.platform == "darwin":
-            # macOS
-            with subprocess.Popen(
+            # macOS - pbcopy is a hardcoded system utility, not user input
+            with subprocess.Popen(  # nosec B603 B607
                 ["pbcopy"],
                 stdin=subprocess.PIPE,
                 close_fds=True,
@@ -147,7 +147,8 @@ def _fallback_copy(text: str) -> bool:
         if sys.platform.startswith("linux"):
             # Linux with xclip
             try:
-                with subprocess.Popen(
+                # xclip is a hardcoded system utility, not user input
+                with subprocess.Popen(  # nosec B603 B607
                     ["xclip", "-selection", "clipboard"],
                     stdin=subprocess.PIPE,
                     close_fds=True,
@@ -155,8 +156,8 @@ def _fallback_copy(text: str) -> bool:
                     process.communicate(text.encode("utf-8"))
                     return process.returncode == 0
             except FileNotFoundError:
-                # Try xsel
-                with subprocess.Popen(
+                # xsel is a hardcoded system utility, not user input
+                with subprocess.Popen(  # nosec B603 B607
                     ["xsel", "--clipboard", "--input"],
                     stdin=subprocess.PIPE,
                     close_fds=True,
@@ -184,8 +185,8 @@ def _fallback_copy(text: str) -> bool:
             user32.CloseClipboard()
             return True
 
-    except Exception:  # pylint: disable=broad-exception-caught
-        pass
+    except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+        pass  # Fallback must fail silently
 
     return False
 
@@ -267,8 +268,8 @@ def emergency_cleanup() -> None:
     # Clear clipboard - fail silently on errors
     try:
         clear_clipboard()
-    except Exception:  # pylint: disable=broad-exception-caught
-        pass
+    except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+        pass  # Emergency cleanup must not raise
 
 
 def reset_cleanup_flag() -> None:

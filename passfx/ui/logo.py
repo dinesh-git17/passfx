@@ -53,7 +53,7 @@ def get_logo() -> str:
 
 def get_random_tagline() -> str:
     """Return a random nerdy tagline."""
-    return random.choice(TAGLINES)
+    return random.choice(TAGLINES)  # nosec B311 - cosmetic UI only
 
 
 def _apply_gradient(text: str, colors: list[str]) -> Text:
