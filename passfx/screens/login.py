@@ -77,7 +77,7 @@ def _get_lockout_state() -> dict:
         # Validate types
         if not isinstance(failed_attempts, int) or failed_attempts < 0:
             failed_attempts = 0
-        if lockout_until is not None and not isinstance(lockout_until, (int, float)):
+        if lockout_until is not None and not isinstance(lockout_until, int | float):
             lockout_until = None
 
         return {"failed_attempts": failed_attempts, "lockout_until": lockout_until}
