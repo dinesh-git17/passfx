@@ -844,7 +844,7 @@ class PhonesScreen(Screen):
             self.notify("No credential selected", severity="warning")
             return
 
-        def handle_result(confirmed: bool) -> None:
+        def handle_result(confirmed: bool | None) -> None:
             if confirmed:
                 app: PassFXApp = self.app  # type: ignore
                 app.vault.delete_phone(cred.id)

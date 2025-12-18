@@ -23,11 +23,11 @@ class SystemTerminal(Vertical, can_focus=True):
 
     def __init__(
         self,
-        *args,
-        **kwargs,
+        *args: object,
+        **kwargs: object,
     ) -> None:
         """Initialize the SystemTerminal widget."""
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
 
     def on_click(self, event: Click) -> None:
         """Focus the input when terminal is clicked."""

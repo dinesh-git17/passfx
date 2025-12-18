@@ -76,7 +76,7 @@ def check_strength(password: str) -> StrengthResult:
         suggestions = result["feedback"].get("suggestions", [])
 
         # Get warning
-        warning = result["feedback"].get("warning")
+        warning: str | None = result["feedback"].get("warning")
         if warning == "":
             warning = None
 

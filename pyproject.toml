@@ -35,6 +35,15 @@ dependencies = [
     "simple-term-menu>=1.6.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "types-pyperclip>=1.9.0",
+    "types-zxcvbn>=4.5.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+    "bandit>=1.7.0",
+]
+
 [project.scripts]
 passfx = "passfx.cli:main"
 
@@ -62,6 +71,16 @@ profile = "black"
 line_length = 88
 skip_gitignore = true
 skip = [".venv", "venv", "__pycache__", ".git", "dist", "build"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "simple_term_menu.*"
+ignore_missing_imports = true
 
 [tool.pylint.main]
 fail-under = 10.0

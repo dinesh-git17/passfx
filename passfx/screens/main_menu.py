@@ -12,6 +12,7 @@ from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.dom import DOMNode
 from textual.events import Click
 from textual.screen import Screen
 from textual.widgets import Digits, Input, Label, OptionList, Static
@@ -38,8 +39,8 @@ class SecurityScore(Static):
     Renders everything as formatted text for precise layout control.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
         self._health: VaultHealthResult | None = None
 
     def update_health(self, health: VaultHealthResult) -> None:
@@ -356,27 +357,27 @@ class MainMenuScreen(Screen):
     def on_click(self, event: Click) -> None:
         """Handle clicks on stat segments."""
         # Check if click is within a stat segment
-        widget = event.widget
-        while widget is not None:
-            if widget.id == "segment-passwords":
+        node: DOMNode | None = event.widget
+        while node is not None:
+            if node.id == "segment-passwords":
                 self.action_passwords()
                 return
-            if widget.id == "segment-phones":
+            if node.id == "segment-phones":
                 self.action_phones()
                 return
-            if widget.id == "segment-cards":
+            if node.id == "segment-cards":
                 self.action_cards()
                 return
-            if widget.id == "segment-notes":
+            if node.id == "segment-notes":
                 self.action_notes()
                 return
-            if widget.id == "segment-envs":
+            if node.id == "segment-envs":
                 self.action_envs()
                 return
-            if widget.id == "segment-recovery":
+            if node.id == "segment-recovery":
                 self.action_recovery()
                 return
-            widget = widget.parent
+            node = node.parent
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         """Handle menu selection."""
@@ -529,4 +530,4 @@ class MainMenuScreen(Screen):
 
     def action_quit(self) -> None:
         """Quit the application."""
-        self.app.action_quit()
+        self.app.exit()

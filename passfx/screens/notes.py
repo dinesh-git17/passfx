@@ -686,7 +686,7 @@ class NotesScreen(Screen):
             self.notify("No note selected", severity="warning")
             return
 
-        def handle_result(confirmed: bool) -> None:
+        def handle_result(confirmed: bool | None) -> None:
             if confirmed:
                 app: PassFXApp = self.app  # type: ignore
                 app.vault.delete_note(entry.id)
