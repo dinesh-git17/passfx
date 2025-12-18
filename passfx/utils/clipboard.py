@@ -105,7 +105,8 @@ def get_clipboard() -> str | None:
     try:
         import pyperclip
 
-        return pyperclip.paste()
+        result: str = pyperclip.paste()
+        return result
     except Exception:  # pylint: disable=broad-exception-caught
         return None
 
