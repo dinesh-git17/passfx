@@ -40,7 +40,7 @@ To help you focus your research, here is what we consider in-scope and out-of-sc
 
 ### In Scope (We want to know about these)
 
-- **Cryptographic Weaknesses:** Flaws in our implementation of Fernet (AES-256-CBC) or PBKDF2.
+- **Cryptographic Weaknesses:** Flaws in our implementation of Fernet (AES-128-CBC with HMAC-SHA256) or PBKDF2.
 - **Data Leaks:** Credentials appearing in logs, unencrypted swap, or persisting in memory after a "lock" event.
 - **Side-Channel Attacks:** Timing attacks on password verification or key derivation.
 - **Injection:** TUI rendering bugs that allow arbitrary code execution via malicious payloads.
@@ -114,7 +114,7 @@ PassFX uses native Windows Security APIs via `ctypes` to set Discretionary Acces
 │                    PassFX Security Layers                        │
 ├─────────────────────────────────────────────────────────────────┤
 │  Layer 1: Encryption at Rest                                     │
-│  ├── AES-256-CBC (Fernet)                                       │
+│  ├── Fernet (AES-128-CBC + HMAC-SHA256)                         │
 │  ├── PBKDF2-HMAC-SHA256 (480,000 iterations)                    │
 │  └── 32-byte cryptographic salt                                 │
 ├─────────────────────────────────────────────────────────────────┤

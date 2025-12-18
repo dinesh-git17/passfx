@@ -29,7 +29,7 @@ We take a paranoid, "local-first" approach to security. For a deep dive into our
 - **Offline Only:** No servers. No syncing. No "cloud backup." Because there is no cloud, only other people's computers.
 - **Zero Knowledge:** We cannot see your data. If you lose your master password, your data is mathematically irretrievable.
 - **Standard Primitives:** We do not roll our own crypto (rule #1 of crypto club).
-  - **Encryption:** AES-256-CBC via Fernet (with HMAC-SHA256 for integrity).
+  - **Encryption:** Fernet authenticated encryption (AES-128-CBC + HMAC-SHA256).
   - **Key Derivation:** PBKDF2-HMAC-SHA256 (480,000 iterations, exceeding OWASP 2023 recommendations).
   - **Randomness:** All secrets are generated using Python's `secrets` module (CSPRNG), never `random`.
 - **Memory Hygiene:** We employ best-effort memory wiping for sensitive keys and implement strict auto-lock timeouts.
@@ -143,7 +143,7 @@ A: Browsers are huge attack surfaces that connect to the internet. PassFX is a s
 A: On your hard drive. Specifically `~/.passfx/`. It works on my machine, and it stays on yours.
 
 **Q: I forgot my Master Password. Can you reset it?**
-A: No. We hash it more times than you've pushed to `main` on a Friday. The encryption is standard AES-256. Unless you have a few million years and a supercomputer, that data is gone.
+A: No. We hash it more times than you've pushed to `main` on a Friday. The encryption uses industry-standard Fernet (AES-128-CBC with HMAC-SHA256), which is NIST-approved and computationally secure. Unless you have a few million years and a supercomputer, that data is gone.
 
 **Q: Why "PassFX"?**
 A: Because "PasswordManagerForTerminalWrittenInPythonUsingTextual" was rejected by PyPI for being too verbose.

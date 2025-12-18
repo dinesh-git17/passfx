@@ -1,6 +1,6 @@
 """Cryptographic operations for PassFX vault encryption.
 
-Uses Fernet (AES-256-CBC) with PBKDF2 key derivation for secure encryption.
+Uses Fernet authenticated encryption (AES-128-CBC + HMAC-SHA256) with PBKDF2 key derivation.
 """
 
 from __future__ import annotations

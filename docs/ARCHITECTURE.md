@@ -14,7 +14,7 @@ Think of PassFX as a digital safebox located inside your user directory (`~/.pas
 
 1.  **The Key:** Your master password (which we never store).
 2.  **The Lock:** PBKDF2 key derivation.
-3.  **The Walls:** AES-256-CBC encryption.
+3.  **The Walls:** Fernet authenticated encryption (AES-128-CBC with HMAC-SHA256).
 4.  **The Contents:** JSON data loaded into memory only when the safe is open.
 
 ---
@@ -84,7 +84,7 @@ sequenceDiagram
 1.  User inputs **Master Password**.
 2.  `CryptoManager` reads the **Salt** from disk.
 3.  **Key Derivation:** We run the password + salt through **PBKDF2-HMAC-SHA256** (480,000 iterations). This burns CPU cycles to make brute-forcing expensive.
-4.  **Decryption:** The derived key opens the `vault.enc` file via **Fernet** (AES-256-CBC).
+4.  **Decryption:** The derived key opens the `vault.enc` file via **Fernet** (AES-128-CBC with HMAC-SHA256 authenticated encryption).
 5.  **Inflation:** The decrypted JSON bytes are parsed into Python objects (`EmailCredential`, etc.) and reside in **System RAM**.
 
 ### B. Saving a Credential

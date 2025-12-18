@@ -134,13 +134,13 @@ Before pushing to GitHub, and **before providing a summary**:
 
 ### Cryptographic Standards
 
-| Requirement    | Specification          |
-| -------------- | ---------------------- |
-| Encryption     | AES-256-CBC via Fernet |
-| Key Derivation | PBKDF2-HMAC-SHA256     |
-| KDF Iterations | 480,000 minimum        |
-| Salt Length    | 32 bytes               |
-| RNG            | `secrets` module only  |
+| Requirement    | Specification                                      |
+| -------------- | -------------------------------------------------- |
+| Encryption     | Fernet (AES-128-CBC + HMAC-SHA256)                 |
+| Key Derivation | PBKDF2-HMAC-SHA256                                 |
+| KDF Iterations | 480,000 minimum                                    |
+| Salt Length    | 32 bytes                                           |
+| RNG            | `secrets` module only                              |
 
 ### File Permissions
 
@@ -379,7 +379,7 @@ vault_path = os.path.join(os.path.expanduser("~"), ".passfx", "vault.enc")
 
 ## Project Overview
 
-**PassFX** is a production-grade terminal-based password manager built with Python and Textual. AES-256 encrypted storage with a cyberpunk-themed TUI. Security, data integrity, and user privacy are paramount.
+**PassFX** is a production-grade terminal-based password manager built with Python and Textual. Fernet authenticated encryption (AES-128-CBC + HMAC-SHA256) with a cyberpunk-themed TUI. Security, data integrity, and user privacy are paramount.
 
 ### Tech Stack
 
@@ -387,7 +387,7 @@ vault_path = os.path.join(os.path.expanduser("~"), ".passfx", "vault.enc")
 | -------------- | ----------------------------- |
 | Framework      | Textual (TUI)                 |
 | Language       | Python 3.11+ (strict typing)  |
-| Encryption     | cryptography (Fernet/AES-256) |
+| Encryption     | cryptography (Fernet/AES-128) |
 | Key Derivation | PBKDF2 (480k iterations)      |
 | Styling        | Textual CSS (.tcss)           |
 | Clipboard      | pyperclip                     |
