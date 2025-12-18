@@ -110,6 +110,7 @@ Claude must **ALWAYS** follow this exact workflow — no deviations:
 6. **After committing**
    - Always create a PR
    - Use the github PR template and fill it out
+   - Do **NOT** mention Claude or AI when filling out the PR template
 
 🚫 **Hard Rules**
 
@@ -134,13 +135,13 @@ Before pushing to GitHub, and **before providing a summary**:
 
 ### Cryptographic Standards
 
-| Requirement    | Specification                                      |
-| -------------- | -------------------------------------------------- |
-| Encryption     | Fernet (AES-128-CBC + HMAC-SHA256)                 |
-| Key Derivation | PBKDF2-HMAC-SHA256                                 |
-| KDF Iterations | 480,000 minimum                                    |
-| Salt Length    | 32 bytes                                           |
-| RNG            | `secrets` module only                              |
+| Requirement    | Specification                      |
+| -------------- | ---------------------------------- |
+| Encryption     | Fernet (AES-128-CBC + HMAC-SHA256) |
+| Key Derivation | PBKDF2-HMAC-SHA256                 |
+| KDF Iterations | 480,000 minimum                    |
+| Salt Length    | 32 bytes                           |
+| RNG            | `secrets` module only              |
 
 ### File Permissions
 
