@@ -19,6 +19,71 @@ class ImportExportError(Exception):
     """Error during import/export operations."""
 
 
+class PathValidationError(ImportExportError):
+    """Raised when path validation fails for security reasons."""
+
+
+def validate_path(path: Path, must_exist: bool = False) -> Path:
+    """Validate and resolve a path for import/export operations.
+
+    Security checks performed:
+    1. Path is resolved to absolute form
+    2. Path must be within user's home directory
+    3. Path must not be a symlink (prevents symlink attacks)
+    4. Parent directory must exist and not be a symlink
+
+    Args:
+        path: Path to validate.
+        must_exist: If True, file must already exist.
+
+    Returns:
+        Resolved absolute path.
+
+    Raises:
+        PathValidationError: If path fails security validation.
+    """
+    # Resolve path to absolute, normalized form
+    try:
+        resolved = path.expanduser().resolve()
+    except (OSError, ValueError) as e:
+        raise PathValidationError(f"Invalid path: {e}") from e
+
+    # Get user home directory
+    home_dir = Path.home().resolve()
+
+    # Verify path is within home directory
+    try:
+        resolved.relative_to(home_dir)
+    except ValueError as exc:
+        raise PathValidationError(
+            f"Path must be within home directory ({home_dir}). " f"Got: {resolved}"
+        ) from exc
+
+    # Check if path is a symlink (before it exists for export, or if it exists)
+    if resolved.is_symlink():
+        raise PathValidationError(
+            f"Path cannot be a symlink for security reasons: {resolved}"
+        )
+
+    # For import, file must exist
+    if must_exist:
+        if not resolved.exists():
+            raise PathValidationError(f"File not found: {resolved}")
+        if not resolved.is_file():
+            raise PathValidationError(f"Path is not a file: {resolved}")
+
+    # For export, parent directory must exist and not be a symlink
+    parent = resolved.parent
+    if not parent.exists():
+        raise PathValidationError(f"Parent directory does not exist: {parent}")
+    if parent.is_symlink():
+        raise PathValidationError(f"Parent directory cannot be a symlink: {parent}")
+    if not parent.is_dir():
+        raise PathValidationError(f"Parent path is not a directory: {parent}")
+
+    return resolved
+
+
 def _secure_write_text(path: Path, content: str, encoding: str = "utf-8") -> None:
     """Write text to a file with secure permissions (0600).
 
@@ -51,8 +116,12 @@ def export_vault(
         Number of entries exported.
 
     Raises:
+        PathValidationError: If path fails security validation.
         ImportExportError: If export fails.
     """
+    # Validate path before export
+    validated_path = validate_path(path, must_exist=False)
+
     try:
         count = 0
 
@@ -62,17 +131,19 @@ def export_vault(
                 "exported_at": datetime.now().isoformat(),
                 "data": data,
             }
-            _secure_write_text(path, json.dumps(export_data, indent=2))
+            _secure_write_text(validated_path, json.dumps(export_data, indent=2))
             count = sum(len(v) for v in data.values())
 
         elif fmt == "csv":
-            count = _export_csv(data, path, include_sensitive)
+            count = _export_csv(data, validated_path, include_sensitive)
 
         else:
             raise ImportExportError(f"Unknown format: {fmt}")
 
         return count
 
+    except PathValidationError:
+        raise
     except Exception as e:
         raise ImportExportError(f"Export failed: {e}") from e
 
@@ -202,14 +273,15 @@ def import_vault(
         Tuple of (data dict, count of entries).
 
     Raises:
+        PathValidationError: If path fails security validation.
         ImportExportError: If import fails.
     """
-    if not path.exists():
-        raise ImportExportError(f"File not found: {path}")
+    # Validate path before import
+    validated_path = validate_path(path, must_exist=True)
 
     # Auto-detect format
     if fmt is None:
-        suffix = path.suffix.lower()
+        suffix = validated_path.suffix.lower()
         if suffix == ".json":
             fmt = "json"
         elif suffix == ".csv":
@@ -219,12 +291,12 @@ def import_vault(
 
     try:
         if fmt == "json":
-            return _import_json(path)
+            return _import_json(validated_path)
         if fmt == "csv":
-            return _import_csv(path)
+            return _import_csv(validated_path)
         raise ImportExportError(f"Unknown format: {fmt}")
 
-    except ImportExportError:
+    except (ImportExportError, PathValidationError):
         raise
     except Exception as e:
         raise ImportExportError(f"Import failed: {e}") from e
