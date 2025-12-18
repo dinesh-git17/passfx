@@ -66,8 +66,8 @@ LEGEND_CONTENT = """\
 
 SYSTEM_CONTENT = """\
 [bold #00d4ff]> ENCRYPTION PROTOCOL[/]
-  [bold #8b5cf6]CIPHER[/]       [#22c55e]AES-256-CBC[/]
-                 [dim #64748b]256-bit key, CBC mode[/]
+  [bold #8b5cf6]CIPHER[/]       [#22c55e]Fernet (AES-128-CBC)[/]
+                 [dim #64748b]128-bit AES, CBC mode[/]
 
   [bold #8b5cf6]INTEGRITY[/]    [#22c55e]HMAC-SHA256[/]
                  [dim #64748b]Message authentication[/]

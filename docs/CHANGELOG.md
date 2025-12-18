@@ -25,7 +25,7 @@ This is the initial public release of PassFX. It includes the core architecture,
 ### Added
 
 - **Core Security:**
-  - AES-256-CBC encryption via `cryptography.fernet`.
+  - Fernet authenticated encryption (AES-128-CBC + HMAC-SHA256) via `cryptography.fernet`.
   - PBKDF2-HMAC-SHA256 key derivation with 480,000 iterations.
   - Zero-knowledge architecture with separate salt storage.
 - **Terminal UI (TUI):**
