@@ -28,7 +28,7 @@ class PlatformSecurityError(Exception):
 
 
 # Windows-specific implementation
-def _get_current_user_sid_windows() -> (
+def _get_current_user_sid_windows() -> (  # pragma: no cover
     tuple[ctypes.c_void_p, int]
 ):  # pylint: disable=import-outside-toplevel
     """Get the current user's SID on Windows.
@@ -152,7 +152,7 @@ def _get_current_user_sid_windows() -> (
             kernel32.CloseHandle(token_handle)
 
 
-def _set_windows_acl(  # pylint: disable=import-outside-toplevel
+def _set_windows_acl(  # pragma: no cover  # pylint: disable=import-outside-toplevel
     path: Path,
     is_directory: bool = False,
 ) -> None:
@@ -362,7 +362,7 @@ def secure_file_permissions(path: Path) -> None:
         logger.warning("Cannot set permissions on non-existent file: %s", path)
         return
 
-    if sys.platform == "win32":
+    if sys.platform == "win32":  # pragma: no cover
         try:
             _set_windows_acl(path, is_directory=False)
             logger.debug("Set Windows ACL for file: %s", path)
@@ -394,7 +394,7 @@ def secure_directory_permissions(path: Path) -> None:
         logger.warning("Cannot set permissions on non-existent directory: %s", path)
         return
 
-    if sys.platform == "win32":
+    if sys.platform == "win32":  # pragma: no cover
         try:
             _set_windows_acl(path, is_directory=True)
             logger.debug("Set Windows ACL for directory: %s", path)
@@ -469,7 +469,7 @@ def get_platform_security_notes() -> list[str]:
                 "macOS: Keychain integration is not used; secrets are file-based.",
             ]
         )
-    else:  # Linux and other Unix
+    else:  # Linux and other Unix  # pragma: no cover
         notes.extend(
             [
                 "Linux: File permissions enforced via standard Unix mode bits.",
