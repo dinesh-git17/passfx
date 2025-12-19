@@ -30,6 +30,7 @@ $surface-black: #0a0a0a;
 $operator-black: #000000;
 $operator-primary: #00FFFF;
 $operator-secondary: #8b5cf6;
+$operator-pink: #ec4899;
 $operator-surface: #0a0a0a;
 $operator-text: #e0e0e0;
 $operator-muted: #666666;
@@ -1106,14 +1107,13 @@ PasswordsScreen .screen-header {
 }
 
 /* Pink variant for phones screen */
-.pane-header-block-purple {
+.pane-header-block-pink {
     width: 100%;
     height: 1;
-    background: #d946ef;
+    background: $operator-pink;
     color: #000000;
     text-style: bold;
     padding: 0 1;
-    margin-bottom: 0;
 }
 
 /* Green variant for cards screen - lime green for contrast */
@@ -1262,6 +1262,89 @@ PasswordsScreen .keycap-label {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   PHONES SCREEN - OPERATOR THEME DATA CONSOLE (Pink Accent)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Screen-level background - pure black Operator theme */
+PhonesScreen {
+    background: $operator-black;
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+/* Force background on all direct children */
+PhonesScreen #app-header,
+PhonesScreen #vault-body,
+PhonesScreen #app-footer {
+    background: $operator-black;
+}
+
+/* Header for phones screen */
+PhonesScreen #app-header {
+    background: $operator-black;
+    border-bottom: heavy $operator-primary;
+}
+
+PhonesScreen #header-branding {
+    color: $operator-primary;
+    text-style: bold;
+}
+
+PhonesScreen .screen-header {
+    text-style: bold;
+}
+
+/* Phones screen specific footer */
+PhonesScreen .pane-footer {
+    background: $operator-black;
+    color: $operator-muted;
+    border-top: solid $operator-pink 30%;
+}
+
+/* Phones screen app footer - Operator theme with pink accent */
+PhonesScreen #app-footer {
+    width: 100%;
+    height: 3;
+    dock: bottom;
+    background: $operator-black;
+    border-top: heavy $operator-pink;
+    align: left middle;
+    padding: 0;
+    margin: 0;
+}
+
+PhonesScreen #footer-version {
+    background: $operator-black;
+    color: $operator-muted;
+    width: auto;
+    height: 3;
+    padding: 0 2;
+    content-align: center middle;
+}
+
+PhonesScreen #footer-keys {
+    background: $operator-black;
+    width: 1fr;
+    height: 3;
+    align: left middle;
+    padding-left: 1;
+}
+
+PhonesScreen .keycap-group {
+    background: $operator-black;
+    height: auto;
+}
+
+PhonesScreen .keycap {
+    background: $operator-surface;
+}
+
+PhonesScreen .keycap-label {
+    background: $operator-black;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    PASSWORDS TABLE - OPERATOR THEME DATA STREAM
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -1313,11 +1396,12 @@ PasswordsScreen .keycap-label {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PHONES TABLE - MAINFRAME TERMINAL LOOK (matches passwords-table)
+   PHONES TABLE - OPERATOR THEME DATA STREAM (Pink Accent)
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Phones Table - Pure black data stream terminal */
 #phones-table {
-    background: $pfx-bg;
+    background: $operator-black;
     border: none;
     margin: 0;
     padding: 0;
@@ -1330,31 +1414,36 @@ PasswordsScreen .keycap-label {
     border: none;
 }
 
+/* Data stream selection - locked target feel with left border */
 #phones-table > .datatable--cursor {
-    background: #2d1f4a;
+    background: #1a0a12;
     color: $pfx-fg;
-    text-style: none;
+    text-style: bold;
+    border-left: heavy $operator-pink;
 }
 
 #phones-table > .datatable--cursor:hover {
-    background: #3b2d5a;
+    background: #1a0a12;
 }
 
+/* Headers - Pink accent for system labels */
 #phones-table > .datatable--header {
-    background: #8b5cf6;
-    color: black;
+    background: $operator-pink;
+    color: #000000;
     text-style: bold;
-    border-right: solid #8b5cf6;
 }
 
+/* Row styling - dark data stream with subtle separators and breathing room */
 #phones-table > .datatable--even-row {
-    background: #02040a;
-    border-bottom: solid #1e293b;
+    background: $operator-black;
+    border-bottom: solid #1a1a1a;
+    height: 2;
 }
 
 #phones-table > .datatable--odd-row {
-    background: #060a12;
-    border-bottom: solid #1e293b;
+    background: #050505;
+    border-bottom: solid #1a1a1a;
+    height: 2;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
