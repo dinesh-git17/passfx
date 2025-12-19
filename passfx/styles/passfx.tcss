@@ -20,6 +20,12 @@ $pfx-surface-lighter: #475569;
 $pfx-fg: #f8fafc;
 $pfx-muted: #94a3b8;
 
+/* Night City Theme Tokens */
+$neon-cyan: #00FFFF;
+$deep-black: #050505;
+$terminal-dim: #444444;
+$surface-black: #0a0a0a;
+
 /* ═══════════════════════════════════════════════════════════════════════════
    GLOBAL STYLES
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -158,118 +164,103 @@ FooterKey > .footer-key--description {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LOGIN SCREEN - FULL-SCREEN GRID LAYOUT
+   LOGIN SCREEN - NIGHT CITY THEME
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Login body matches main-container layout */
-#login-body {
-    width: 100%;
-    height: 1fr;
-    align: left top;
+/* Screen-level background - deep black */
+LoginScreen {
+    background: $deep-black;
+    align: center middle;
 }
 
 /* Main content area - centered */
 #login-form-pane {
     width: 1fr;
     height: 100%;
-    background: #1e293b;
+    background: $deep-black;
 }
 
-/* Content wrapper inside Center */
-#login-content {
-    width: 52;
+/* The Deck Container - neon cyan border */
+#login-deck {
+    width: 60;
     height: auto;
+    border: heavy $neon-cyan;
+    padding: 1 2;
+    background: $surface-black;
 }
 
-/* Logo in main pane - full width */
-#login-content #logo {
-    color: #60a5fa;
+/* Brand Logo (ASCII art via Rich markup) */
+#brand-logo {
     text-align: center;
-    padding: 1 0;
-    width: auto;
-    min-width: 52;
+    width: 100%;
+    margin-bottom: 0;
 }
 
-/* Tagline in main pane */
-#login-content #tagline {
-    color: #8b5cf6;
+/* Brand Subtitle */
+#brand-subtitle {
+    color: $neon-cyan;
     text-align: center;
-    text-style: italic;
-    padding: 0 0 2 0;
-    width: 100%;
+    margin-bottom: 2;
 }
 
-#form-title {
-    text-align: center;
-    padding: 0 0 1 0;
-    width: 100%;
-}
-
-/* Form container - full width, centers children */
-#login-form {
-    width: 100%;
-    height: auto;
-    align: center top;
-}
-
-/* Terminal-style label */
-.terminal-label {
-    color: #60a5fa;
+/* Input Label */
+.input-label {
+    color: $neon-cyan;
     text-style: bold;
-    text-align: left;
-    padding: 0;
-    width: 38;
+    margin-bottom: 1;
 }
 
-/* Terminal Prompt Input Styling - underline only */
-#login-form Input {
-    background: transparent;
-    border: none;
-    border-bottom: heavy $pfx-primary;
-    padding: 0 1 0 1;
-    margin: 0;
-    color: $pfx-fg;
-    width: 38;
-    height: 2;
+/* Password Input */
+#login-deck #password-input,
+#login-deck #confirm-input {
+    border: tall $neon-cyan;
+    background: $surface-black;
+    color: white;
+    width: 100%;
+    margin-bottom: 2;
 }
 
-#login-form Input:focus {
-    border-bottom: heavy #00d4ff;
+#login-deck #password-input:focus,
+#login-deck #confirm-input:focus {
+    border: tall #FFFFFF;
 }
 
-#login-form Input.-invalid {
-    border-bottom: heavy $pfx-error;
+#login-deck #password-input.-invalid,
+#login-deck #confirm-input.-invalid {
+    border: tall $pfx-error;
 }
 
-/* Pill-shaped high-contrast button */
+/* Login/Create Buttons - Night City Theme */
 #unlock-button, #create-button {
-    margin: 1 0 0 0;
-    width: 38;
-    background: $pfx-primary;
-    color: #0f172a;
+    background: $neon-cyan;
+    color: #000000;
     text-style: bold;
-    border: tall $pfx-primary;
-    padding: 0 4;
-    height: 3;
+    border: none;
+    width: 100%;
+    min-height: 3;
 }
 
 #unlock-button:hover, #create-button:hover {
-    background: #00d4ff;
-    border: tall #00d4ff;
+    background: #FFFFFF;
 }
 
 #unlock-button:focus, #create-button:focus {
-    background: $pfx-accent;
-    border: tall $pfx-accent;
+    background: #FFFFFF;
 }
 
-#error-message {
+/* Status Footer */
+#status-footer {
+    color: $terminal-dim;
+    text-align: center;
+    margin-top: 2;
+}
+
+/* Error Message */
+#login-deck #error-message {
     color: #ef4444;
     text-align: center;
     text-style: bold;
-    padding: 1;
-    margin: 1 0;
-    width: 100%;
+    margin-top: 1;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
