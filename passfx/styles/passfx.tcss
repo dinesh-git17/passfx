@@ -1446,6 +1446,247 @@ CardsScreen .input-col-small {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   NOTES SCREEN - OPERATOR THEME WITH YELLOW ACCENT
+   Yellow accent (#eab308) matches purple luminosity for industrial/encrypted feel
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Yellow accent token for Notes screen */
+$operator-yellow: #eab308;
+
+/* Screen-level background - pure black Operator theme */
+NotesScreen {
+    background: $operator-black;
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+/* Force background on all direct children */
+NotesScreen #app-header,
+NotesScreen #vault-body,
+NotesScreen #app-footer {
+    background: $operator-black;
+}
+
+/* Header for notes screen - cyan underline */
+NotesScreen #app-header {
+    background: $operator-black;
+    border-bottom: heavy $operator-primary;
+}
+
+NotesScreen #header-branding {
+    color: $operator-primary;
+    text-style: bold;
+}
+
+NotesScreen #header-right {
+    background: $operator-black;
+    color: $operator-muted;
+    width: 1fr;
+    height: 100%;
+    align: right middle;
+    padding-right: 2;
+}
+
+NotesScreen .screen-header {
+    text-style: bold;
+}
+
+/* Notes screen specific pane footer */
+NotesScreen .pane-footer {
+    background: $operator-black;
+    color: $operator-muted;
+    border-top: solid #eab308 30%;
+}
+
+/* Notes screen app footer - Operator theme with yellow accent */
+NotesScreen #app-footer {
+    width: 100%;
+    height: 3;
+    dock: bottom;
+    background: $operator-black;
+    border-top: heavy #eab308;
+    align: left middle;
+    padding: 0;
+    margin: 0;
+}
+
+NotesScreen #footer-version {
+    background: $operator-black;
+    color: $operator-muted;
+    width: auto;
+    height: 3;
+    padding: 0 2;
+    content-align: center middle;
+}
+
+NotesScreen #footer-keys {
+    background: $operator-black;
+    width: 1fr;
+    height: 3;
+    align: left middle;
+    padding-left: 1;
+}
+
+NotesScreen .keycap-group {
+    background: $operator-black;
+    height: auto;
+}
+
+NotesScreen .keycap {
+    background: $operator-surface;
+}
+
+NotesScreen .keycap-label {
+    background: $operator-black;
+}
+
+/* Notes screen inspector header - yellow accent */
+NotesScreen .pane-header-block-accent {
+    width: 100%;
+    height: 1;
+    background: #eab308;
+    color: #000000;
+    text-style: bold;
+    padding: 0 1;
+}
+
+/* Notes screen inspector content - full width */
+NotesScreen #inspector-content {
+    width: 100%;
+    height: 1fr;
+    padding: 1 2;
+    overflow-y: auto;
+    background: $operator-black;
+}
+
+/* Notes screen terminal box - yellow border title */
+NotesScreen .notes-terminal-box {
+    background: #050505;
+    border: solid #eab308 50%;
+    width: 100%;
+    height: 1fr;
+    min-height: 5;
+    padding: 1;
+    overflow-y: auto;
+    border-title-align: center;
+    border-title-color: #eab308;
+}
+
+/* Notes screen sections fill width */
+NotesScreen .notes-section {
+    width: 100%;
+    height: 1fr;
+}
+
+NotesScreen .strength-section {
+    width: 100%;
+    height: auto;
+    padding: 0 0 1 0;
+    margin-bottom: 1;
+}
+
+NotesScreen .field-grid {
+    width: 100%;
+    height: auto;
+    padding: 0 0 1 0;
+}
+
+NotesScreen .inspector-header {
+    width: 100%;
+    height: auto;
+    padding: 1 0;
+    margin-bottom: 1;
+    border-bottom: solid #eab308 30%;
+}
+
+/* Notes screen vault panes - ensure full fill */
+NotesScreen #vault-body {
+    width: 100%;
+    height: 100%;
+    background: $operator-black;
+}
+
+NotesScreen #vault-grid-pane {
+    width: 65%;
+    height: 100%;
+    background: $operator-black;
+    border-right: solid #eab308 30%;
+}
+
+NotesScreen #vault-inspector {
+    width: 35%;
+    height: 100%;
+    background: $operator-black;
+    padding: 0;
+    overflow-y: hidden;
+}
+
+/* Ensure all inspector children fill width */
+NotesScreen #inspector-content > Vertical {
+    width: 100%;
+}
+
+NotesScreen #inspector-content > Vertical > Horizontal {
+    width: 100%;
+}
+
+NotesScreen #inspector-content > Vertical > Vertical {
+    width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NOTES TABLE - OPERATOR THEME DATA STREAM (Yellow Accent)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Notes Table - Pure black data stream terminal */
+NotesScreen #notes-table {
+    background: $operator-black;
+    border: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 1fr;
+    overflow-x: hidden;
+}
+
+NotesScreen #notes-table:focus {
+    border: none;
+}
+
+/* Data stream selection - locked target feel with left border */
+NotesScreen #notes-table > .datatable--cursor {
+    background: #1a1a0a;
+    color: $pfx-fg;
+    text-style: bold;
+    border-left: heavy $operator-primary;
+}
+
+NotesScreen #notes-table > .datatable--cursor:hover {
+    background: #1a1a0a;
+}
+
+/* Headers - Yellow accent for system labels */
+NotesScreen #notes-table > .datatable--header {
+    background: #eab308;
+    color: #000000;
+    text-style: bold;
+}
+
+/* Row styling - dark data stream with subtle separators and breathing room */
+NotesScreen #notes-table > .datatable--even-row {
+    background: $operator-black;
+    border-bottom: solid #1a1a1a;
+    height: 2;
+}
+
+NotesScreen #notes-table > .datatable--odd-row {
+    background: #050505;
+    border-bottom: solid #1a1a1a;
+    height: 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    PASSWORDS TABLE - OPERATOR THEME DATA STREAM
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -3515,46 +3756,10 @@ $pfx-slate-light: #cbd5e1;
     border-title-color: #94a3b8;
 }
 
-/* Notes Table - Mainframe Terminal Look with Amber accents */
-#notes-table {
-    background: $pfx-bg;
-    border: none;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 1fr;
-    overflow-x: hidden;
-}
-
-#notes-table:focus {
-    border: none;
-}
-
-#notes-table > .datatable--cursor {
-    background: #78350f;
-    color: $pfx-fg;
-    text-style: none;
-}
-
-#notes-table > .datatable--cursor:hover {
-    background: #92400e;
-}
-
-#notes-table > .datatable--header {
-    background: #f59e0b;
-    color: black;
-    text-style: bold;
-}
-
-#notes-table > .datatable--even-row {
-    background: #02040a;
-    border-bottom: solid #1e293b;
-}
-
-#notes-table > .datatable--odd-row {
-    background: #060a12;
-    border-bottom: solid #1e293b;
-}
+/* Notes Table - DEPRECATED: Styles moved to NotesScreen-specific section
+   Old global styles removed to avoid conflicts with Operator theme styling.
+   See NotesScreen #notes-table styles for current implementation.
+*/
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    SECURE NOTE CODE EDITOR / TEXTAREA STYLING

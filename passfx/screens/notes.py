@@ -1,6 +1,6 @@
 """Secure Notes Screen for PassFX - Encrypted Data Shards."""
 
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code,too-many-lines
 
 from __future__ import annotations
 
@@ -25,10 +25,16 @@ if TYPE_CHECKING:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def _get_relative_time(
-    iso_timestamp: str | None,
-) -> str:  # pylint: disable=too-many-return-statements
-    """Convert ISO timestamp to relative time string."""
+# pylint: disable=too-many-return-statements
+def _get_relative_time(iso_timestamp: str | None) -> str:
+    """Convert ISO timestamp to relative time string.
+
+    Args:
+        iso_timestamp: ISO format timestamp string.
+
+    Returns:
+        Relative time string like "2m ago", "1d ago", "3w ago".
+    """
     if not iso_timestamp:
         return "-"
 
@@ -159,27 +165,21 @@ class AddNoteModal(ModalScreen[NoteEntry | None]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade modal layout with TextArea."""
-        with Vertical(id="note-edit-modal"):
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
-                    yield Static(
-                        "[bold #94a3b8][ :: SECURE WRITE PROTOCOL :: ][/]",
-                        id="note-edit-title",
-                    )
-                    yield Static("[#22c55e]STATUS: OPEN[/]", classes="modal-status")
+                    yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: OPEN", classes="modal-status")
 
             # Form
-            with Vertical(id="note-form"):
+            with Vertical(id="pwd-form"):
                 # Title input
-                yield Label("[#94a3b8]> MEMO_TITLE[/]", classes="note-input-label")
+                yield Label("> SHARD_TITLE", classes="input-label")
                 yield Input(placeholder="e.g. Office Wi-Fi Password", id="title-input")
 
                 # Content TextArea
-                yield Label(
-                    "[#94a3b8]> CONTENT[/]  [dim #64748b]secure text[/]",
-                    classes="note-input-label",
-                )
+                yield Label("> CONTENT", classes="input-label")
                 yield TextArea(
                     "",
                     id="content-area",
@@ -188,9 +188,9 @@ class AddNoteModal(ModalScreen[NoteEntry | None]):
 
             # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
-                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
                 yield Button(
-                    r"\[ ENCRYPT & COMMIT ]", id="save-button", classes="note-save-btn"
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
 
     def on_mount(self) -> None:
@@ -237,29 +237,26 @@ class EditNoteModal(ModalScreen[dict | None]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade modal layout."""
-        with Vertical(id="note-edit-modal"):
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static(
-                        f"[bold #94a3b8][ :: MODIFY // {self.note.title.upper()[:18]} :: ][/]",
-                        id="note-edit-title",
+                        f"[ :: MODIFY // {self.note.title.upper()[:18]} :: ]",
+                        id="modal-title",
                     )
-                    yield Static("[#22c55e]STATUS: EDIT[/]", classes="modal-status")
+                    yield Static("STATUS: EDIT", classes="modal-status")
 
             # Form
-            with Vertical(id="note-form"):
-                yield Label("[#94a3b8]> MEMO_TITLE[/]", classes="note-input-label")
+            with Vertical(id="pwd-form"):
+                yield Label("> SHARD_TITLE", classes="input-label")
                 yield Input(
                     value=self.note.title,
                     placeholder="e.g. Office Wi-Fi Password",
                     id="title-input",
                 )
 
-                yield Label(
-                    "[#94a3b8]> CONTENT[/]  [dim #64748b]secure text[/]",
-                    classes="note-input-label",
-                )
+                yield Label("> CONTENT", classes="input-label")
                 yield TextArea(
                     self.note.content,
                     id="content-area",
@@ -268,9 +265,9 @@ class EditNoteModal(ModalScreen[dict | None]):
 
             # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
-                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
                 yield Button(
-                    r"\[ ENCRYPT & COMMIT ]", id="save-button", classes="note-save-btn"
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -315,27 +312,20 @@ class ConfirmDeleteNoteModal(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade modal layout."""
-        with Vertical(id="note-delete-modal"):
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
             # HUD Header with warning status
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
-                    yield Static(
-                        "[bold #94a3b8][ :: PURGE PROTOCOL :: ][/]",
-                        id="note-delete-title",
-                    )
-                    yield Static("[#ef4444]STATUS: ARMED[/]", classes="modal-status")
-            with Vertical(id="delete-content"):
-                yield Static(
-                    f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target"
-                )
-                yield Static(
-                    "[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning"
-                )
+                    yield Static(r"\[ :: PURGE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: ARMED", classes="modal-status")
+
+            with Vertical(id="pwd-form"):
+                yield Static(f"TARGET: '{self.item_name}'", classes="delete-target")
+                yield Static("THIS ACTION CANNOT BE UNDONE", classes="warning")
+
             with Horizontal(id="modal-buttons"):
                 yield Button(r"\[ ABORT ]", id="cancel-button")
-                yield Button(
-                    r"\[ CONFIRM PURGE ]", id="delete-button", classes="note-delete-btn"
-                )
+                yield Button(r"\[ CONFIRM PURGE ]", variant="error", id="delete-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -370,73 +360,116 @@ class NotesScreen(Screen):
         Binding("escape", "back", "Back"),
     ]
 
+    # Operator theme color tokens - Yellow accent (industrial/encrypted)
+    COLORS = {
+        "primary": "#00FFFF",  # Cyan - active selection, titles
+        "accent": "#eab308",  # Yellow - labels, headers (matches purple luminosity)
+        "success": "#22c55e",  # Green - high strength, decrypted
+        "muted": "#666666",  # Dim grey - metadata, timestamps
+        "text": "#e0e0e0",  # Light text
+        "surface": "#0a0a0a",  # Dark surface
+    }
+
     def __init__(self) -> None:
         super().__init__()
         self._selected_row_key: str | None = None
         self._pulse_state: bool = True
 
+    # pylint: disable=too-many-locals
     def compose(self) -> ComposeResult:
         """Create the notes screen layout."""
-        # 1. Global Header with Breadcrumbs
+        c = self.COLORS
+
+        # 1. Global Header with Breadcrumbs - Operator theme
         with Horizontal(id="app-header"):
-            breadcrumb = (
-                "[dim #64748b]HOME[/] [#475569]>[/] "
-                "[dim #64748b]VAULT[/] [#475569]>[/] [bold #f59e0b]NOTES[/]"
+            yield Static(
+                f"[bold {c['primary']}]VAULT // DATA_SHARDS[/]",
+                id="header-branding",
+                classes="screen-header",
             )
-            yield Static(breadcrumb, id="header-branding")
-            yield Static("░░ ENCRYPTED DATA SHARDS ░░", id="header-status")
-            yield Static("", id="header-lock")
+            with Horizontal(id="header-right"):
+                yield Static("", id="header-lock")  # Will be updated with pulse
 
         # 2. Body (Master-Detail Split)
         with Horizontal(id="vault-body"):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
-                yield Static(" ≡ SHARD_DATABASE ", classes="pane-header-block-amber")
                 yield DataTable(id="notes-table", cursor_type="row")
-                # Empty state
+                # Empty state placeholder (hidden by default)
                 with Center(id="empty-state"):
                     yield Static(
-                        "[dim #475569]╔══════════════════════════════════════╗\n"
+                        f"[dim {c['muted']}]╔══════════════════════════════════════╗\n"
                         "║                                      ║\n"
-                        "║      NO SECURE NOTES FOUND           ║\n"
+                        "║      NO SHARDS FOUND                 ║\n"
                         "║                                      ║\n"
-                        "║      INITIATE SEQUENCE [A]           ║\n"
+                        f"║      INITIATE SEQUENCE [{c['primary']}]A[/]           ║\n"
                         "║                                      ║\n"
                         "╚══════════════════════════════════════╝[/]",
                         id="empty-state-text",
                     )
+                # Footer with object count
                 yield Static(
                     " └── SYSTEM_READY", classes="pane-footer", id="grid-footer"
                 )
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
-                yield Static(" ≡ SHARD_INSPECTOR ", classes="pane-header-block-amber")
-                yield Vertical(id="inspector-content")
+                # Inverted Block Header - Operator accent (yellow)
+                yield Static(" ≡ SHARD_INSPECTOR ", classes="pane-header-block-accent")
+                yield Vertical(id="inspector-content")  # Dynamic content here
 
-        # 3. Global Footer
+        # 3. Global Footer - Mechanical keycap style
         with Horizontal(id="app-footer"):
-            yield Static(" VAULT ", id="footer-version")
-            yield Static(
-                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  \\[V] View  \\[ESC] Back",
-                id="footer-keys-static",
-            )
+            yield Static(f" [{c['accent']}]SHARDS[/] ", id="footer-version")
+            with Horizontal(id="footer-keys"):
+                # Keycap groups for each command
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] A [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Add[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] C [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Copy[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] E [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Edit[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] D [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Del[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] V [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]View[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] ESC [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Back[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Initialize the data table."""
         self._refresh_table()
+        # Focus table and initialize inspector after layout is complete
         self.call_after_refresh(self._initialize_selection)
+        # Start pulse animation
         self._update_pulse()
         self.set_interval(1.0, self._update_pulse)
+        # Start cursor blink animation
+        self.set_interval(0.5, self._blink_cursor)
+
+    def _blink_cursor(self) -> None:
+        """Toggle the blinking cursor visibility in empty notes."""
+        try:
+            cursor = self.query_one(".blink-cursor", Static)
+            cursor.toggle_class("-blink-off")
+        except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+            pass  # Cursor may not exist if notes have content
 
     def _update_pulse(self) -> None:
-        """Update the pulse indicator."""
+        """Update the pulse indicator in the header."""
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
+        c = self.COLORS
         if self._pulse_state:
-            header_lock.update("[#fcd34d]● [bold]ARCHIVED[/][/]")
+            header_lock.update(f"[{c['success']}]● [bold]ENCRYPTED[/][/]")
         else:
-            header_lock.update("[#b45309]○ [bold]ARCHIVED[/][/]")
+            header_lock.update(f"[#166534]○ [{c['success']}]ENCRYPTED[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector."""
@@ -452,24 +485,27 @@ class NotesScreen(Screen):
         else:
             self._update_inspector(None)
 
-    def _refresh_table(self) -> None:  # pylint: disable=too-many-locals
-        """Refresh the data table."""
+    # pylint: disable=too-many-locals
+    def _refresh_table(self) -> None:
+        """Refresh the data table with notes."""
         app: PassFXApp = self.app  # type: ignore
         table = self.query_one("#notes-table", DataTable)
         empty_state = self.query_one("#empty-state", Center)
+        c = self.COLORS
 
         table.clear(columns=True)
 
-        table.add_column("", width=3)  # Indicator
-        table.add_column("Title", width=30)  # Title
-        table.add_column("Lines", width=8)  # Lines
-        table.add_column("Chars", width=10)  # Chars
-        table.add_column("Updated", width=12)  # Updated - fixed width
-        # Content preview to fill remaining space
-        table.add_column("Preview", width=60)
+        # Column layout - data stream style (matching Passwords total: 118)
+        table.add_column("", width=2)  # Selection indicator column
+        table.add_column("TITLE", width=28)
+        table.add_column("LINES", width=8)
+        table.add_column("CHARS", width=10)
+        table.add_column("SYNC", width=12)
+        table.add_column("PREVIEW", width=58)
 
         entries = app.vault.get_notes()
 
+        # Toggle visibility based on entry count
         if len(entries) == 0:
             table.display = False
             empty_state.display = True
@@ -478,23 +514,31 @@ class NotesScreen(Screen):
             empty_state.display = False
 
         for entry in entries:
+            # Selection indicator - will be updated dynamically
             is_selected = entry.id == self._selected_row_key
-            indicator = "[bold #f59e0b]▍[/]" if is_selected else " "
-            title_text = entry.title[:23] if len(entry.title) > 23 else entry.title
-            lines_text = f"[#94a3b8]{entry.line_count}[/]"
-            chars_text = f"[#94a3b8]{entry.char_count}[/]"
+            indicator = f"[bold {c['primary']}]▸[/]" if is_selected else " "
+
+            # Title - primary cyan for selected, white otherwise
+            title_text = entry.title[:20] if len(entry.title) > 20 else entry.title
+
+            # Lines (muted grey)
+            lines_text = f"[{c['muted']}]{entry.line_count}[/]"
+
+            # Chars (muted grey)
+            chars_text = f"[{c['muted']}]{entry.char_count}[/]"
+
+            # Relative time (dim muted)
             updated = _get_relative_time(entry.updated_at)
-            updated_text = f"[dim]{updated}[/]"
-            # Truncate content preview to first 50 characters
-            notes_preview = (
-                entry.content[:50] if len(entry.content) > 50 else entry.content
-            )
-            if len(entry.content) > 50:
-                notes_preview += "…"
-            if notes_preview:
-                notes_text = f"[dim #94a3b8]{notes_preview}[/]"
+            updated_text = f"[dim {c['muted']}]{updated}[/]"
+
+            # Content preview (dim)
+            preview = entry.content.replace("\n", " ")[:30]
+            if len(entry.content) > 30:
+                preview += "…"
+            if preview.strip():
+                preview_text = f"[dim {c['muted']}]{preview}[/]"
             else:
-                notes_text = "[dim #555555]// EMPTY[/]"
+                preview_text = f"[dim {c['muted']}]// EMPTY[/]"
 
             table.add_row(
                 indicator,
@@ -502,34 +546,44 @@ class NotesScreen(Screen):
                 lines_text,
                 chars_text,
                 updated_text,
-                notes_text,
+                preview_text,
                 key=entry.id,
             )
 
+        # Update the grid footer with object count
         footer = self.query_one("#grid-footer", Static)
         count = len(entries)
-        footer.update(f" └── [{count}] SHARDS LOADED")
+        footer.update(f" └── [{c['primary']}]{count}[/] SHARDS LOADED")
 
     def _update_row_indicators(self, old_key: str | None, new_key: str | None) -> None:
-        """Update indicator column for selection change."""
+        """Update only the indicator column for old and new selected rows.
+
+        This avoids rebuilding the entire table on selection change.
+        """
         table = self.query_one("#notes-table", DataTable)
         app: PassFXApp = self.app  # type: ignore
         entries = app.vault.get_notes()
+        c = self.COLORS
+
+        # Build a map of id -> entry for quick lookup
         entry_map = {e.id: e for e in entries}
 
+        # Get column keys (first column is the indicator)
         if not table.columns:
             return
         indicator_col = list(table.columns.keys())[0]
 
+        # Clear old selection indicator
         if old_key and old_key in entry_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
             except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
                 pass  # Row may not exist during rapid navigation
 
+        # Set new selection indicator - cyan arrow for locked target feel
         if new_key and new_key in entry_map:
             try:
-                table.update_cell(new_key, indicator_col, "[bold #f59e0b]▍[/]")
+                table.update_cell(new_key, indicator_col, f"[bold {c['primary']}]▸[/]")
             except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
                 pass  # Row may not exist during rapid navigation
 
@@ -626,15 +680,25 @@ class NotesScreen(Screen):
         self._update_inspector(key_value)
         self._update_row_indicators(old_key, key_value)
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-statements
     def _update_inspector(self, row_key: Any) -> None:
-        """Update the inspector panel with note details."""
+        """Update the inspector panel with note details.
+
+        Renders a structured "Shard Inspector" with:
+        - Entry Header (large text, primary color)
+        - Field Grid (labels in accent, values in text)
+        - Shard Stats (lines, chars)
+        - Preview Section (terminal style)
+        """
         inspector = self.query_one("#inspector-content", Vertical)
         inspector.remove_children()
+        c = self.COLORS
 
+        # Get the entry by row key
         app: PassFXApp = self.app  # type: ignore
         entries = app.vault.get_notes()
 
+        # Find entry by ID
         entry = None
         for e in entries:
             if e.id == str(row_key):
@@ -642,88 +706,113 @@ class NotesScreen(Screen):
                 break
 
         if not entry:
+            # Empty state - styled for Operator theme
             inspector.mount(
                 Static(
-                    "[dim #555555]╔══════════════════════════╗\n"
-                    "║    SELECT A DATA SHARD   ║\n"
-                    "║    TO VIEW DETAILS       ║\n"
-                    "╚══════════════════════════╝[/]",
+                    f"[dim {c['muted']}]╔══════════════════════════════╗\n"
+                    "║                              ║\n"
+                    "║    SELECT A SHARD            ║\n"
+                    "║    TO INSPECT DETAILS        ║\n"
+                    "║                              ║\n"
+                    "╚══════════════════════════════╝[/]",
                     classes="inspector-empty",
                 )
             )
             return
 
-        # Section 1: Note ID Card
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 1: Entry Header - Large title with underline
+        # ═══════════════════════════════════════════════════════════════
         inspector.mount(
             Vertical(
-                Horizontal(
-                    Vertical(
-                        Static(
-                            "[on #94a3b8][bold #000000] MEM [/][/]",
-                            classes="avatar-char",
-                        ),
-                        Static("[on #94a3b8]     [/]", classes="avatar-char"),
-                        classes="avatar-box",
-                    ),
-                    Vertical(
-                        Static(
-                            f"[bold #f8fafc]{entry.title}[/]", classes="id-label-text"
-                        ),
-                        Static(
-                            "[dim #94a3b8]Encrypted Data Shard[/]",
-                            classes="id-email-text",
-                        ),
-                        classes="id-details-stack",
-                    ),
-                    classes="id-card-header",
+                Static(
+                    f"[bold underline {c['primary']}]{entry.title.upper()}[/]",
+                    classes="inspector-title",
                 ),
-                classes="id-card-wrapper note-card",
+                classes="inspector-header",
             )
         )
 
-        # Section 2: Stats Widget
-        stats_text = (
-            f"[#94a3b8]LINES:[/] {entry.line_count}    "
-            f"[#94a3b8]CHARS:[/] {entry.char_count}"
-        )
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 2: Field Grid - Structured label/value pairs
+        # ═══════════════════════════════════════════════════════════════
         inspector.mount(
             Vertical(
-                Static("[dim #6b7280]▸ SHARD STATS[/]", classes="section-label"),
-                Static(stats_text, classes="strength-bar-widget"),
-                classes="security-widget",
+                # Type field
+                Horizontal(
+                    Static(f"[{c['accent']}]TYPE[/]", classes="field-label"),
+                    Static(f"[{c['text']}]ENCRYPTED_SHARD[/]", classes="field-value"),
+                    classes="field-row",
+                ),
+                # Content hint - truncated
+                Horizontal(
+                    Static(f"[{c['accent']}]DATA[/]", classes="field-label"),
+                    Static(
+                        f"[{c['muted']}]●●●●●●●●●●●●[/]  " f"[dim]\\[V] to reveal[/]",
+                        classes="field-value",
+                    ),
+                    classes="field-row",
+                ),
+                classes="field-grid",
             )
         )
 
-        # Section 3: Content Preview
-        preview_lines = []
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 3: Shard Stats - Size metrics
+        # ═══════════════════════════════════════════════════════════════
+        inspector.mount(
+            Vertical(
+                Static(
+                    f"[{c['accent']}]SHARD_STATS[/]", classes="strength-section-label"
+                ),
+                Static(
+                    f"[{c['text']}]{entry.line_count}[/] lines  "
+                    f"[{c['text']}]{entry.char_count}[/] chars",
+                    classes="strength-bar",
+                ),
+                classes="strength-section",
+            )
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 4: Preview Terminal - Styled like terminal output
+        # ═══════════════════════════════════════════════════════════════
         if entry.content:
-            lines = entry.content.split("\n")[:8]
-            for i, line in enumerate(lines, 1):
+            lines = entry.content.split("\n")
+            numbered_lines = []
+            for i, line in enumerate(lines[:8], 1):  # Limit to 8 lines
+                line_num = f"[dim {c['muted']}]{i:2}[/]"
                 line_preview = line[:35] if len(line) > 35 else line
-                formatted_line = f"[dim #475569]{i:2}[/] │ [#94a3b8]{line_preview}[/]"
-                preview_lines.append(formatted_line)
-            if len(entry.content.split("\n")) > 8:
-                more_text = "[dim #475569]   [/]   [dim #64748b]... more content[/]"
-                preview_lines.append(more_text)
+                line_content = (
+                    f"[{c['success']}]{line_preview}[/]" if line.strip() else ""
+                )
+                numbered_lines.append(f"{line_num} │ {line_content}")
+            if len(lines) > 8:
+                numbered_lines.append(
+                    f"[dim {c['muted']}]   │ ... {len(lines) - 8} more[/]"
+                )
+            notes_content = "\n".join(numbered_lines)
         else:
-            preview_lines.append("[dim #64748b] 1[/] │ [dim #555555]// EMPTY[/]")
+            notes_content = f"[dim {c['muted']}] 1[/] │ [dim {c['muted']}]// EMPTY[/] "
 
-        preview_content = "\n".join(preview_lines)
         notes_terminal = Vertical(
-            Static(preview_content, classes="notes-code"),
-            classes="notes-editor note-preview",
+            Static(notes_content, classes="notes-code"),
+            Static("▌", classes="blink-cursor") if not entry.content else Static(""),
+            classes="notes-terminal-box",
         )
-        notes_terminal.border_title = "CONTENT_PREVIEW"
+        notes_terminal.border_title = "PREVIEW"
 
         inspector.mount(
             Vertical(
-                Static("[dim #6b7280]▸ PREVIEW[/]", classes="section-label"),
+                Static(f"[{c['accent']}]CONTENT[/]", classes="notes-section-label"),
                 notes_terminal,
                 classes="notes-section",
             )
         )
 
-        # Section 4: Footer
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 5: Footer Metadata Bar (ID + Updated)
+        # ═══════════════════════════════════════════════════════════════
         try:
             updated_full = datetime.fromisoformat(entry.updated_at).strftime(
                 "%Y-%m-%d %H:%M"
@@ -734,11 +823,11 @@ class NotesScreen(Screen):
         inspector.mount(
             Horizontal(
                 Static(
-                    f"[dim #475569]ID:[/] [#64748b]{entry.id[:8]}[/]",
+                    f"[dim {c['muted']}]ID:[/] [{c['muted']}]{entry.id[:8]}[/]",
                     classes="meta-id",
                 ),
                 Static(
-                    f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
+                    f"[dim {c['muted']}]SYNC:[/] [{c['muted']}]{updated_full}[/]",
                     classes="meta-updated",
                 ),
                 classes="inspector-footer-bar",
