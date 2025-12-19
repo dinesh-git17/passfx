@@ -28,6 +28,7 @@ from passfx.utils.io import (
     export_vault,
     import_vault,
 )
+from passfx.widgets.keycap_footer import KeycapFooter
 
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
@@ -463,18 +464,11 @@ class SettingsScreen(Screen):
                 yield Vertical(id="content-pane")
 
         # Footer with keycaps
-        with Horizontal(id="settings-footer"):
-            yield Static(" SETTINGS ", id="settings-footer-label")
-            with Horizontal(id="settings-footer-keys"):
-                with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #00FFFF] ↑↓ [/]", classes="keycap")
-                    yield Static("[#666666]Navigate[/]", classes="keycap-label")
-                with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #00FFFF] TAB [/]", classes="keycap")
-                    yield Static("[#666666]Focus[/]", classes="keycap-label")
-                with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #00FFFF] ESC [/]", classes="keycap")
-                    yield Static("[#666666]Back[/]", classes="keycap-label")
+        yield KeycapFooter(
+            hints=[("↑↓", "Navigate"), ("TAB", "Focus"), ("ESC", "Back")],
+            footer_id="settings-footer",
+            label=" SETTINGS ",
+        )
 
     def on_mount(self) -> None:
         """Initialize settings screen."""
