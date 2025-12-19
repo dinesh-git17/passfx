@@ -42,9 +42,26 @@ class SecurityScore(Static):
         self._health: VaultHealthResult | None = None
 
     def update_health(self, health: VaultHealthResult) -> None:
-        """Update the widget with new health data."""
+        """Update the widget with new health data and tooltip."""
         self._health = health
         self._render_display()
+        self._update_tooltip(health)
+
+    def _update_tooltip(self, health: VaultHealthResult) -> None:
+        """Update tooltip with health explanation."""
+        if health.overall_score >= 100:
+            self.tooltip = "All credentials meet strength requirements"
+        elif health.overall_score >= 80:
+            issues = []
+            if health.weak_count > 0:
+                issues.append(f"{health.weak_count} weak")
+            if health.reuse_count > 0:
+                issues.append(f"{health.reuse_count} reused")
+            if health.old_count > 0:
+                issues.append(f"{health.old_count} old")
+            self.tooltip = f"Minor issues: {', '.join(issues)}" if issues else "Good"
+        else:
+            self.tooltip = "Review weak or reused credentials"
 
     def _render_display(self) -> None:
         """Render the complete health display."""
@@ -83,14 +100,14 @@ class SecurityScore(Static):
         self.update("\n".join(lines))
 
     def _get_score_color(self, score: int) -> str:
-        """Get color based on security score - Operator theme."""
+        """Get color based on security score - Operator theme palette."""
         if score >= 80:
-            return "#00FFFF"  # Operator primary (cyan)
+            return "#00FFFF"  # Cyan - excellent
         if score >= 60:
-            return "#00cc99"  # Teal
+            return "#22c55e"  # Green - good
         if score >= 40:
-            return "#8b5cf6"  # Operator secondary (purple)
-        return "#ef4444"  # Error red
+            return "#f59e0b"  # Amber - needs attention
+        return "#ef4444"  # Red - critical
 
     def _build_histogram(self, health: VaultHealthResult) -> list[str]:
         """Build strength distribution histogram."""
@@ -108,7 +125,7 @@ class SecurityScore(Static):
             (0, "WEAK  ", "#ef4444"),
             (1, "POOR  ", "#ef4444"),
             (2, "FAIR  ", "#f59e0b"),
-            (3, "GOOD  ", "#60a5fa"),
+            (3, "GOOD  ", "#00FFFF"),
             (4, "STRONG", "#22c55e"),
         ]
 
@@ -256,6 +273,8 @@ class MainMenuScreen(Screen):
         self._refresh_dashboard()
         self._update_clock()
         self.set_interval(1, self._update_clock)
+        # Start subtle pulse on DECRYPTED status indicator
+        self.set_interval(3.0, self._pulse_status)
 
     def _log_startup_sequence(self) -> None:
         """Log welcome message and tips to the terminal."""
@@ -266,16 +285,19 @@ class MainMenuScreen(Screen):
         terminal.log_raw("[bold #8b5cf6]Quick Navigation Terminal[/]")
         terminal.log_raw("[dim]Navigate PassFX using commands[/]")
         terminal.log_raw("")
-        terminal.log_raw("[#64748b]Commands:[/]")
-        terminal.log_raw("  [#60a5fa]/key[/]  [dim]→ Passwords[/]")
-        terminal.log_raw("  [#60a5fa]/gen[/]  [dim]→ Generator[/]")
-        terminal.log_raw("  [#60a5fa]/help[/] [dim]→ All commands[/]")
+        terminal.log_raw("[#666666]Commands:[/]")
+        terminal.log_raw("  [#00FFFF]/key[/]  [dim]→ Passwords[/]")
+        terminal.log_raw("  [#00FFFF]/gen[/]  [dim]→ Generator[/]")
+        terminal.log_raw("  [#00FFFF]/help[/] [dim]→ All commands[/]")
         terminal.log_raw("")
-        terminal.log_raw("[dim]Press[/] [#a78bfa]/[/] [dim]to focus terminal[/]")
-        terminal.log_raw("[dim]Press[/] [#a78bfa]ESC[/] [dim]to return to menu[/]")
+        terminal.log_raw("[dim]Press[/] [#8b5cf6]/[/] [dim]to focus terminal[/]")
+        terminal.log_raw("[dim]Press[/] [#8b5cf6]ESC[/] [dim]to return to menu[/]")
 
     def _update_clock(self) -> None:
-        """Update the header clock with current time and vault stats."""
+        """Update the header clock with current time and vault stats.
+
+        Applies a micro tick-glow effect to indicate time refresh.
+        """
         app: PassFXApp = self.app  # type: ignore
         now = datetime.now().strftime("%H:%M:%S")
 
@@ -292,7 +314,29 @@ class MainMenuScreen(Screen):
             vault_size = f"[dim]│[/] [#8b5cf6]{vault_size}[/]"
 
         clock_widget = self.query_one("#header-clock", Static)
-        clock_widget.update(f"[#60a5fa]{now}[/] {vault_size}")
+        clock_widget.update(f"[#00FFFF]{now}[/] {vault_size}")
+        # Micro tick glow - brief brightness shift
+        clock_widget.add_class("tick-glow")
+        self.set_timer(0.15, lambda: clock_widget.remove_class("tick-glow"))
+
+    def _pulse_status(self) -> None:
+        """Subtle pulse on DECRYPTED status indicator.
+
+        Creates a slow heartbeat effect indicating active encryption monitoring.
+        """
+        app: PassFXApp = self.app  # type: ignore
+        if not app._unlocked:  # pylint: disable=protected-access
+            return
+
+        lock_widget = self.query_one("#header-lock", Static)
+        # Subtle brightness pulse - toggle intensity briefly
+        lock_widget.update("[dim]│[/] [bold #00ff41]DECRYPTED[/]")
+        self.set_timer(0.5, self._reset_status)
+
+    def _reset_status(self) -> None:
+        """Reset DECRYPTED status to normal intensity."""
+        lock_widget = self.query_one("#header-lock", Static)
+        lock_widget.update("[dim]│[/] [#22c55e]DECRYPTED[/]")
 
     def on_screen_resume(self) -> None:
         """Called when screen becomes active again after being covered."""
@@ -419,7 +463,7 @@ class MainMenuScreen(Screen):
             return
 
         # Echo the command to the log
-        terminal.write_log(f"[bold #a78bfa]>[/] {raw_command}")
+        terminal.write_log(f"[bold #8b5cf6]>[/] {raw_command}")
 
         # Normalize command: remove leading slash, uppercase for matching
         command = raw_command.lstrip("/").upper()
