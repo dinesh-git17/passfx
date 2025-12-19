@@ -352,11 +352,12 @@ class TestCallbackInvocation:
         mock_pyperclip = MagicMock()
         callback = MagicMock()
         captured_callback: list[Any] = []
+        mock_timer_instance = MagicMock()
+        mock_timer_instance.cancel = MagicMock()  # Explicitly add cancel method
 
         def capture_timer(timeout: float, callback_fn: Any) -> MagicMock:
             captured_callback.append(callback_fn)
-            timer = MagicMock(spec=threading.Timer)
-            return timer
+            return mock_timer_instance
 
         with patch.dict("sys.modules", {"pyperclip": mock_pyperclip}):
             with patch("threading.Timer", side_effect=capture_timer):
@@ -386,10 +387,12 @@ class TestCallbackInvocation:
         """No error when on_clear is None and timer fires."""
         mock_pyperclip = MagicMock()
         captured_callback: list[Any] = []
+        mock_timer_instance = MagicMock()
+        mock_timer_instance.cancel = MagicMock()  # Explicitly add cancel method
 
         def capture_timer(timeout: float, callback_fn: Any) -> MagicMock:
             captured_callback.append(callback_fn)
-            return MagicMock(spec=threading.Timer)
+            return mock_timer_instance
 
         with patch.dict("sys.modules", {"pyperclip": mock_pyperclip}):
             with patch("threading.Timer", side_effect=capture_timer):
@@ -1052,11 +1055,12 @@ class TestSafetyGuarantees:
         """Timer callback actually clears the clipboard."""
         mock_pyperclip = MagicMock()
         captured_callback: list[Any] = []
+        mock_timer_instance = MagicMock()
+        mock_timer_instance.cancel = MagicMock()  # Explicitly add cancel method
 
         def capture_timer(timeout: float, callback_fn: Any) -> MagicMock:
             captured_callback.append(callback_fn)
-            timer = MagicMock(spec=threading.Timer)
-            return timer
+            return mock_timer_instance
 
         with patch.dict("sys.modules", {"pyperclip": mock_pyperclip}):
             with patch("threading.Timer", side_effect=capture_timer):
