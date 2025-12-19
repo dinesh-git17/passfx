@@ -2902,35 +2902,150 @@ NotesScreen #notes-table > .datatable--odd-row {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   ENV VARS SCREEN - CONFIG INJECTOR THEME
-   Theme: Amber/Yellow (#f59e0b) for Low-level System Access
+   ENV VARS SCREEN - OPERATOR THEME (Indigo Accent - System Config)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Amber accent color */
-$pfx-amber: #f59e0b;
-$pfx-amber-dim: #92400e;
-$pfx-amber-light: #fbbf24;
+/* Indigo accent color for Envs */
+$pfx-indigo: #818cf8;
+$pfx-indigo-dim: #6366f1;
+$pfx-indigo-dark: #4f46e5;
 
-/* ENV Header Block - Amber variant */
-.env-header {
-    background: #f59e0b;
+/* Screen background - pure black operator theme */
+EnvsScreen {
+    background: $operator-black;
+}
+
+EnvsScreen #app-header {
+    background: $operator-black;
+    border-bottom: heavy $pfx-indigo-dim;
+}
+
+EnvsScreen #header-branding {
+    background: $operator-black;
+}
+
+EnvsScreen #app-footer {
+    background: $operator-black;
+    border-top: heavy $pfx-indigo-dim;
+}
+
+EnvsScreen #footer-version {
+    background: $operator-black;
+}
+
+EnvsScreen #footer-keys {
+    background: $operator-black;
+}
+
+EnvsScreen .keycap {
+    background: $operator-surface;
+}
+
+EnvsScreen .keycap-label {
+    background: $operator-black;
+}
+
+/* Envs screen inspector header - indigo accent */
+EnvsScreen .pane-header-block-accent {
+    width: 100%;
+    height: 1;
+    background: $pfx-indigo;
     color: #000000;
+    text-style: bold;
+    padding: 0 1;
 }
 
-/* ENV Card wrapper with amber accent */
-.env-card {
-    border-left: heavy #f59e0b;
+/* Envs screen inspector content - full width */
+EnvsScreen #inspector-content {
+    width: 100%;
+    height: 1fr;
+    padding: 1 2;
+    overflow-y: auto;
+    background: $operator-black;
 }
 
-/* ENV Preview with amber border */
-.env-preview {
-    border: solid #f59e0b 50%;
-    border-title-color: #f59e0b;
+/* Envs screen terminal box - indigo border title */
+EnvsScreen .notes-terminal-box {
+    background: #050505;
+    border: solid $pfx-indigo 50%;
+    width: 100%;
+    height: 1fr;
+    min-height: 5;
+    padding: 1;
+    overflow-y: auto;
+    border-title-align: center;
+    border-title-color: $pfx-indigo;
 }
 
-/* ENV Table - Mainframe Terminal Look with Indigo accents */
-#envs-table {
-    background: $pfx-bg;
+/* Envs screen sections fill width */
+EnvsScreen .notes-section {
+    width: 100%;
+    height: 1fr;
+}
+
+EnvsScreen .strength-section {
+    width: 100%;
+    height: auto;
+    padding: 0 0 1 0;
+    margin-bottom: 1;
+}
+
+EnvsScreen .field-grid {
+    width: 100%;
+    height: auto;
+    padding: 0 0 1 0;
+}
+
+EnvsScreen .inspector-header {
+    width: 100%;
+    height: auto;
+    padding: 1 0;
+    margin-bottom: 1;
+    border-bottom: solid $pfx-indigo 30%;
+}
+
+/* Envs screen vault panes - ensure full fill */
+EnvsScreen #vault-body {
+    width: 100%;
+    height: 100%;
+    background: $operator-black;
+}
+
+EnvsScreen #vault-grid-pane {
+    width: 65%;
+    height: 100%;
+    background: $operator-black;
+    border-right: solid $pfx-indigo 30%;
+}
+
+EnvsScreen #vault-inspector {
+    width: 35%;
+    height: 100%;
+    background: $operator-black;
+    padding: 0;
+    overflow-y: hidden;
+}
+
+/* Ensure all inspector children fill width */
+EnvsScreen #inspector-content > Vertical {
+    width: 100%;
+}
+
+EnvsScreen #inspector-content > Vertical > Horizontal {
+    width: 100%;
+}
+
+EnvsScreen #inspector-content > Vertical > Vertical {
+    width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENVS TABLE - OPERATOR THEME DATA STREAM (Indigo Accent)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Envs Table - Pure black data stream terminal */
+EnvsScreen #envs-table {
+    background: $operator-black;
     border: none;
     margin: 0;
     padding: 0;
@@ -2939,34 +3054,130 @@ $pfx-amber-light: #fbbf24;
     overflow-x: hidden;
 }
 
-#envs-table:focus {
+EnvsScreen #envs-table:focus {
     border: none;
 }
 
-#envs-table > .datatable--cursor {
+/* Data stream selection - prominent indigo highlight with cyan border */
+EnvsScreen #envs-table > .datatable--cursor {
     background: #3730a3;
     color: $pfx-fg;
-    text-style: none;
+    text-style: bold;
+    border-left: heavy $operator-primary;
 }
 
-#envs-table > .datatable--cursor:hover {
+EnvsScreen #envs-table > .datatable--cursor:hover {
     background: #4338ca;
 }
 
-#envs-table > .datatable--header {
-    background: #6366f1;
-    color: black;
+/* Headers - Indigo accent for system labels */
+EnvsScreen #envs-table > .datatable--header {
+    background: $pfx-indigo;
+    color: #000000;
     text-style: bold;
 }
 
-#envs-table > .datatable--even-row {
-    background: #02040a;
-    border-bottom: solid #1e293b;
+/* Row styling - dark data stream with subtle separators and breathing room */
+EnvsScreen #envs-table > .datatable--even-row {
+    background: $operator-black;
+    border-bottom: solid #1a1a1a;
+    height: 2;
 }
 
-#envs-table > .datatable--odd-row {
-    background: #060a12;
-    border-bottom: solid #1e293b;
+EnvsScreen #envs-table > .datatable--odd-row {
+    background: #050505;
+    border-bottom: solid #1a1a1a;
+    height: 2;
+}
+
+/* Envs screen pane footer */
+EnvsScreen .pane-footer {
+    background: $operator-black;
+    color: $operator-muted;
+    border-top: solid $pfx-indigo 30%;
+}
+
+/* Envs modals - landscape layout to prevent scrolling */
+#pwd-modal.env-modal-wide {
+    width: 140;
+    max-height: 85%;
+}
+
+/* Horizontal input row for side-by-side fields */
+.env-modal-wide .input-row {
+    width: 100%;
+    height: auto;
+    align: left top;
+}
+
+/* Column for side-by-side inputs */
+.env-modal-wide .input-col {
+    width: 1fr;
+    height: auto;
+    padding-right: 2;
+}
+
+.env-modal-wide .input-col:last-child {
+    padding-right: 0;
+}
+
+/* TextArea for env content - shorter height */
+.env-modal-wide .note-code-editor {
+    height: 10;
+    min-height: 8;
+    max-height: 12;
+}
+
+/* Modal buttons - compact single line */
+.env-modal-wide #modal-buttons {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    content-align: center middle;
+    padding: 1 0 0 0;
+}
+
+.env-modal-wide #modal-buttons Button {
+    width: 24;
+    min-width: 24;
+    max-width: 24;
+    height: 3;
+    min-height: 3;
+    max-height: 3;
+    margin: 0 1;
+    padding: 0 2;
+}
+
+.env-modal-wide #import-button {
+    width: 24;
+    min-width: 24;
+    max-width: 24;
+    background: $pfx-indigo-dark;
+    color: $pfx-indigo;
+    border: solid $pfx-indigo;
+}
+
+.env-modal-wide #import-button:hover {
+    background: $pfx-indigo;
+    color: #000000;
+}
+
+.env-modal-wide #cancel-button {
+    width: 24;
+    min-width: 24;
+    max-width: 24;
+    background: #1e293b;
+    color: #94a3b8;
+    border: solid #475569;
+}
+
+.env-modal-wide #save-button {
+    width: 24;
+    min-width: 24;
+    max-width: 24;
+    background: #166534;
+    color: #22c55e;
+    border: solid #22c55e;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

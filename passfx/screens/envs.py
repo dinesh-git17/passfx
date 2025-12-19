@@ -82,10 +82,10 @@ class ViewEnvModal(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade view modal layout."""
-        # Get content preview (first 40 chars, masked)
+        # Get content preview (first 60 chars)
         preview = (
-            self.env.content[:40] + "..."
-            if len(self.env.content) > 40
+            self.env.content[:60] + "..."
+            if len(self.env.content) > 60
             else self.env.content
         )
         preview = preview.replace("\n", " ")
@@ -99,8 +99,8 @@ class ViewEnvModal(ModalScreen[None]):
 
             # Data Display Body
             with Vertical(id="pwd-form"):
-                # Row 1: Config Name
-                yield Label("> CONFIG_NAME", classes="input-label")
+                # Row 1: Config Title
+                yield Label("> CONFIG_TITLE", classes="input-label")
                 yield Static(
                     f"  {self.env.title}", classes="view-value", id="title-value"
                 )
@@ -108,7 +108,7 @@ class ViewEnvModal(ModalScreen[None]):
                 # Row 2: Filename
                 yield Label("> FILE_TARGET", classes="input-label")
                 yield Static(
-                    f"  [#a5b4fc]{self.env.filename}[/]",
+                    f"  [#fcd34d]{self.env.filename}[/]",
                     classes="view-value",
                     id="filename-value",
                 )
@@ -116,8 +116,8 @@ class ViewEnvModal(ModalScreen[None]):
                 # Row 3: Stats
                 yield Label("> CONFIG_STATS", classes="input-label")
                 yield Static(
-                    f"  [#a5b4fc]{self.env.line_count}[/] lines  "
-                    f"[#a5b4fc]{self.env.var_count}[/] vars",
+                    f"  [#fcd34d]{self.env.line_count}[/] lines  "
+                    f"[#fcd34d]{self.env.var_count}[/] vars",
                     classes="view-value",
                     id="stats-value",
                 )
@@ -125,7 +125,7 @@ class ViewEnvModal(ModalScreen[None]):
                 # Row 4: Content Preview
                 yield Label("> CONTENT_PREVIEW", classes="input-label")
                 yield Static(
-                    f"  [#6366f1]{preview}[/]",
+                    f"  [#f59e0b]{preview}[/]",
                     classes="view-value secret",
                     id="preview-value",
                 )
@@ -167,45 +167,42 @@ class AddEnvModal(ModalScreen[EnvEntry | None]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade modal layout with TextArea."""
-        with Vertical(id="env-edit-modal"):
+        with Vertical(id="pwd-modal", classes="secure-terminal env-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
-                    yield Static(
-                        "[bold #f59e0b][ :: SECURE WRITE PROTOCOL :: ][/]",
-                        id="env-edit-title",
-                    )
-                    yield Static("[#22c55e]STATUS: OPEN[/]", classes="modal-status")
+                    yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: OPEN", classes="modal-status")
 
-            # Form
-            with Vertical(id="env-form"):
-                # Title input
-                yield Label("[#f59e0b]> CONFIG_TITLE[/]", classes="env-input-label")
-                yield Input(placeholder="e.g. Project X Production", id="title-input")
+            # Form - landscape layout
+            with Vertical(id="pwd-form"):
+                # Row 1: Title and Filename side-by-side
+                with Horizontal(classes="input-row"):
+                    with Vertical(classes="input-col"):
+                        yield Label("> CONFIG_TITLE", classes="input-label")
+                        yield Input(
+                            placeholder="e.g. Project X Production", id="title-input"
+                        )
+                    with Vertical(classes="input-col"):
+                        yield Label("> FILENAME", classes="input-label")
+                        yield Input(
+                            placeholder="e.g. .env.production", id="filename-input"
+                        )
 
-                # Filename input
-                yield Label("[#f59e0b]> FILENAME[/]", classes="env-input-label")
-                yield Input(placeholder="e.g. .env.production", id="filename-input")
-
-                # Content TextArea
-                yield Label(
-                    "[#f59e0b]> CONTENT[/]  [dim #64748b]paste or drop file[/]",
-                    classes="env-input-label",
-                )
+                # Row 2: Content TextArea
+                yield Label("> CONTENT", classes="input-label")
                 yield TextArea(
                     "",
                     id="content-area",
                     language="dotenv",
-                    classes="code-editor",
+                    classes="note-code-editor",
                 )
 
-            # Footer Actions - right aligned
+            # Footer Actions
             with Horizontal(id="modal-buttons"):
-                yield Button(r"\[ IMPORT ]", id="import-button", classes="import-btn")
-                yield Button(r"\[ ABORT ]", id="cancel-button")
-                yield Button(
-                    r"\[ ENCRYPT & COMMIT ]", id="save-button", classes="env-save-btn"
-                )
+                yield Button(r"\[ FILE ]", id="import-button")
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
+                yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -301,50 +298,49 @@ class EditEnvModal(ModalScreen[dict | None]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade modal layout."""
-        with Vertical(id="env-edit-modal"):
+        with Vertical(id="pwd-modal", classes="secure-terminal env-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static(
-                        f"[bold #f59e0b][ :: MODIFY // {self.env.title.upper()[:18]} :: ][/]",
-                        id="env-edit-title",
+                        f"[ :: MODIFY // {self.env.title.upper()[:18]} :: ]",
+                        id="modal-title",
                     )
-                    yield Static("[#22c55e]STATUS: EDIT[/]", classes="modal-status")
+                    yield Static("STATUS: EDIT", classes="modal-status")
 
-            # Form
-            with Vertical(id="env-form"):
-                yield Label("[#f59e0b]> CONFIG_TITLE[/]", classes="env-input-label")
-                yield Input(
-                    value=self.env.title,
-                    placeholder="e.g. Project X Production",
-                    id="title-input",
-                )
+            # Form - landscape layout
+            with Vertical(id="pwd-form"):
+                # Row 1: Title and Filename side-by-side
+                with Horizontal(classes="input-row"):
+                    with Vertical(classes="input-col"):
+                        yield Label("> CONFIG_TITLE", classes="input-label")
+                        yield Input(
+                            value=self.env.title,
+                            placeholder="e.g. Project X Production",
+                            id="title-input",
+                        )
+                    with Vertical(classes="input-col"):
+                        yield Label("> FILENAME", classes="input-label")
+                        yield Input(
+                            value=self.env.filename,
+                            placeholder="e.g. .env.production",
+                            id="filename-input",
+                        )
 
-                yield Label("[#f59e0b]> FILENAME[/]", classes="env-input-label")
-                yield Input(
-                    value=self.env.filename,
-                    placeholder="e.g. .env.production",
-                    id="filename-input",
-                )
-
-                yield Label(
-                    "[#f59e0b]> CONTENT[/]  [dim #64748b]paste or drop file[/]",
-                    classes="env-input-label",
-                )
+                # Row 2: Content TextArea
+                yield Label("> CONTENT", classes="input-label")
                 yield TextArea(
                     self.env.content,
                     id="content-area",
                     language="dotenv",
-                    classes="code-editor",
+                    classes="note-code-editor",
                 )
 
-            # Footer Actions - right aligned
+            # Footer Actions
             with Horizontal(id="modal-buttons"):
-                yield Button(r"\[ IMPORT ]", id="import-button", classes="import-btn")
-                yield Button(r"\[ ABORT ]", id="cancel-button")
-                yield Button(
-                    r"\[ ENCRYPT & COMMIT ]", id="save-button", classes="env-save-btn"
-                )
+                yield Button(r"\[ FILE ]", id="import-button")
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
+                yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
 
     def on_drop(self, event: Any) -> None:
         """Handle file drop events."""
@@ -425,22 +421,26 @@ class ImportPathModal(ModalScreen[str | None]):
 
     def compose(self) -> ComposeResult:
         """Create the path input modal."""
-        with Vertical(id="import-modal"):
-            yield Static(
-                "[bold #f59e0b]╔══ IMPORT FROM PATH ══╗[/]",
-                id="import-title",
-            )
-            yield Label("[#f59e0b]FILE_PATH[/]", classes="env-input-label")
-            yield Input(placeholder="/path/to/.env", id="path-input")
-            yield Static(
-                "[dim #64748b]Enter absolute path to .env file[/]",
-                id="import-hint",
-            )
-            with Horizontal(id="modal-buttons"):
-                yield Button(r"\[ESC] ABORT", id="cancel-button")
-                yield Button(
-                    "[ENTER] IMPORT", id="do-import-button", classes="env-save-btn"
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: IMPORT PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: READY", classes="modal-status")
+
+            # Form
+            with Vertical(id="pwd-form"):
+                yield Label("> FILE_PATH", classes="input-label")
+                yield Input(placeholder="/path/to/.env", id="path-input")
+                yield Static(
+                    "[dim]Enter absolute path to .env file[/]",
+                    classes="view-value",
                 )
+
+            # Footer Actions
+            with Horizontal(id="modal-buttons"):
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
+                yield Button(r"\[ IMPORT ]", variant="primary", id="do-import-button")
 
     def on_mount(self) -> None:
         """Focus input."""
@@ -485,27 +485,20 @@ class ConfirmDeleteEnvModal(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade modal layout."""
-        with Vertical(id="env-delete-modal"):
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
             # HUD Header with warning status
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
-                    yield Static(
-                        "[bold #f59e0b][ :: PURGE PROTOCOL :: ][/]",
-                        id="delete-title",
-                    )
-                    yield Static("[#ef4444]STATUS: ARMED[/]", classes="modal-status")
-            with Vertical(id="delete-content"):
-                yield Static(
-                    f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target"
-                )
-                yield Static(
-                    "[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning"
-                )
+                    yield Static(r"\[ :: PURGE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: ARMED", classes="modal-status")
+
+            with Vertical(id="pwd-form"):
+                yield Static(f"TARGET: '{self.item_name}'", classes="delete-target")
+                yield Static("THIS ACTION CANNOT BE UNDONE", classes="warning")
+
             with Horizontal(id="modal-buttons"):
                 yield Button(r"\[ ABORT ]", id="cancel-button")
-                yield Button(
-                    r"\[ CONFIRM PURGE ]", id="delete-button", classes="env-delete-btn"
-                )
+                yield Button(r"\[ CONFIRM PURGE ]", variant="error", id="delete-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -540,58 +533,87 @@ class EnvsScreen(Screen):
         Binding("escape", "back", "Back"),
     ]
 
+    # Operator theme color tokens - Indigo accent (system config)
+    COLORS = {
+        "primary": "#00FFFF",  # Cyan - active selection, titles
+        "accent": "#818cf8",  # Indigo - labels, headers
+        "success": "#22c55e",  # Green - high strength, decrypted
+        "muted": "#666666",  # Dim grey - metadata, timestamps
+        "text": "#e0e0e0",  # Light text
+        "surface": "#0a0a0a",  # Dark surface
+    }
+
     def __init__(self) -> None:
         super().__init__()
         self._selected_row_key: str | None = None
         self._pulse_state: bool = True
 
+    # pylint: disable=too-many-locals
     def compose(self) -> ComposeResult:
         """Create the envs screen layout."""
-        # 1. Global Header with Breadcrumbs
+        c = self.COLORS
+
+        # 1. Global Header with Breadcrumbs - Operator theme
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] "
-                "[#475569]>[/] [bold #6366f1]ENV VARS[/]",
+                f"[bold {c['primary']}]VAULT // CONFIG_FILES[/]",
                 id="header-branding",
+                classes="screen-header",
             )
-            yield Static("░░ CONFIG INJECTOR ░░", id="header-status")
-            yield Static("", id="header-lock")
+            with Horizontal(id="header-right"):
+                yield Static("", id="header-lock")  # Will be updated with pulse
 
         # 2. Body (Master-Detail Split)
         with Horizontal(id="vault-body"):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
-                yield Static(" ≡ CONFIG_DATABASE ", classes="pane-header-block-indigo")
                 yield DataTable(id="envs-table", cursor_type="row")
-                # Empty state
+                # Empty state placeholder (hidden by default)
                 with Center(id="empty-state"):
                     yield Static(
-                        "[dim #475569]╔══════════════════════════════════════╗\n"
+                        f"[dim {c['muted']}]╔══════════════════════════════════════╗\n"
                         "║                                      ║\n"
                         "║      NO CONFIGS FOUND                ║\n"
                         "║                                      ║\n"
-                        "║      INITIATE SEQUENCE [A]           ║\n"
+                        f"║      INITIATE SEQUENCE [{c['primary']}]A[/]           ║\n"
                         "║                                      ║\n"
                         "╚══════════════════════════════════════╝[/]",
                         id="empty-state-text",
                     )
+                # Footer with object count
                 yield Static(
                     " └── SYSTEM_READY", classes="pane-footer", id="grid-footer"
                 )
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
-                yield Static(" ≡ CONFIG_INSPECTOR ", classes="pane-header-block-indigo")
-                yield Vertical(id="inspector-content")
+                # Inverted Block Header - Operator accent (yellow)
+                yield Static(" ≡ CONFIG_INSPECTOR ", classes="pane-header-block-accent")
+                yield Vertical(id="inspector-content")  # Dynamic content here
 
-        # 3. Global Footer
+        # 3. Global Footer - Mechanical keycap style
         with Horizontal(id="app-footer"):
-            yield Static(" VAULT ", id="footer-version")
-            yield Static(
-                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  "
-                "\\[V] View  \\[ESC] Back",
-                id="footer-keys-static",
-            )
+            yield Static(f" [{c['accent']}]CONFIGS[/] ", id="footer-version")
+            with Horizontal(id="footer-keys"):
+                # Keycap groups for each command
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] A [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Add[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] C [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Copy[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] E [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Edit[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] D [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Del[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] V [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]View[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] ESC [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Back[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Initialize the data table."""
@@ -601,13 +623,14 @@ class EnvsScreen(Screen):
         self.set_interval(1.0, self._update_pulse)
 
     def _update_pulse(self) -> None:
-        """Update the pulse indicator."""
+        """Update the pulse indicator in the header."""
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
+        c = self.COLORS
         if self._pulse_state:
-            header_lock.update("[#a5b4fc]● [bold]INJECTOR[/][/]")
+            header_lock.update(f"[{c['success']}]● [bold]ENCRYPTED[/][/]")
         else:
-            header_lock.update("[#4f46e5]○ [bold]INJECTOR[/][/]")
+            header_lock.update(f"[#166534]○ [{c['success']}]ENCRYPTED[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector."""
@@ -625,22 +648,25 @@ class EnvsScreen(Screen):
 
     # pylint: disable=too-many-locals
     def _refresh_table(self) -> None:
-        """Refresh the data table."""
+        """Refresh the data table with configs."""
         app: PassFXApp = self.app  # type: ignore
         table = self.query_one("#envs-table", DataTable)
         empty_state = self.query_one("#empty-state", Center)
+        c = self.COLORS
 
         table.clear(columns=True)
 
-        table.add_column("", width=3)
-        table.add_column("Title", width=25)
-        table.add_column("Filename", width=22)
-        table.add_column("Vars", width=8)
-        table.add_column("Updated", width=12)
-        table.add_column("Notes", width=55)  # Wider to fill remaining space
+        # Column layout - data stream style (matching Notes total: 118)
+        table.add_column("", width=2)  # Selection indicator column
+        table.add_column("TITLE", width=28)
+        table.add_column("FILENAME", width=20)
+        table.add_column("VARS", width=8)
+        table.add_column("SYNC", width=12)
+        table.add_column("PREVIEW", width=48)
 
         envs = app.vault.get_envs()
 
+        # Toggle visibility based on entry count
         if len(envs) == 0:
             table.display = False
             empty_state.display = True
@@ -649,18 +675,31 @@ class EnvsScreen(Screen):
             empty_state.display = False
 
         for env in envs:
+            # Selection indicator - will be updated dynamically
             is_selected = env.id == self._selected_row_key
-            indicator = "[bold #6366f1]▍[/]" if is_selected else " "
+            indicator = f"[bold {c['primary']}]▸[/]" if is_selected else " "
+
+            # Title - primary cyan for selected, white otherwise
             title_text = env.title[:20] if len(env.title) > 20 else env.title
-            filename_text = f"[#94a3b8]{env.filename}[/]"
-            vars_text = f"[#f59e0b]{env.var_count}[/]"
+
+            # Filename (muted grey)
+            filename_text = f"[{c['muted']}]{env.filename}[/]"
+
+            # Vars count (muted grey)
+            vars_text = f"[{c['muted']}]{env.var_count}[/]"
+
+            # Relative time (dim muted)
             updated = _get_relative_time(env.updated_at)
-            updated_text = f"[dim]{updated}[/]"
-            # Truncate notes to first 50 characters
-            notes_preview = env.notes[:50] if env.notes else ""
-            if env.notes and len(env.notes) > 50:
-                notes_preview = notes_preview + "..."
-            notes_text = f"[dim #64748b]{notes_preview}[/]"
+            updated_text = f"[dim {c['muted']}]{updated}[/]"
+
+            # Content preview (dim)
+            preview = env.content.replace("\n", " ")[:30]
+            if len(env.content) > 30:
+                preview += "…"
+            if preview.strip():
+                preview_text = f"[dim {c['muted']}]{preview}[/]"
+            else:
+                preview_text = f"[dim {c['muted']}]// EMPTY[/]"
 
             table.add_row(
                 indicator,
@@ -668,34 +707,44 @@ class EnvsScreen(Screen):
                 filename_text,
                 vars_text,
                 updated_text,
-                notes_text,
+                preview_text,
                 key=env.id,
             )
 
+        # Update the grid footer with object count
         footer = self.query_one("#grid-footer", Static)
         count = len(envs)
-        footer.update(f" └── [{count}] CONFIGS LOADED")
+        footer.update(f" └── [{c['primary']}]{count}[/] CONFIGS LOADED")
 
     def _update_row_indicators(self, old_key: str | None, new_key: str | None) -> None:
-        """Update indicator column for selection change."""
+        """Update only the indicator column for old and new selected rows.
+
+        This avoids rebuilding the entire table on selection change.
+        """
         table = self.query_one("#envs-table", DataTable)
         app: PassFXApp = self.app  # type: ignore
         envs = app.vault.get_envs()
+        c = self.COLORS
+
+        # Build a map of id -> entry for quick lookup
         env_map = {e.id: e for e in envs}
 
+        # Get column keys (first column is the indicator)
         if not table.columns:
             return
         indicator_col = list(table.columns.keys())[0]
 
+        # Clear old selection indicator
         if old_key and old_key in env_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
             except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
                 pass  # Row may not exist during rapid navigation
 
+        # Set new selection indicator - cyan arrow for locked target feel
         if new_key and new_key in env_map:
             try:
-                table.update_cell(new_key, indicator_col, "[bold #6366f1]▍[/]")
+                table.update_cell(new_key, indicator_col, f"[bold {c['primary']}]▸[/]")
             except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
                 pass  # Row may not exist during rapid navigation
 
@@ -793,15 +842,25 @@ class EnvsScreen(Screen):
         self._update_inspector(key_value)
         self._update_row_indicators(old_key, key_value)
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-statements
     def _update_inspector(self, row_key: Any) -> None:
-        """Update the inspector panel with env details."""
+        """Update the inspector panel with env details.
+
+        Renders a structured "Config Inspector" with:
+        - Entry Header (large text, primary color)
+        - Field Grid (labels in accent, values in text)
+        - Config Stats (lines, vars)
+        - Preview Section (terminal style)
+        """
         inspector = self.query_one("#inspector-content", Vertical)
         inspector.remove_children()
+        c = self.COLORS
 
+        # Get the entry by row key
         app: PassFXApp = self.app  # type: ignore
         envs = app.vault.get_envs()
 
+        # Find entry by ID
         env = None
         for e in envs:
             if e.id == str(row_key):
@@ -809,94 +868,125 @@ class EnvsScreen(Screen):
                 break
 
         if not env:
+            # Empty state - styled for Operator theme
             inspector.mount(
                 Static(
-                    "[dim #555555]╔══════════════════════════╗\n"
-                    "║    SELECT A CONFIG       ║\n"
-                    "║    TO VIEW DETAILS       ║\n"
-                    "╚══════════════════════════╝[/]",
+                    f"[dim {c['muted']}]╔══════════════════════════════╗\n"
+                    "║                              ║\n"
+                    "║    SELECT A CONFIG           ║\n"
+                    "║    TO INSPECT DETAILS        ║\n"
+                    "║                              ║\n"
+                    "╚══════════════════════════════╝[/]",
                     classes="inspector-empty",
                 )
             )
             return
 
-        # Section 1: Config ID Card
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 1: Entry Header - Large title with underline
+        # ═══════════════════════════════════════════════════════════════
         inspector.mount(
             Vertical(
-                Horizontal(
-                    Vertical(
-                        Static(
-                            "[on #f59e0b][bold #000000] ENV [/][/]",
-                            classes="avatar-char",
-                        ),
-                        Static("[on #f59e0b]     [/]", classes="avatar-char"),
-                        classes="avatar-box",
-                    ),
-                    Vertical(
-                        Static(
-                            f"[bold #f8fafc]{env.title}[/]", classes="id-label-text"
-                        ),
-                        Static(
-                            f"[dim #94a3b8]{env.filename}[/]", classes="id-email-text"
-                        ),
-                        classes="id-details-stack",
-                    ),
-                    classes="id-card-header",
-                ),
-                classes="id-card-wrapper env-card",
-            )
-        )
-
-        # Section 2: Stats Widget
-        inspector.mount(
-            Vertical(
-                Static("[dim #6b7280]▸ CONFIG STATS[/]", classes="section-label"),
                 Static(
-                    f"[#f59e0b]LINES:[/] {env.line_count}    [#f59e0b]VARS:[/] {env.var_count}",
-                    classes="strength-bar-widget",
+                    f"[bold underline {c['primary']}]{env.title.upper()}[/]",
+                    classes="inspector-title",
                 ),
-                classes="security-widget",
+                classes="inspector-header",
             )
         )
 
-        # Section 3: Content Preview
-        preview_lines = []
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 2: Field Grid - Structured label/value pairs
+        # ═══════════════════════════════════════════════════════════════
+        inspector.mount(
+            Vertical(
+                # Type field
+                Horizontal(
+                    Static(f"[{c['accent']}]TYPE[/]", classes="field-label"),
+                    Static(f"[{c['text']}]CONFIG_FILE[/]", classes="field-value"),
+                    classes="field-row",
+                ),
+                # Filename
+                Horizontal(
+                    Static(f"[{c['accent']}]FILE[/]", classes="field-label"),
+                    Static(f"[{c['muted']}]{env.filename}[/]", classes="field-value"),
+                    classes="field-row",
+                ),
+                # Content hint - truncated
+                Horizontal(
+                    Static(f"[{c['accent']}]DATA[/]", classes="field-label"),
+                    Static(
+                        f"[{c['muted']}]●●●●●●●●●●●●[/]  " f"[dim]\\[V] to reveal[/]",
+                        classes="field-value",
+                    ),
+                    classes="field-row",
+                ),
+                classes="field-grid",
+            )
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 3: Config Stats - Size metrics
+        # ═══════════════════════════════════════════════════════════════
+        inspector.mount(
+            Vertical(
+                Static(
+                    f"[{c['accent']}]CONFIG_STATS[/]", classes="strength-section-label"
+                ),
+                Static(
+                    f"[{c['text']}]{env.line_count}[/] lines  "
+                    f"[{c['text']}]{env.var_count}[/] vars",
+                    classes="strength-bar",
+                ),
+                classes="strength-section",
+            )
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 4: Preview Terminal - Styled like terminal output
+        # ═══════════════════════════════════════════════════════════════
         if env.content:
-            lines = env.content.split("\n")[:8]
-            for i, line in enumerate(lines, 1):
+            lines = env.content.split("\n")
+            numbered_lines = []
+            for i, line in enumerate(lines[:8], 1):  # Limit to 8 lines
+                line_num = f"[dim {c['muted']}]{i:2}[/]"
                 line_preview = line[:35] if len(line) > 35 else line
+                # Highlight env var names
                 if "=" in line and not line.strip().startswith("#"):
                     parts = line_preview.split("=", 1)
-                    preview_lines.append(
-                        f"[dim #475569]{i:2}[/] │ [#f59e0b]{parts[0]}[/]=[dim]...[/]"
-                    )
+                    line_content = f"[{c['success']}]{parts[0]}[/]=[dim]...[/]"
                 else:
-                    preview_lines.append(
-                        f"[dim #475569]{i:2}[/] │ [dim #64748b]{line_preview}[/]"
+                    line_content = (
+                        f"[{c['success']}]{line_preview}[/]" if line.strip() else ""
                     )
-            if len(env.content.split("\n")) > 8:
-                preview_lines.append(
-                    "[dim #475569]   [/]   [dim #64748b]... more lines[/]"
+                numbered_lines.append(f"{line_num} │ {line_content}")
+            if len(lines) > 8:
+                numbered_lines.append(
+                    f"[dim {c['muted']}]   │ ... {len(lines) - 8} more[/]"
                 )
+            content_display = "\n".join(numbered_lines)
         else:
-            preview_lines.append("[dim #64748b] 1[/] │ [dim #555555]// EMPTY[/]")
+            content_display = (
+                f"[dim {c['muted']}] 1[/] │ [dim {c['muted']}]// EMPTY[/] "
+            )
 
-        preview_content = "\n".join(preview_lines)
         notes_terminal = Vertical(
-            Static(preview_content, classes="notes-code"),
-            classes="notes-editor env-preview",
+            Static(content_display, classes="notes-code"),
+            classes="notes-terminal-box",
         )
-        notes_terminal.border_title = "CONTENT_PREVIEW"
+        notes_terminal.border_title = "PREVIEW"
 
         inspector.mount(
             Vertical(
-                Static("[dim #6b7280]▸ PREVIEW[/]", classes="section-label"),
+                Static(f"[{c['accent']}]CONTENT[/]", classes="notes-section-label"),
                 notes_terminal,
                 classes="notes-section",
             )
         )
 
-        # Section 4: Footer
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 5: Footer Metadata Bar (ID + Updated)
+        # ═══════════════════════════════════════════════════════════════
         try:
             updated_full = datetime.fromisoformat(env.updated_at).strftime(
                 "%Y-%m-%d %H:%M"
@@ -907,11 +997,11 @@ class EnvsScreen(Screen):
         inspector.mount(
             Horizontal(
                 Static(
-                    f"[dim #475569]ID:[/] [#64748b]{env.id[:8]}[/]",
+                    f"[dim {c['muted']}]ID:[/] [{c['muted']}]{env.id[:8]}[/]",
                     classes="meta-id",
                 ),
                 Static(
-                    f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
+                    f"[dim {c['muted']}]SYNC:[/] [{c['muted']}]{updated_full}[/]",
                     classes="meta-updated",
                 ),
                 classes="inspector-footer-bar",
