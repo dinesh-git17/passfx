@@ -595,9 +595,11 @@ class TestSecurityProperties:
 
     def test_pin_uses_secrets_module(self) -> None:
         """PIN generation uses cryptographic randomness."""
-        pins = [generate_pin(length=6) for _ in range(500)]
-        # 6-digit PIN has 1M possibilities, 500 samples should be unique
-        assert len(set(pins)) == 500
+        # Use 100 samples to avoid birthday paradox collisions
+        # (500 samples from 1M has ~12% collision chance)
+        pins = [generate_pin(length=6) for _ in range(100)]
+        # 6-digit PIN has 1M possibilities, 100 samples should be unique
+        assert len(set(pins)) == 100
 
     def test_no_sequential_patterns_in_passwords(self) -> None:
         """Passwords don't contain obvious sequential patterns."""
