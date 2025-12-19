@@ -46,9 +46,13 @@ flags:
 # UI modules excluded - coverage focuses on security-critical code
 # (core crypto, vault, models, utils). UI rendering tests add
 # complexity without improving security guarantees.
+#
+# Pattern notes (from Codecov docs):
+# - "path/to/folder" ignores folder and ALL contents (recursive)
+# - "**/*" requires at least one subdirectory level (won't match direct children)
 ignore:
   - "passfx/__main__.py"
   - "**/__init__.py"
-  - "passfx/screens/**/*"
-  - "passfx/ui/**/*"
-  - "passfx/widgets/**/*"
+  - "passfx/screens"
+  - "passfx/ui"
+  - "passfx/widgets"
