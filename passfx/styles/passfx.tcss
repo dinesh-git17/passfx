@@ -26,6 +26,14 @@ $deep-black: #050505;
 $terminal-dim: #444444;
 $surface-black: #0a0a0a;
 
+/* Operator Theme Tokens - Pure black cyberpunk aesthetic */
+$operator-black: #000000;
+$operator-primary: #00FFFF;
+$operator-secondary: #8b5cf6;
+$operator-surface: #0a0a0a;
+$operator-text: #e0e0e0;
+$operator-muted: #666666;
+
 /* ═══════════════════════════════════════════════════════════════════════════
    GLOBAL STYLES
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -35,52 +43,58 @@ Screen {
     color: $pfx-fg;
 }
 
+/* Main Menu uses pure black Operator theme */
+MainMenuScreen {
+    background: $operator-black;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    CUSTOM HEADER - SYSTEM STATUS BAR
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* COMMAND BAR - Operator Theme Header with ASCII Logo */
 #app-header {
     width: 100%;
-    height: 3;
+    height: 4;
     dock: top;
-    background: #0f172a;
-    align: center middle;
+    background: $operator-black;
+    border-bottom: heavy $operator-secondary;
+    align: left middle;
 }
 
 #header-branding {
     width: auto;
-    min-width: 28;
-    height: 100%;
-    background: #0f172a;
-    color: #00d4ff;
-    text-style: bold;
+    height: 4;
+    background: $operator-black;
+    color: $operator-primary;
     content-align: left middle;
-    padding-left: 1;
+    padding: 1 2;
 }
 
-#header-status {
+#header-right {
     width: 1fr;
-    height: 100%;
-    color: #475569;
-    content-align: center middle;
+    height: 4;
+    background: $operator-black;
+    align: right middle;
+    padding: 0 2;
 }
 
 #header-clock {
     width: auto;
-    height: 100%;
-    color: #60a5fa;
+    height: auto;
+    color: $operator-primary;
     text-style: bold;
-    padding: 0 2;
-    content-align: center middle;
+    content-align: right middle;
+    background: $operator-black;
 }
 
 #header-lock {
     width: auto;
-    height: 100%;
-    color: #22c55e;
+    height: auto;
+    color: $pfx-success;
     text-style: bold;
-    padding-right: 1;
-    content-align: center middle;
+    content-align: right middle;
+    background: $operator-black;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -112,14 +126,15 @@ FooterKey > .footer-key--description {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CUSTOM FOOTER - GRID-ALIGNED COMMAND STRIP
+   CUSTOM FOOTER - Operator Theme Command Strip
    ═══════════════════════════════════════════════════════════════════════════ */
 
 #app-footer {
     width: 100%;
     height: 3;
     dock: bottom;
-    background: #0f172a;
+    background: $operator-black;
+    border-top: heavy $operator-secondary;
     align: center middle;
     padding: 0;
     margin: 0;
@@ -127,40 +142,43 @@ FooterKey > .footer-key--description {
 
 #footer-version {
     width: 28;
-    height: 100%;
-    background: #0a0e27;
-    color: #475569;
+    height: 3;
+    background: $operator-black;
+    color: $operator-muted;
     content-align: center middle;
 }
 
 #footer-keys {
     width: 1fr;
-    height: 100%;
-    background: #0f172a;
+    height: 3;
+    background: $operator-black;
     align: left middle;
     padding-left: 2;
 }
 
-/* Mechanical Keycap Styling */
+/* Mechanical Keycap Styling - Operator Theme */
 .keycap-group {
     width: auto;
-    height: 1;
+    height: auto;
     margin-right: 2;
 }
 
 .keycap {
     width: auto;
-    height: 1;
-    min-width: 3;
-    background: #334155;
+    height: auto;
+    min-width: 5;
+    background: $operator-surface;
+    color: $operator-primary;
+    text-style: bold;
     padding: 0 1;
 }
 
 .keycap-label {
     width: auto;
-    height: 1;
+    height: auto;
     background: transparent;
     margin-left: 1;
+    color: $operator-muted;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -305,17 +323,16 @@ LoginScreen {
     align: left top;
 }
 
+/* SECTOR GRID - Navigation Sidebar Operator Theme */
 #sidebar {
     width: 28;
     height: 100%;
-    background: #0f172a;
-    padding: 1 0;
-}
-
-#sidebar-logo {
-    text-align: center;
-    padding: 1 0;
-    margin-bottom: 1;
+    background: $operator-black;
+    padding: 1 1 0 1;
+    border: solid $operator-primary 30%;
+    border-title-align: center;
+    border-title-color: $operator-primary;
+    border-title-style: bold;
 }
 
 #sidebar-menu {
@@ -330,17 +347,32 @@ LoginScreen {
     border: none;
 }
 
-#sidebar-menu > .option-list--option-highlighted {
-    background: #3b82f6;
-    color: #0f172a;
-    text-style: bold;
+/* Navigation items - default state */
+#sidebar-menu > .option-list--option {
+    padding-left: 2;
+    color: $operator-text;
 }
 
-/* Dashboard View - Scrollable Container */
+/* Active/Highlighted state with left border glow */
+#sidebar-menu > .option-list--option-highlighted {
+    background: #0a2a2a;
+    color: #00FFFF;
+    text-style: bold;
+    border-left: heavy #00FFFF;
+    padding-left: 1;
+}
+
+/* Hover state */
+#sidebar-menu > .option-list--option-hover {
+    background: #1a1a2e;
+    color: #FFFFFF;
+}
+
+/* Dashboard View - Operator Theme */
 #dashboard-view {
     width: 1fr;
     height: 100%;
-    background: #1e293b;
+    background: $operator-black;
     padding: 0 2 1 2;
     scrollbar-gutter: stable;
 }
@@ -351,44 +383,46 @@ LoginScreen {
 
 #dashboard-title {
     text-align: center;
-    padding: 1 0;
-    margin-top: 1;
-    margin-bottom: 1;
+    padding: 0;
+    margin: 0;
     height: auto;
+    color: $operator-primary;
+    display: none;
 }
 
-/* Stats HUD Strip - Hardware Panel Look */
+/* Stats HUD Strip - Operator Theme */
 #stats-strip,
 #stats-strip-2 {
     width: 100%;
     height: 2fr;
     max-height: 10;
-    background: #0a0e27;
+    background: $operator-black;
+    border: solid $operator-primary 50%;
     padding: 0;
 }
 
 #stats-strip {
-    margin: 1 0 0 0;
+    margin: 0;
 }
 
 #stats-strip-2 {
     margin: 0 0 1 0;
-    border-top: solid #1e293b;
+    border-top: none;
 }
 
-/* Stat Segment - Responsive Card Design */
+/* Stat Segment - Operator Theme */
 .stat-segment {
     width: 1fr;
     min-width: 12;
     height: 100%;
     align: center middle;
     padding: 0 1;
-    border-right: solid #334155;
+    border-right: solid $operator-primary 30%;
     background: transparent;
 }
 
 .stat-segment:hover {
-    background: #1e3a5f;
+    background: $operator-surface;
 }
 
 .stat-segment:last-child {
@@ -396,7 +430,7 @@ LoginScreen {
 }
 
 .stat-label {
-    color: $pfx-muted;
+    color: $operator-muted;
     text-style: bold;
     text-align: center;
     height: 1;
@@ -446,15 +480,32 @@ LoginScreen {
     overflow: hidden;
 }
 
-/* CRT-style dashboard panels - deep recessed screen effect */
+/* HUD CARDS - Operator Theme Panels */
+.hud-card {
+    background: $operator-black;
+    border: solid $operator-primary;
+    border-title-align: center;
+    border-title-color: $operator-primary;
+    border-title-style: bold;
+    border-title-background: $operator-black;
+    padding: 1;
+    margin: 1;
+}
+
+.hud-card:focus {
+    border: solid $operator-secondary;
+}
+
+/* CRT-style dashboard panels - Operator Theme */
 .gauge-panel {
     width: 1fr;
     height: 100%;
-    background: #000000;
-    border: heavy $pfx-primary-dim;
-    border-title-color: $pfx-primary-light;
+    background: $operator-black;
+    border: solid $operator-primary;
+    border-title-align: center;
+    border-title-color: $operator-primary;
     border-title-style: bold;
-    border-title-background: #000000;
+    border-title-background: $operator-black;
     padding: 1 2;
     margin: 1 1 1 0;
     text-align: center;
@@ -463,11 +514,12 @@ LoginScreen {
 .log-panel {
     width: 1fr;
     height: 100%;
-    background: #000000;
-    border: heavy $pfx-accent-dim;
-    border-title-color: $pfx-accent;
+    background: $operator-black;
+    border: solid $operator-secondary;
+    border-title-align: center;
+    border-title-color: $operator-secondary;
     border-title-style: bold;
-    border-title-background: #000000;
+    border-title-background: $operator-black;
     padding: 1 2;
     margin: 1 0 1 1;
     text-align: left;
@@ -3293,7 +3345,7 @@ Button.note-delete-btn:focus {
    Theme: Purple/Violet (#8b5cf6) for System Commands
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Terminal Container - constrained to fit log-panel */
+/* SYSTEM TERMINAL - Operator Theme */
 #system-terminal {
     width: 1fr;
     max-width: 100%;
@@ -3308,8 +3360,8 @@ Button.note-delete-btn:focus {
     width: 1fr;
     max-width: 100%;
     height: 1fr;
-    background: #000000;
-    color: $pfx-fg;
+    background: $operator-black;
+    color: $operator-text;
     border: none;
     padding: 0;
     overflow-x: hidden;
@@ -3325,24 +3377,24 @@ Button.note-delete-btn:focus {
     width: 1fr;
     max-width: 100%;
     height: 1;
-    background: #000000;
+    background: $operator-black;
     align: left middle;
     padding: 0;
     dock: bottom;
 }
 
-/* Terminal Prompt - Arrow indicator */
+/* Terminal Prompt - Operator theme arrow */
 .terminal-prompt,
 #terminal-prompt {
     width: auto;
     height: 1;
-    color: $pfx-success;
+    color: $operator-primary;
     text-style: bold;
     background: transparent;
     padding: 0;
 }
 
-/* Terminal Input - Command text entry (terminal style) */
+/* Terminal Input - Command text entry (Operator theme) */
 #terminal-input {
     width: 1fr;
     height: 1;
@@ -3350,7 +3402,7 @@ Button.note-delete-btn:focus {
     border: none;
     padding: 0;
     margin: 0;
-    color: $pfx-fg;
+    color: $operator-text;
 }
 
 #terminal-input:focus {
@@ -3359,10 +3411,11 @@ Button.note-delete-btn:focus {
 }
 
 #terminal-input > .input--placeholder {
-    color: #475569;
+    color: $operator-muted;
 }
 
+/* Block cursor effect */
 #terminal-input > .input--cursor {
-    background: $pfx-success;
-    color: $pfx-bg;
+    background: $operator-primary;
+    color: $operator-black;
 }
