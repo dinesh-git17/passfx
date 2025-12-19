@@ -451,7 +451,7 @@ login.py -> main_menu.py -> [passwords | phones | cards | notes | envs | generat
 ```bash
 # Setup
 python -m venv .venv && source .venv/bin/activate
-pip install -e . && pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 pre-commit install
 
 # Run

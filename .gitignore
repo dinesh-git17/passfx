@@ -58,3 +58,6 @@ htmlcov/
 .passfx/
 *.enc
 salt
+
+# macOS
+.DS_Store
