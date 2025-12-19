@@ -5,14 +5,13 @@
 from __future__ import annotations
 
 import json
-import random
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Horizontal, Vertical
+from textual.containers import Center, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Input, Label, Static
 
@@ -22,8 +21,8 @@ from passfx.utils.platform_security import secure_file_permissions
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
 
-# ASCII Logo (ANSI Shadow)
-LOGO = """[bold #00d4ff]
+# ASCII Logo - PASSFX in neon cyan
+LOGO = """[bold #00FFFF]
 ██████╗  █████╗ ███████╗███████╗███████╗██╗  ██╗
 ██╔══██╗██╔══██╗██╔════╝██╔════╝██╔════╝╚██╗██╔╝
 ██████╔╝███████║███████╗███████╗█████╗   ╚███╔╝
@@ -31,19 +30,6 @@ LOGO = """[bold #00d4ff]
 ██║     ██║  ██║███████║███████║██║     ██╔╝ ██╗
 ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚═╝  ╚═╝
 [/]"""
-
-TAGLINES = [
-    "Your secrets are safe with us. Probably.",
-    "sudo rm -rf your_worries",
-    "Encryption so good, even we can't read it.",
-    "Because 'password123' wasn't cutting it.",
-    "Fort Knox for your digital life.",
-    "Trust issues? We've got encryption.",
-    "Making hackers cry since 2024.",
-    "256 bits of pure security.",
-    "Where passwords go to live forever.",
-    "Ctrl+S for your credentials.",
-]
 
 VERSION = "v1.0.0"
 
@@ -171,89 +157,33 @@ class LoginScreen(Screen):
         self.new_vault = new_vault
 
     def compose(self) -> ComposeResult:
-        """Create the full-screen login layout matching main menu grid."""
+        """Create the Night City login layout."""
         app: PassFXApp = self.app  # type: ignore
 
-        # Header - System Status Bar
-        with Horizontal(id="app-header"):
-            yield Static("[bold #00d4ff]◄ PASSFX ►[/]", id="header-branding")
-            yield Static("░░ SYSTEM LOCKED ░░", id="header-status")
-            yield Static("[#ef4444]🔒 RESTRICTED[/]", id="header-lock")
-
-        # Body - Centered content
         with Center(id="login-form-pane"):
-            with Vertical(id="login-content"):
-                yield Static(LOGO, id="logo")
-                yield Static(
-                    f'[italic #8b5cf6]"{random.choice(TAGLINES)}"[/]',  # nosec B311 - cosmetic UI only
-                    id="tagline",
+            with Vertical(id="login-deck"):
+                yield Static(LOGO, id="brand-logo")
+                yield Label(":: SECURE VAULT ACCESS ::", id="brand-subtitle")
+
+                if app.vault.exists and not self.new_vault:
+                    # Unlock mode
+                    yield Label("> ENTER PASSPHRASE", classes="input-label")
+                    yield Input(password=True, id="password-input")
+                    yield Button("DECRYPT VAULT", id="unlock-button")
+                else:
+                    # Create mode
+                    yield Label("> CREATE PASSPHRASE", classes="input-label")
+                    yield Input(password=True, id="password-input")
+                    yield Label("> CONFIRM PASSPHRASE", classes="input-label")
+                    yield Input(password=True, id="confirm-input")
+                    with Center():
+                        yield Button("[ INITIALIZE VAULT ]", id="create-button")
+
+                yield Static("", id="error-message")
+                yield Label(
+                    "STATUS: WAITING... // AES-128 AUTHENTICATED ENCRYPTION",
+                    id="status-footer",
                 )
-
-                # Form container for centered inputs
-                with Vertical(id="login-form"):
-                    if app.vault.exists and not self.new_vault:
-                        yield Static(
-                            "[bold #60a5fa]━━━ IDENTITY VERIFICATION ━━━[/]",
-                            id="form-title",
-                        )
-                        with Center():
-                            yield Label(
-                                "ENTER MASTER PASSWORD", classes="muted terminal-label"
-                            )
-                        with Center():
-                            yield Input(
-                                placeholder="••••••••",
-                                password=True,
-                                id="password-input",
-                            )
-                        with Center():
-                            yield Button(
-                                "▶ UNLOCK VAULT", variant="primary", id="unlock-button"
-                            )
-                    else:
-                        yield Static(
-                            "[bold #60a5fa]━━━ VAULT INITIALIZATION ━━━[/]",
-                            id="form-title",
-                        )
-                        with Center():
-                            yield Label(
-                                "CREATE MASTER PASSWORD", classes="muted terminal-label"
-                            )
-                        with Center():
-                            yield Input(
-                                placeholder="••••••••",
-                                password=True,
-                                id="password-input",
-                            )
-                        with Center():
-                            yield Label(
-                                "CONFIRM PASSWORD", classes="muted terminal-label"
-                            )
-                        with Center():
-                            yield Input(
-                                placeholder="••••••••",
-                                password=True,
-                                id="confirm-input",
-                            )
-                        with Center():
-                            yield Button(
-                                "▶ INITIALIZE VAULT",
-                                variant="primary",
-                                id="create-button",
-                            )
-
-                    yield Static("", id="error-message")
-
-        # Footer - Command Strip
-        with Horizontal(id="app-footer"):
-            yield Static(f" {VERSION} ", id="footer-version")
-            with Horizontal(id="footer-keys"):
-                with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #a78bfa]ENTER[/]", classes="keycap")
-                    yield Static("[#64748b]Confirm[/]", classes="keycap-label")
-                with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #a78bfa] Q [/]", classes="keycap")
-                    yield Static("[#64748b]Abort[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Focus the password input on mount."""
