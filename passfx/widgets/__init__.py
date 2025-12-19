@@ -7,6 +7,7 @@ from passfx.widgets.id_card_modal import (
     IDCardField,
     IDCardModal,
 )
+from passfx.widgets.matrix_rain import MatrixRainContainer, MatrixRainStrip
 from passfx.widgets.terminal import SystemTerminal
 
 __all__ = [
@@ -16,4 +17,6 @@ __all__ = [
     "IDCardColors",
     "IDCardField",
     "IDCardButton",
+    "MatrixRainContainer",
+    "MatrixRainStrip",
 ]

@@ -11,12 +11,13 @@ from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Center, Vertical
+from textual.containers import Center, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Input, Label, Static
 
 from passfx.core.crypto import validate_master_password
 from passfx.utils.platform_security import secure_file_permissions
+from passfx.widgets.matrix_rain import MatrixRainStrip
 
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
@@ -31,7 +32,7 @@ LOGO = """[bold #00FFFF]
 ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚═╝  ╚═╝
 [/]"""
 
-VERSION = "v1.0.0"
+VERSION = "v1.0.1"
 
 # Persistent rate limiting configuration
 LOCKOUT_FILE = Path.home() / ".passfx" / "lockout.json"
@@ -146,7 +147,7 @@ def _clear_lockout() -> None:
 
 
 class LoginScreen(Screen):
-    """Login screen with split-view: logo on left, form on right."""
+    """Login screen with Matrix rain background and centered login form."""
 
     BINDINGS = [
         Binding("enter", "submit", "Submit", show=False),
@@ -157,33 +158,56 @@ class LoginScreen(Screen):
         self.new_vault = new_vault
 
     def compose(self) -> ComposeResult:
-        """Create the Night City login layout."""
+        """Create the Night City login layout with Matrix rain strips."""
         app: PassFXApp = self.app  # type: ignore
 
-        with Center(id="login-form-pane"):
-            with Vertical(id="login-deck"):
-                yield Static(LOGO, id="brand-logo")
-                yield Label(":: SECURE VAULT ACCESS ::", id="brand-subtitle")
-
-                if app.vault.exists and not self.new_vault:
-                    # Unlock mode
-                    yield Label("> ENTER PASSPHRASE", classes="input-label")
-                    yield Input(password=True, id="password-input")
-                    yield Button("DECRYPT VAULT", id="unlock-button")
-                else:
-                    # Create mode
-                    yield Label("> CREATE PASSPHRASE", classes="input-label")
-                    yield Input(password=True, id="password-input")
-                    yield Label("> CONFIRM PASSPHRASE", classes="input-label")
-                    yield Input(password=True, id="confirm-input")
-                    with Center():
-                        yield Button("[ INITIALIZE VAULT ]", id="create-button")
-
-                yield Static("", id="error-message")
-                yield Label(
-                    "STATUS: WAITING... // AES-128 AUTHENTICATED ENCRYPTION",
-                    id="status-footer",
+        # Vertical layout with rain at top/bottom, horizontal with side strips
+        with Vertical(id="matrix-bg"):
+            yield MatrixRainStrip(
+                update_interval=0.05,
+                decay_rate=0.10,
+                classes="matrix-strip-top",
+            )
+            with Horizontal(id="matrix-middle"):
+                yield MatrixRainStrip(
+                    update_interval=0.05,
+                    decay_rate=0.06,
+                    classes="matrix-strip-left",
                 )
+                with Center(id="login-form-pane"):
+                    with Vertical(id="login-deck"):
+                        yield Static(LOGO, id="brand-logo")
+                        yield Label(":: SECURE VAULT ACCESS ::", id="brand-subtitle")
+
+                        if app.vault.exists and not self.new_vault:
+                            # Unlock mode
+                            yield Label("> ENTER PASSPHRASE", classes="input-label")
+                            yield Input(password=True, id="password-input")
+                            yield Button("DECRYPT VAULT", id="unlock-button")
+                        else:
+                            # Create mode
+                            yield Label("> CREATE PASSPHRASE", classes="input-label")
+                            yield Input(password=True, id="password-input")
+                            yield Label("> CONFIRM PASSPHRASE", classes="input-label")
+                            yield Input(password=True, id="confirm-input")
+                            with Center():
+                                yield Button("[ INITIALIZE VAULT ]", id="create-button")
+
+                        yield Static("", id="error-message")
+                        yield Label(
+                            "STATUS: WAITING... // AES-128 AUTHENTICATED ENCRYPTION",
+                            id="status-footer",
+                        )
+                yield MatrixRainStrip(
+                    update_interval=0.05,
+                    decay_rate=0.06,
+                    classes="matrix-strip-right",
+                )
+            yield MatrixRainStrip(
+                update_interval=0.05,
+                decay_rate=0.10,
+                classes="matrix-strip-bottom",
+            )
 
     def on_mount(self) -> None:
         """Focus the password input on mount."""

@@ -167,17 +167,49 @@ FooterKey > .footer-key--description {
    LOGIN SCREEN - NIGHT CITY THEME
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Screen-level background - deep black */
+/* Screen-level background */
 LoginScreen {
     background: $deep-black;
-    align: center middle;
 }
 
-/* Main content area - centered */
-#login-form-pane {
-    width: 1fr;
+/* Matrix Rain Container - vertical layout with top strip */
+#matrix-bg {
+    width: 100%;
     height: 100%;
     background: $deep-black;
+}
+
+/* Top/bottom rain strips - equal flex to center the card */
+.matrix-strip-top,
+.matrix-strip-bottom {
+    width: 100%;
+    height: 1fr;
+    background: #050505;
+}
+
+/* Middle section - horizontal with side strips */
+#matrix-middle {
+    width: 100%;
+    height: auto;
+    background: #050505;
+}
+
+/* Side rain strips - expand to fill remaining space */
+.matrix-strip-left,
+.matrix-strip-right {
+    width: 1fr;
+    height: 100%;
+    background: #050505;
+}
+
+/* Main content area - fixed width for login card, centered */
+#login-form-pane {
+    width: auto;
+    height: auto;
+    background: #050505;
+    align: center middle;
+    padding: 0;
+    margin: 0;
 }
 
 /* The Deck Container - neon cyan border */
