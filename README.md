@@ -2,7 +2,7 @@
 
 <img src="assets/logo.png" alt="PassFX Logo" width="40%">
 
-**Your secrets. Your terminal. Offline by design.**
+**A terminal password manager for people who read the source code.**
 
 [![CI](https://github.com/dinesh-git17/passfx/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/dinesh-git17/passfx/actions/workflows/code-quality.yml)
 [![codecov](https://codecov.io/gh/dinesh-git17/passfx/branch/main/graph/badge.svg)](https://codecov.io/gh/dinesh-git17/passfx)
@@ -14,142 +14,354 @@
 
 ---
 
-## 🔐 What is PassFX?
+## Why PassFX Exists
 
-**PassFX** is a production-grade, terminal-based password manager (TUI) built for developers who trust code more than clouds (and certainly more than they trust "free tier" SaaS).
+Most password managers want you to trust them. They ask you to upload your credentials to their servers, use their proprietary sync, and believe their marketing about "military-grade encryption" (a phrase that should make any engineer nervous).
 
-It provides a modern, keyboard-centric interface for managing your most sensitive data—passwords, credit cards, recovery codes, and environment variables—without ever sending a single byte over the network. It combines the usability of a GUI with the speed and security of the command line.
+PassFX takes a different approach: it assumes you do not trust anyone, and builds from there.
 
-> **Note:** PassFX is currently in Beta. It is stable enough for daily use, but as with all security tools, please maintain backups of your recovery keys.
+Your vault lives on your machine. It never touches a network. There is no account to create, no subscription to manage, no "forgot password" email to request. If someone wants your passwords, they need physical access to your computer and your master password. That is a much smaller attack surface than "the entire internet."
 
-## 🛡️ Security Philosophy
+This is not a limitation. This is the point.
 
-We take a paranoid, "local-first" approach to security. For a deep dive into our threat model, read our [Security Policy](SECURITY.md).
+PassFX is for developers who understand that the safest byte is the one that never leaves your disk. It is for security-conscious users who would rather memorize one strong password than trust a company that might get acquired, hacked, or quietly change their privacy policy.
 
-- **Offline Only:** No servers. No syncing. No "cloud backup." Because there is no cloud, only other people's computers.
-- **Zero Knowledge:** We cannot see your data. If you lose your master password, your data is mathematically irretrievable.
-- **Standard Primitives:** We do not roll our own crypto (rule #1 of crypto club).
-  - **Encryption:** Fernet authenticated encryption (AES-128-CBC + HMAC-SHA256).
-  - **Key Derivation:** PBKDF2-HMAC-SHA256 (480,000 iterations, exceeding OWASP 2023 recommendations).
-  - **Randomness:** All secrets are generated using Python's `secrets` module (CSPRNG), never `random`.
-- **Memory Hygiene:** We employ best-effort memory wiping for sensitive keys and implement strict auto-lock timeouts.
+If you have ever thought "I should really stop reusing passwords, but I also do not want to give all my credentials to a startup," then you are in the right place.
 
-## ⚙️ Features
+---
 
-- **🖥️ Modern TUI:** Built on [Textual](https://textual.textualize.io/), featuring full mouse support, modal dialogs, and layouts that actually center the div.
-- **🗃️ Versatile Storage:**
-  - **Credentials:** Email/Password combinations.
-  - **Financial:** Credit card details (PAN, CVV, PIN).
-  - **DevOps:** Environment variables and API keys.
-  - **Recovery:** 2FA backup codes.
-  - **Notes:** Encrypted free-text notes.
-- **⚡ Clipboard Hygiene:** Automatic clipboard clearing after 30 seconds to prevent you from accidentally pasting your password into Slack.
-- **🎲 Secure Generator:** Robust generator for passwords, passphrases (XKCD-style), and PINs.
-- **📊 Strength Meter:** Integrated `zxcvbn` estimation to reject "password123" before you even try to save it.
-- **📤 Portable:** Full JSON/CSV export and import capabilities (encrypted export coming soon).
+## What You Get
 
-## 🚀 Installation
+**Secure Vault Storage**
+- Email and password credentials
+- Credit card details (number, CVV, PIN, expiry)
+- Phone numbers with PINs
+- Environment variables and API keys
+- 2FA recovery codes
+- Encrypted notes for everything else
+
+**Strong Cryptography**
+- Fernet authenticated encryption (AES-128-CBC + HMAC-SHA256)
+- PBKDF2-HMAC-SHA256 key derivation with 480,000 iterations
+- 256-bit random salts generated via Python's `secrets` module
+- No custom crypto implementations (we read the rules)
+
+**A Terminal Interface That Does Not Hate You**
+- Built on [Textual](https://textual.textualize.io/) with full keyboard and mouse support
+- Modal dialogs, searchable lists, and responsive layouts
+- Cyberpunk aesthetic because security tools should not look like tax software
+
+**Clipboard Safety**
+- Automatic clipboard clearing after 15 seconds
+- Because "accidentally pasting your database password into Slack" is a story no one wants to tell
+
+**Password Generation**
+- Strong random passwords with configurable length and character sets
+- XKCD-style passphrases for when you need to remember something
+- PIN generation for numeric codes
+- Strength estimation via zxcvbn to reject weak choices before they happen
+
+**Local-First Design**
+- Zero network code
+- Zero cloud sync
+- Zero recovery mechanisms (by design, not by accident)
+- Your data lives at `~/.passfx/` and nowhere else
+
+---
+
+## Quick Start
 
 PassFX requires Python 3.10 or higher.
 
-### From PyPI (Recommended)
+### Install
 
 ```bash
 pip install passfx
 ```
 
-### From Source
+Or from source:
 
 ```bash
-git clone [https://github.com/dinesh-git17/passfx.git](https://github.com/dinesh-git17/passfx.git)
+git clone https://github.com/dinesh-git17/passfx.git
 cd passfx
 pip install -e .
 ```
 
-## 🕹️ Usage
-
-Once installed, simply run:
+### Run
 
 ```bash
 passfx
 ```
 
-📖 **Full Manual:** For detailed instructions on recovery codes, environment variables, and drag-and-drop features, consult the **[User Guide](docs/USER_GUIDE.md)**.
+### Create Your Vault
 
-### First Run
+On first run, you will be asked to create a master password. This password is the only thing standing between an attacker and your data, so make it count:
 
-1.  You will be prompted to create a **Master Password**.
-2.  Make this strong. If you lose it, **we cannot recover your data**.
-3.  The vault is initialized at `~/.passfx/vault.enc`.
+- Minimum 12 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one digit
+- At least one special character
 
-### Navigation
+If you forget this password, your data is gone. This is not a bug. This is the entire security model.
 
-- **`TAB` / `Shift+TAB`**: Navigate between fields.
-- **`Enter`**: Select or submit.
-- **`Esc`**: Go back or close modals.
-- **`q`**: Quit the application immediately (auto-locks vault).
+### Navigate
 
-## 🧪 Development & Tooling
+| Key | Action |
+|-----|--------|
+| `Tab` / `Shift+Tab` | Move between fields |
+| `Enter` | Select or submit |
+| `Esc` | Go back or close dialogs |
+| `q` | Quit (auto-locks vault) |
+| `a` | Add new entry |
+| `e` | Edit selected entry |
+| `d` | Delete selected entry |
+| `c` | Copy to clipboard |
 
-We treat this project like mission-critical infrastructure. Our development workflow utilizes a modern `pyproject.toml` configuration and enforces strict quality gates:
+For the full manual, see the [User Guide](docs/USER_GUIDE.md).
 
-- **Formatting:** Enforced by `black` and `isort`.
-- **Linting:** `pylint` configuration requires a perfect **10.0/10** score. Code with smells does not merge.
-- **Pre-commit:** We provide a comprehensive `.pre-commit-config.yaml`.
-- **Attribution Guard:** Our CI pipeline includes a custom scanner (`scripts/attribution_guard.py`) to ensure the codebase remains clean of accidental AI/LLM attribution headers or watermarks.
+---
 
-### Setting up a Dev Environment
+## How PassFX Thinks About Security
 
-```bash
-# Install the project in editable mode (dependencies from pyproject.toml)
-pip install -e .
+Security is not a feature. It is a constraint that shapes every decision.
 
-# Install development tooling
-pip install black pylint isort pre-commit
+### What PassFX Protects Against
 
-# Install pre-commit hooks (Mandatory)
-pre-commit install
+**Stolen Vault File**: An attacker who copies `vault.enc` from your disk still needs your master password. With 480,000 PBKDF2 iterations and a 256-bit salt, brute-forcing that password is computationally expensive. "Password123" will still fall quickly, but a proper master password will not.
 
-# Run the test suite
-pytest
+**Clipboard Snooping**: Copied credentials are automatically cleared after 15 seconds. If you forget to clear them manually, PassFX does it for you.
+
+**Shoulder Surfing**: Passwords are masked in the UI by default. The terminal does not echo your master password during entry.
+
+**Accidental Leaks**: All credential types have `__repr__` methods that show `[REDACTED]` instead of actual values. You cannot accidentally log or print a password to stdout.
+
+**Concurrent Corruption**: File locking prevents multiple PassFX instances from writing to the vault simultaneously.
+
+**Crash-Time Corruption**: Atomic writes ensure the vault is either fully saved or not saved at all. Power loss mid-write does not corrupt your data.
+
+### What PassFX Does Not Protect Against
+
+**Compromised System**: If an attacker has root access to your machine while PassFX is running, they can read memory, log keystrokes, or just wait for you to unlock the vault. No password manager can protect against a fully compromised host.
+
+**Forgotten Master Password**: There is no recovery mechanism. No hint system. No reset email. If you forget your master password, your data is cryptographically inaccessible. Keep a backup of your password somewhere secure (paper in a safe, encrypted file on a separate device).
+
+**Weak Master Password**: PBKDF2 slows down brute-force attacks, but a password like "password123" or "correcthorsebatterystaple" will still be cracked eventually. The strength of PassFX is directly proportional to the strength of your master password.
+
+**Physical Access While Unlocked**: If someone walks up to your computer while the vault is unlocked and you are not there, they have access to everything. Auto-lock helps (default 5 minutes), but it is not a substitute for locking your screen.
+
+### The Master Password Matters
+
+Your master password is the single point of failure. PassFX does not store it, does not hash it to disk, and cannot recover it. The encryption key is derived from your password using PBKDF2 with 480,000 iterations and a unique salt.
+
+If you use "hunter2" as your master password, all the cryptography in the world will not save you.
+
+For the complete threat model, read [SECURITY.md](docs/SECURITY.md).
+
+---
+
+## Architecture
+
+PassFX is built in layers, with security boundaries that prevent UI code from directly touching cryptographic operations.
+
+```
++------------------+
+|   Entry Points   |  cli.py, __main__.py
++------------------+
+         |
++------------------+
+|    App Layer     |  app.py (Textual application)
++------------------+
+         |
++------------------+
+|     Screens      |  login, main_menu, passwords, cards, notes, etc.
++------------------+
+         |
++------------------+
+|      Utils       |  clipboard, generator, strength, io
++------------------+
+         |
+===================   <- Security Boundary
+         |
++------------------+
+|    Core Layer    |  crypto.py, vault.py, models.py, exceptions.py
++------------------+
+         |
++------------------+
+| Platform Security|  File permissions (Unix modes, Windows ACLs)
++------------------+
+         |
++------------------+
+|   File System    |  ~/.passfx/vault.enc, ~/.passfx/salt
++------------------+
 ```
 
-## 🧠 Design Decisions
+**Core Layer** contains all cryptographic operations and vault management. It has zero dependencies on UI code and can be tested in complete isolation.
 
-**Why Textual?**
-Most terminal password managers use `curses` or `urwid`. We chose `Textual` because it allows for a CSS-driven layout engine, making the UI easier to audit and significantly more responsive. Plus, it looks better than `vim` on a bad day.
+**Screens and Utils** handle user interaction and convenience features. They call into Core but never implement security logic themselves.
 
-**Why Separate Salt?**
-Your vault's cryptographic salt is stored in `~/.passfx/salt`, separate from the encrypted payload `~/.passfx/vault.enc`. This architectural choice adds a layer of complexity for attackers attempting to brute-force a stolen vault file without the accompanying local environment.
+**Platform Security** enforces file permissions (0600 for files, 0700 for directories) across Unix and Windows.
 
-👉 **Deep Dive:** Read the full **[Architecture Document](docs/ARCHITECTURE.md)** for a breakdown of our crypto boundaries and data flow.
+Key architectural decisions:
 
-## 🤝 Contributing
+- **Atomic Writes**: All vault saves use temp file, fsync, atomic rename. No partial writes possible.
+- **Salt Integrity**: Salt hash is cached at unlock and verified before every save. Detects tampering and symlink attacks.
+- **File Locking**: Cross-platform locking (fcntl on Unix, msvcrt on Windows) prevents concurrent access corruption.
+- **Rate Limiting**: Failed unlock attempts trigger exponential backoff, persisted to disk to survive restarts.
 
-We welcome contributions from security-conscious developers.
+For the complete architecture documentation, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-1.  Read **[CONTRIBUTING.md](docs/CONTRIBUTING.md)** for our strict quality gates.
-2.  Review our **[Code of Conduct](CODE_OF_CONDUCT.md)**.
-3.  🤖 **AI Users:** If you use an LLM to assist with coding, you **MUST** prompt it to read **[CLAUDE.md](CLAUDE.md)** first.
+---
 
-**Note:** All PRs must pass the "Quality Gate" CI workflow, which includes formatting, strict linting, and the attribution guard.
+## Testing and Trust
 
-## 🧩 FAQ
+Trust is not built on marketing copy. It is built on tests that fail when security invariants are violated.
 
-**Q: Is this safer than storing passwords in a browser?**
-A: Browsers are huge attack surfaces that connect to the internet. PassFX is a small, focused tool that doesn't know how to make a network request. You do the math.
+### Coverage
 
-**Q: Where is my data stored?**
-A: On your hard drive. Specifically `~/.passfx/`. It works on my machine, and it stays on yours.
+| Component | Target |
+|-----------|--------|
+| `core/crypto.py` | 100% |
+| `core/vault.py` | 100% |
+| `core/models.py` | 95% |
+| `utils/generator.py` | 95% |
+| Overall | 90% |
 
-**Q: I forgot my Master Password. Can you reset it?**
-A: No. We hash it more times than you've pushed to `main` on a Friday. The encryption uses industry-standard Fernet (AES-128-CBC with HMAC-SHA256), which is NIST-approved and computationally secure. Unless you have a few million years and a supercomputer, that data is gone.
+### Test Categories
 
-**Q: Why "PassFX"?**
-A: Because "PasswordManagerForTerminalWrittenInPythonUsingTextual" was rejected by PyPI for being too verbose.
+**Unit Tests**: Pure function testing with no I/O. Validates cryptographic operations, data models, and utility functions in isolation.
+
+**Integration Tests**: Full vault workflows using real cryptography (not mocked). Create, unlock, add credentials, lock, unlock again, verify data integrity.
+
+**Security Tests**: Threat model validation. Passwords never logged. Plaintext never written to disk. File permissions enforced. Symlink attacks detected.
+
+**Regression Tests**: Security parameters locked in with exact equality checks. Changing PBKDF2 iterations from 480,000 to 479,999 fails the build. This is intentional.
+
+**Edge Case Tests**: Corrupted files, permission errors, concurrent access, disk full scenarios. PassFX should fail safely, not silently.
+
+### What the Tests Verify
+
+- Passwords are excluded from all log output at DEBUG, INFO, and WARNING levels
+- Vault files contain zero plaintext passwords, card numbers, CVVs, or PINs (verified via binary inspection)
+- Salt files contain only high-entropy random bytes
+- File permissions match expected values on every write
+- Exception messages never include sensitive data
+- Constant-time comparison is used for password verification (timing attack prevention)
+- No `pickle` or `random` module usage in security-critical code
+- PBKDF2 iterations are exactly 480,000 (not "at least")
+
+The test suite is the specification. If a security property is not tested, it is not guaranteed.
+
+Run the tests yourself:
+
+```bash
+pip install -e ".[dev]"
+pytest tests/ --cov=passfx --cov-report=html
+```
+
+For the complete testing documentation, see [tests/README.md](tests/README.md).
+
+---
+
+## Documentation Map
+
+Different readers need different information. Here is where to go:
+
+**I want to use PassFX day-to-day**
+- Start with this README for installation
+- Read the [User Guide](docs/USER_GUIDE.md) for detailed usage instructions
+- Keep the keyboard shortcuts handy
+
+**I want to understand the security model**
+- Read [SECURITY.md](docs/SECURITY.md) for the complete threat model
+- Review the test suite in `tests/security/` for verified security properties
+- Check [ARCHITECTURE.md](docs/ARCHITECTURE.md) for security boundaries
+
+**I want to contribute code**
+- Read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for development setup and quality gates
+- Review [CLAUDE.md](CLAUDE.md) if you use AI assistants (this is mandatory)
+- Check `pyproject.toml` for tooling configuration
+
+**I want to understand how it works**
+- Read [ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design
+- Browse `passfx/core/` for the cryptographic implementation
+- Read the test files for executable specifications
+
+**I want to report a security issue**
+- Follow the process in [SECURITY.md](docs/SECURITY.md)
+- Use GitHub Security Advisories for private disclosure
+- Do not open public issues for security vulnerabilities
+
+---
+
+## Contributing
+
+Contributions are welcome from developers who take security seriously.
+
+The quality bar is high. This is a password manager, not a todo app. Every line of code that touches credentials is security-critical.
+
+**Before you submit a PR:**
+
+- Run the full test suite and verify it passes
+- Run `ruff check passfx/` for linting
+- Run `mypy passfx/` for type checking
+- Run `bandit -r passfx/` for security audit
+- Ensure pre-commit hooks are installed and passing
+
+**What we expect:**
+
+- Tests for all new functionality (security-critical code requires 100% coverage)
+- Type hints on all functions and methods
+- No `print()` statements in production code
+- No logging of sensitive data under any circumstances
+- Conventional commit format
+
+**What we will not accept:**
+
+- PRs that reduce PBKDF2 iterations
+- PRs that add network functionality
+- PRs that implement password recovery
+- PRs that use `pickle` for serialization
+- PRs that use `random` instead of `secrets`
+
+Read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for the complete guidelines.
+
+If you use an AI assistant for coding, you must have it read [CLAUDE.md](CLAUDE.md) first. This is not optional.
+
+---
+
+## Community and Conduct
+
+PassFX is built by people who believe security tools should be accessible to everyone. We welcome contributors at all experience levels.
+
+The project follows a code of conduct that can be summarized as: be excellent to each other.
+
+Everyone was once the person who did not know what PBKDF2 stood for. Questions are welcome. Condescension is not.
+
+For the complete community guidelines, read [CODE_OF_CONDUCT.md](docs/CODE_OF_CONDUCT.md).
+
+To report conduct issues: conduct@dineshd.dev
+
+---
+
+## Final Notes
+
+PassFX is not the password manager for everyone. It does not sync. It does not have a mobile app. It does not have a browser extension. It will not remind you to change your passwords or check if they have been leaked.
+
+What it does is simple: it stores your credentials locally, encrypts them properly, and gets out of your way.
+
+If you want a password manager that "just works" across all your devices, use something else. If you want a password manager where you can read every line of code that touches your data, and where that code is backed by a test suite that treats security properties as non-negotiable, then PassFX might be for you.
+
+Your passwords belong to you. Not to a company. Not to a cloud. Not to anyone else.
+
+Keep your master password strong. Keep your backups current. And remember: the best security is the kind you actually use.
 
 ---
 
 <div align="center">
-  <sub>Built with 🔒 and ☕ by Dinesh.</sub>
+
+Built by [Dinesh](https://github.com/dinesh-git17).
+
+If you find a security issue, please report it responsibly via [SECURITY.md](docs/SECURITY.md).
+
 </div>
