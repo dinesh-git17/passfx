@@ -485,6 +485,7 @@ class PasswordsScreen(Screen):
         self._selected_row_key: str | None = None
         self._pulse_state: bool = True
         self._password_visible: bool = False
+        self._pending_select_id: str | None = None  # For search navigation
 
     # pylint: disable=too-many-locals
     def compose(self) -> ComposeResult:
@@ -588,15 +589,29 @@ class PasswordsScreen(Screen):
         """Initialize table selection and inspector after render."""
         table = self.query_one("#passwords-table", DataTable)
         table.focus()
+
+        app: PassFXApp = self.app  # type: ignore
+        credentials = app.vault.get_emails()
+
         if table.row_count > 0:
-            # Move cursor to first row
-            table.move_cursor(row=0)
-            # Get the key from the first credential
-            app: PassFXApp = self.app  # type: ignore
-            credentials = app.vault.get_emails()
-            if credentials:
-                self._selected_row_key = credentials[0].id
-                self._update_inspector(credentials[0].id)
+            # Check for pending selection from search
+            target_row = 0
+            target_id = credentials[0].id if credentials else None
+
+            if self._pending_select_id:
+                for i, cred in enumerate(credentials):
+                    if cred.id == self._pending_select_id:
+                        target_row = i
+                        target_id = cred.id
+                        break
+                self._pending_select_id = None  # Clear pending selection
+
+            # Move cursor to target row
+            table.move_cursor(row=target_row)
+
+            if target_id:
+                self._selected_row_key = target_id
+                self._update_inspector(target_id)
         else:
             self._update_inspector(None)
 

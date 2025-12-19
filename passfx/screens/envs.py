@@ -540,6 +540,7 @@ class EnvsScreen(Screen):
         super().__init__()
         self._selected_row_key: str | None = None
         self._pulse_state: bool = True
+        self._pending_select_id: str | None = None  # For search navigation
 
     # pylint: disable=too-many-locals
     def compose(self) -> ComposeResult:
@@ -629,13 +630,29 @@ class EnvsScreen(Screen):
         """Initialize table selection and inspector."""
         table = self.query_one("#envs-table", DataTable)
         table.focus()
+
+        app: PassFXApp = self.app  # type: ignore
+        envs = app.vault.get_envs()
+
         if table.row_count > 0:
-            table.move_cursor(row=0)
-            app: PassFXApp = self.app  # type: ignore
-            envs = app.vault.get_envs()
-            if envs:
-                self._selected_row_key = envs[0].id
-                self._update_inspector(envs[0].id)
+            # Check for pending selection from search
+            target_row = 0
+            target_id = envs[0].id if envs else None
+
+            if self._pending_select_id:
+                for i, env in enumerate(envs):
+                    if env.id == self._pending_select_id:
+                        target_row = i
+                        target_id = env.id
+                        break
+                self._pending_select_id = None  # Clear pending selection
+
+            # Move cursor to target row
+            table.move_cursor(row=target_row)
+
+            if target_id:
+                self._selected_row_key = target_id
+                self._update_inspector(target_id)
         else:
             self._update_inspector(None)
 

@@ -694,6 +694,7 @@ class CardsScreen(Screen):
         super().__init__()
         self._selected_row_key: str | None = None
         self._pulse_state: bool = True
+        self._pending_select_id: str | None = None  # For search navigation
 
     def compose(self) -> ComposeResult:
         """Create the cards screen layout."""
@@ -793,15 +794,29 @@ class CardsScreen(Screen):
         """Initialize table selection and inspector after render."""
         table = self.query_one("#cards-table", DataTable)
         table.focus()
+
+        app: PassFXApp = self.app  # type: ignore
+        cards = app.vault.get_cards()
+
         if table.row_count > 0:
-            # Move cursor to first row
-            table.move_cursor(row=0)
-            # Get the key from the first card
-            app: PassFXApp = self.app  # type: ignore
-            cards = app.vault.get_cards()
-            if cards:
-                self._selected_row_key = cards[0].id
-                self._update_inspector(cards[0].id)
+            # Check for pending selection from search
+            target_row = 0
+            target_id = cards[0].id if cards else None
+
+            if self._pending_select_id:
+                for i, card in enumerate(cards):
+                    if card.id == self._pending_select_id:
+                        target_row = i
+                        target_id = card.id
+                        break
+                self._pending_select_id = None  # Clear pending selection
+
+            # Move cursor to target row
+            table.move_cursor(row=target_row)
+
+            if target_id:
+                self._selected_row_key = target_id
+                self._update_inspector(target_id)
         else:
             self._update_inspector(None)
 

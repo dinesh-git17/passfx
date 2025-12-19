@@ -8,7 +8,7 @@ from __future__ import annotations
 import atexit
 import signal
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from textual.app import App
 from textual.binding import Binding
@@ -17,7 +17,12 @@ from passfx.core.config import get_config
 from passfx.core.crypto import CryptoError
 from passfx.core.vault import Vault, VaultError
 from passfx.screens.login import LoginScreen
+from passfx.search.engine import SearchIndex, SearchResult
 from passfx.utils.clipboard import clear_clipboard, emergency_cleanup
+from passfx.widgets.search_overlay import SearchOverlay
+
+if TYPE_CHECKING:
+    pass
 
 # Module-level state for signal handling (mutable, not constants)
 _app_instance: PassFXApp | None = None  # pylint: disable=invalid-name
@@ -98,6 +103,7 @@ class PassFXApp(App):
 
     BINDINGS = [
         Binding("ctrl+c", "quit", "Quit", priority=True),
+        Binding("ctrl+k", "toggle_search", "Search", priority=True),
         Binding("q", "quit", "Quit", show=True),
         Binding("escape", "back", "Back", show=True),
     ]
@@ -108,6 +114,7 @@ class PassFXApp(App):
         super().__init__()
         self.vault = Vault()
         self._unlocked = False
+        self._search_index: SearchIndex | None = None
 
         # Apply saved settings from config
         config = get_config()
@@ -184,6 +191,98 @@ class PassFXApp(App):
             return True
         except VaultError:
             return False
+
+    def action_toggle_search(self) -> None:
+        """Toggle the global search overlay (Ctrl+K)."""
+        # Don't show search if vault is locked or on login screen
+        if not self._unlocked:
+            return
+
+        screen_name = self.screen.__class__.__name__
+        if screen_name in ("LoginScreen", "SearchOverlay"):
+            return
+
+        # Build search index and push modal
+        self._build_search_index()
+        self.push_screen(
+            SearchOverlay(search_index=self._search_index),
+            callback=self._handle_search_result,
+        )
+
+    def _build_search_index(self) -> None:
+        """Build or rebuild the search index from vault data."""
+        if not self._unlocked or self.vault.is_locked:
+            self._search_index = None
+            return
+
+        index = SearchIndex()
+        index.build_index(
+            emails=self.vault.get_emails(),
+            phones=self.vault.get_phones(),
+            cards=self.vault.get_cards(),
+            envs=self.vault.get_envs(),
+            recovery=self.vault.get_recovery_entries(),
+            notes=self.vault.get_notes(),
+        )
+        self._search_index = index
+
+    def _handle_search_result(self, result: SearchResult | None) -> None:
+        """Handle search result from modal - navigate to appropriate screen."""
+        if result is not None:
+            self._navigate_to_result(result)
+
+    def _navigate_to_result(self, result: SearchResult) -> None:
+        """Navigate to the screen containing the selected search result.
+
+        Args:
+            result: The selected search result.
+        """
+        # Import screens lazily to avoid circular imports
+        # pylint: disable=import-outside-toplevel
+        screen_name = result.screen_name
+        credential_id = result.credential_id
+
+        if screen_name == "passwords":
+            from passfx.screens.passwords import PasswordsScreen
+
+            pwd_screen = PasswordsScreen()
+            pwd_screen._pending_select_id = credential_id
+            self.push_screen(pwd_screen)
+
+        elif screen_name == "phones":
+            from passfx.screens.phones import PhonesScreen
+
+            phone_screen = PhonesScreen()
+            phone_screen._pending_select_id = credential_id
+            self.push_screen(phone_screen)
+
+        elif screen_name == "cards":
+            from passfx.screens.cards import CardsScreen
+
+            card_screen = CardsScreen()
+            card_screen._pending_select_id = credential_id
+            self.push_screen(card_screen)
+
+        elif screen_name == "envs":
+            from passfx.screens.envs import EnvsScreen
+
+            env_screen = EnvsScreen()
+            env_screen._pending_select_id = credential_id
+            self.push_screen(env_screen)
+
+        elif screen_name == "recovery":
+            from passfx.screens.recovery import RecoveryScreen
+
+            recovery_screen = RecoveryScreen()
+            recovery_screen._pending_select_id = credential_id
+            self.push_screen(recovery_screen)
+
+        elif screen_name == "notes":
+            from passfx.screens.notes import NotesScreen
+
+            notes_screen = NotesScreen()
+            notes_screen._pending_select_id = credential_id
+            self.push_screen(notes_screen)
 
 
 def run() -> None:
