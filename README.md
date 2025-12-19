@@ -4,11 +4,11 @@
 
 **Your secrets. Your terminal. Offline by design.**
 
+[![CI](https://github.com/dinesh-git17/passfx/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/dinesh-git17/passfx/actions/workflows/code-quality.yml)
+[![codecov](https://codecov.io/gh/dinesh-git17/passfx/branch/main/graph/badge.svg)](https://codecov.io/gh/dinesh-git17/passfx)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Quality: Strict](https://img.shields.io/badge/quality-strict-red)](.pylintrc)
-[![Changelog](https://img.shields.io/badge/changelog-v1.0.0-orange)](CHANGELOG.md)
 
 </div>
 

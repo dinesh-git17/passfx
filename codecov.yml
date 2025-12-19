@@ -1,0 +1,48 @@
+# Codecov Configuration
+# https://docs.codecov.com/docs/codecovyml-reference
+
+coverage:
+  # Overall project coverage settings
+  status:
+    project:
+      default:
+        # Target 90% coverage (matches pyproject.toml goal)
+        target: 90%
+        # Allow 1% drop before failing (prevents flaky failures)
+        threshold: 1%
+        # Only check coverage on main branch merges
+        only_pulls: true
+
+    # Patch coverage: new code should be well-tested
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+
+  # Precision for coverage percentages
+  precision: 2
+  round: down
+  range: "70...100"
+
+# Comment configuration for PRs
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default
+  require_changes: true
+
+# Flags for different test categories (future use)
+flags:
+  unit:
+    paths:
+      - passfx/
+    carryforward: true
+
+  security:
+    paths:
+      - passfx/core/
+    carryforward: true
+
+# Ignore files that don't need coverage
+ignore:
+  - "passfx/__main__.py"
+  - "**/__init__.py"
