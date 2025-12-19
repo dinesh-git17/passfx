@@ -87,15 +87,11 @@ class ViewNoteModal(ModalScreen[None]):
         self.note = note
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade view modal layout."""
-        # Get content preview (first 60 chars)
-        preview = (
-            self.note.content[:60] + "..."
-            if len(self.note.content) > 60
-            else self.note.content
-        )
-        preview = preview.replace("\n", " ")
+        """Create the Operator-grade view modal layout.
 
+        This is the explicit reveal action - user has pressed V to view content.
+        Full content is displayed securely in a TextArea (read-only).
+        """
         with Vertical(id="pwd-modal", classes="secure-terminal"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
@@ -105,27 +101,22 @@ class ViewNoteModal(ModalScreen[None]):
 
             # Data Display Body
             with Vertical(id="pwd-form"):
-                # Row 1: Title
+                # Row 1: Title + Stats
                 yield Label("> SHARD_TITLE", classes="input-label")
                 yield Static(
-                    f"  {self.note.title}", classes="view-value", id="title-value"
-                )
-
-                # Row 2: Stats
-                yield Label("> SHARD_STATS", classes="input-label")
-                yield Static(
-                    f"  [#fcd34d]{self.note.line_count}[/] lines  "
-                    f"[#fcd34d]{self.note.char_count}[/] chars",
+                    f"  {self.note.title}  "
+                    f"[dim]({self.note.line_count}L {self.note.char_count}C)[/]",
                     classes="view-value",
-                    id="stats-value",
+                    id="title-value",
                 )
 
-                # Row 3: Content Preview
-                yield Label("> CONTENT_PREVIEW", classes="input-label")
-                yield Static(
-                    f"  [#f59e0b]{preview}[/]",
-                    classes="view-value secret",
-                    id="preview-value",
+                # Row 2: Full content in TextArea (read-only reveal)
+                yield Label("> CONTENT [DECRYPTED]", classes="input-label")
+                yield TextArea(
+                    self.note.content,
+                    id="content-area",
+                    classes="note-code-editor",
+                    read_only=True,
                 )
 
             # Footer Actions - right aligned
@@ -531,12 +522,12 @@ class NotesScreen(Screen):
             updated = _get_relative_time(entry.updated_at)
             updated_text = f"[dim {c['muted']}]{updated}[/]"
 
-            # Content preview (dim)
-            preview = entry.content.replace("\n", " ")[:30]
-            if len(entry.content) > 30:
-                preview += "…"
-            if preview.strip():
-                preview_text = f"[dim {c['muted']}]{preview}[/]"
+            # Metadata preview only - NEVER expose content values
+            # Security: notes may contain secrets (passwords, keys, sensitive info)
+            if entry.char_count > 0:
+                preview_text = (
+                    f"[dim {c['muted']}]{entry.char_count} chars · [ENCRYPTED][/]"
+                )
             else:
                 preview_text = f"[dim {c['muted']}]// EMPTY[/]"
 
@@ -775,32 +766,26 @@ class NotesScreen(Screen):
         )
 
         # ═══════════════════════════════════════════════════════════════
-        # SECTION 4: Preview Terminal - Styled like terminal output
+        # SECTION 4: Content Summary - Metadata only, no secret exposure
+        # Security: notes may contain secrets - NEVER render content in inspector
         # ═══════════════════════════════════════════════════════════════
         if entry.content:
-            lines = entry.content.split("\n")
-            numbered_lines = []
-            for i, line in enumerate(lines[:8], 1):  # Limit to 8 lines
-                line_num = f"[dim {c['muted']}]{i:2}[/]"
-                line_preview = line[:35] if len(line) > 35 else line
-                line_content = (
-                    f"[{c['success']}]{line_preview}[/]" if line.strip() else ""
-                )
-                numbered_lines.append(f"{line_num} │ {line_content}")
-            if len(lines) > 8:
-                numbered_lines.append(
-                    f"[dim {c['muted']}]   │ ... {len(lines) - 8} more[/]"
-                )
-            notes_content = "\n".join(numbered_lines)
+            # Show safe metadata only
+            content_display = (
+                f"[{c['muted']}]●●●●●●●●●●●●●●●●●●●●[/]\n\n"
+                f"[dim {c['muted']}]{entry.line_count} lines · "
+                f"{entry.char_count} characters[/]\n\n"
+                f"[dim]Press [bold {c['primary']}]V[/] to reveal content[/]"
+            )
         else:
-            notes_content = f"[dim {c['muted']}] 1[/] │ [dim {c['muted']}]// EMPTY[/] "
+            content_display = f"[dim {c['muted']}]// EMPTY[/]"
 
         notes_terminal = Vertical(
-            Static(notes_content, classes="notes-code"),
+            Static(content_display, classes="notes-code"),
             Static("▌", classes="blink-cursor") if not entry.content else Static(""),
             classes="notes-terminal-box",
         )
-        notes_terminal.border_title = "PREVIEW"
+        notes_terminal.border_title = "ENCRYPTED"
 
         inspector.mount(
             Vertical(

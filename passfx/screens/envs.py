@@ -81,56 +81,49 @@ class ViewEnvModal(ModalScreen[None]):
         self.env = env
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade view modal layout."""
-        # Get content preview (first 60 chars)
-        preview = (
-            self.env.content[:60] + "..."
-            if len(self.env.content) > 60
-            else self.env.content
-        )
-        preview = preview.replace("\n", " ")
+        """Create the Operator-grade view modal layout.
 
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        This is the explicit reveal action - user has pressed V to view content.
+        Full content is displayed securely in a TextArea (read-only).
+        """
+        with Vertical(id="pwd-modal", classes="secure-terminal env-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-            # Data Display Body
+            # Data Display Body - matches EditEnvModal structure
             with Vertical(id="pwd-form"):
-                # Row 1: Config Title
-                yield Label("> CONFIG_TITLE", classes="input-label")
-                yield Static(
-                    f"  {self.env.title}", classes="view-value", id="title-value"
+                # Row 1: Title and Filename side-by-side
+                with Horizontal(classes="input-row"):
+                    with Vertical(classes="input-col"):
+                        yield Label("> CONFIG_TITLE", classes="input-label")
+                        yield Static(
+                            f"  {self.env.title}",
+                            classes="view-value",
+                            id="title-value",
+                        )
+                    with Vertical(classes="input-col"):
+                        yield Label("> FILE_TARGET", classes="input-label")
+                        yield Static(
+                            f"  [#fcd34d]{self.env.filename}[/]  "
+                            f"[dim]({self.env.line_count}L {self.env.var_count}V)[/]",
+                            classes="view-value",
+                            id="filename-value",
+                        )
+
+                # Row 2: Full content in TextArea (read-only reveal)
+                yield Label("> CONTENT [DECRYPTED]", classes="input-label")
+                yield TextArea(
+                    self.env.content,
+                    id="content-area",
+                    language="dotenv",
+                    classes="note-code-editor",
+                    read_only=True,
                 )
 
-                # Row 2: Filename
-                yield Label("> FILE_TARGET", classes="input-label")
-                yield Static(
-                    f"  [#fcd34d]{self.env.filename}[/]",
-                    classes="view-value",
-                    id="filename-value",
-                )
-
-                # Row 3: Stats
-                yield Label("> CONFIG_STATS", classes="input-label")
-                yield Static(
-                    f"  [#fcd34d]{self.env.line_count}[/] lines  "
-                    f"[#fcd34d]{self.env.var_count}[/] vars",
-                    classes="view-value",
-                    id="stats-value",
-                )
-
-                # Row 4: Content Preview
-                yield Label("> CONTENT_PREVIEW", classes="input-label")
-                yield Static(
-                    f"  [#f59e0b]{preview}[/]",
-                    classes="view-value secret",
-                    id="preview-value",
-                )
-
-            # Footer Actions - right aligned
+            # Footer Actions
             with Horizontal(id="modal-buttons"):
                 yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
                 yield Button(r"\[ COPY ]", variant="primary", id="save-button")
@@ -692,12 +685,14 @@ class EnvsScreen(Screen):
             updated = _get_relative_time(env.updated_at)
             updated_text = f"[dim {c['muted']}]{updated}[/]"
 
-            # Content preview (dim)
-            preview = env.content.replace("\n", " ")[:30]
-            if len(env.content) > 30:
-                preview += "…"
-            if preview.strip():
-                preview_text = f"[dim {c['muted']}]{preview}[/]"
+            # Metadata preview only - NEVER expose content values
+            # Security: env files contain secrets (API keys, passwords, etc.)
+            if env.var_count > 0:
+                preview_text = (
+                    f"[dim {c['muted']}]{env.var_count} vars · [ENCRYPTED][/]"
+                )
+            elif env.content.strip():
+                preview_text = f"[dim {c['muted']}][ENCRYPTED][/]"
             else:
                 preview_text = f"[dim {c['muted']}]// EMPTY[/]"
 
@@ -943,38 +938,32 @@ class EnvsScreen(Screen):
         )
 
         # ═══════════════════════════════════════════════════════════════
-        # SECTION 4: Preview Terminal - Styled like terminal output
+        # SECTION 4: Content Summary - Metadata only, no secret exposure
+        # Security: env files contain secrets - NEVER render content in inspector
         # ═══════════════════════════════════════════════════════════════
         if env.content:
+            # Count actual env vars (non-comment, non-empty lines with =)
             lines = env.content.split("\n")
-            numbered_lines = []
-            for i, line in enumerate(lines[:8], 1):  # Limit to 8 lines
-                line_num = f"[dim {c['muted']}]{i:2}[/]"
-                line_preview = line[:35] if len(line) > 35 else line
-                # Highlight env var names
-                if "=" in line and not line.strip().startswith("#"):
-                    parts = line_preview.split("=", 1)
-                    line_content = f"[{c['success']}]{parts[0]}[/]=[dim]...[/]"
-                else:
-                    line_content = (
-                        f"[{c['success']}]{line_preview}[/]" if line.strip() else ""
-                    )
-                numbered_lines.append(f"{line_num} │ {line_content}")
-            if len(lines) > 8:
-                numbered_lines.append(
-                    f"[dim {c['muted']}]   │ ... {len(lines) - 8} more[/]"
-                )
-            content_display = "\n".join(numbered_lines)
-        else:
+            var_lines = [
+                ln
+                for ln in lines
+                if "=" in ln and not ln.strip().startswith("#") and ln.strip()
+            ]
+            # Show safe metadata only
             content_display = (
-                f"[dim {c['muted']}] 1[/] │ [dim {c['muted']}]// EMPTY[/] "
+                f"[{c['muted']}]●●●●●●●●●●●●●●●●●●●●[/]\n\n"
+                f"[dim {c['muted']}]{len(lines)} lines · "
+                f"{len(var_lines)} variables[/]\n\n"
+                f"[dim]Press [bold {c['primary']}]V[/] to reveal content[/]"
             )
+        else:
+            content_display = f"[dim {c['muted']}]// EMPTY[/]"
 
         notes_terminal = Vertical(
             Static(content_display, classes="notes-code"),
             classes="notes-terminal-box",
         )
-        notes_terminal.border_title = "PREVIEW"
+        notes_terminal.border_title = "ENCRYPTED"
 
         inspector.mount(
             Vertical(
