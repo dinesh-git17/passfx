@@ -316,10 +316,13 @@ class TestAppLifecycle:
 
             app = PassFXApp()
             app.push_screen = MagicMock()  # type: ignore[method-assign]
+            app.set_interval = MagicMock()  # type: ignore[method-assign]
 
             app.on_mount()
 
             app.push_screen.assert_called_once_with("login")
+            # Verify auto-lock timer is started
+            app.set_interval.assert_called_once()
 
     @pytest.mark.unit
     def test_action_quit_locks_vault_when_unlocked(self) -> None:
