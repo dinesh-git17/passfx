@@ -1,4 +1,4 @@
-"""Password Generator Screen for PassFX."""
+"""Password Generator Screen for PassFX - Crypto Generation Console."""
 
 # pylint: disable=duplicate-code
 
@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from rich.markup import escape
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -29,18 +30,20 @@ if TYPE_CHECKING:
 
 
 def _make_mode_item(code: str, label: str) -> Text:
-    """Create a mode menu item with consistent formatting.
+    """Create a mode menu item with Operator theme styling.
 
     Args:
-        code: The short code (e.g., "1", "2", "3")
+        code: The short code (e.g., "PWD", "PHR", "PIN")
         label: The mode label
 
     Returns:
-        Rich Text object with styling
+        Rich Text object with [ CODE ] prefix decoration
     """
     text = Text()
-    text.append(f"[{code}]", style="bold #3b82f6")
-    text.append(f" {label}", style="bold white")
+    text.append("[", style="bold #00FFFF")
+    text.append(f"{code:^5}", style="bold #00FFFF")
+    text.append("]", style="bold #00FFFF")
+    text.append(f" {label}", style="white")
     return text
 
 
@@ -57,7 +60,7 @@ def _get_strength_color(score: int) -> str:
         0: "#ef4444",  # Red - Very Weak
         1: "#f87171",  # Light Red - Weak
         2: "#f59e0b",  # Amber - Fair
-        3: "#60a5fa",  # Blue - Good
+        3: "#00FFFF",  # Cyan - Good
         4: "#22c55e",  # Green - Strong
     }
     return colors.get(score, "#94a3b8")
@@ -166,7 +169,7 @@ class SaveGeneratedModal(ModalScreen[EmailCredential | None]):
 
 
 class GeneratorScreen(Screen):
-    """Screen for generating passwords, passphrases, and PINs."""
+    """Crypto Generation Console - Operator Theme."""
 
     BINDINGS = [
         Binding("g", "generate", "Generate"),
@@ -182,27 +185,27 @@ class GeneratorScreen(Screen):
         self._pulse_state: bool = True
 
     def compose(self) -> ComposeResult:
-        """Create the generator screen layout."""
-        # 1. Global Header with Breadcrumbs
+        """Create the generator screen layout - Operator Theme."""
+        # Header - Command Bar
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]TOOLS[/] "
-                "[#475569]>[/] [bold #00d4ff]GENERATOR[/]",
+                "[bold #00FFFF]:: CRYPTO_GENERATOR ::[/]",
                 id="header-branding",
             )
-            yield Static(":: CRYPTO_GENERATOR ::", id="header-status")
-            yield Static("", id="header-lock")
+            with Horizontal(id="header-right"):
+                yield Static("", id="header-clock")
+                yield Static("", id="header-lock")
 
-        # 2. Body (Master-Detail Split)
+        # Main Body - Horizontal Split Layout
         with Horizontal(id="vault-body"):
             # Left Pane: Mode Selection (30%)
             with Vertical(id="generator-mode-pane"):
-                yield Static(" :: GENERATOR_MODES ", classes="pane-header-block")
+                yield Static(" :: GENERATION_MODES ", classes="pane-header-block-cyan")
 
                 yield OptionList(
-                    Option(_make_mode_item("1", "STRONG PASSWORD"), id="password"),
-                    Option(_make_mode_item("2", "MEMORABLE PHRASE"), id="passphrase"),
-                    Option(_make_mode_item("3", "PIN CODE"), id="pin"),
+                    Option(_make_mode_item("PWD", "Strong Password"), id="password"),
+                    Option(_make_mode_item("PHR", "Memorable Phrase"), id="passphrase"),
+                    Option(_make_mode_item("PIN", "PIN Code"), id="pin"),
                     id="mode-select",
                 )
 
@@ -212,84 +215,72 @@ class GeneratorScreen(Screen):
 
             # Right Pane: Generator Console (70%)
             with Vertical(id="generator-console"):
-                yield Static(" :: CRYPTO_CONSOLE ", classes="pane-header-block")
+                yield Static(" :: CONFIGURATION ", classes="pane-header-block-cyan")
 
-                # Console Content Area
-                with Vertical(id="console-content"):
-                    # Section A: Configuration Panel
-                    with Vertical(id="config-section"):
-                        yield Static(
-                            "[dim #6b7280]> CONFIGURATION[/]",
-                            classes="console-section-label",
+                # Password Options (default visible) - Compact horizontal layout
+                with Horizontal(id="password-options", classes="gen-config-row"):
+                    with Vertical(classes="gen-config-field"):
+                        yield Label("> LENGTH", classes="gen-config-label")
+                        yield Input(value="16", placeholder="8-128", id="length-input")
+                    with Vertical(classes="gen-config-field"):
+                        yield Checkbox(
+                            "No ambiguous",
+                            id="exclude-ambiguous",
+                            value=True,
+                        )
+                        yield Checkbox(
+                            "Safe symbols",
+                            id="safe-symbols",
+                            value=False,
                         )
 
-                        # Password Options (default visible)
-                        with Vertical(id="password-options", classes="config-panel"):
-                            yield Label("LENGTH (8-128):", classes="config-label")
-                            yield Input(
-                                value="16", placeholder="8-128", id="length-input"
-                            )
-                            yield Checkbox(
-                                "Exclude ambiguous (0, O, l, 1)",
-                                id="exclude-ambiguous",
-                                value=True,
-                            )
-                            yield Checkbox(
-                                "Safe symbols only (!@#$)",
-                                id="safe-symbols",
-                                value=False,
-                            )
+                # Passphrase Options (hidden by default) - Compact horizontal layout
+                with Horizontal(id="passphrase-options", classes="gen-config-row"):
+                    with Vertical(classes="gen-config-field"):
+                        yield Label("> WORDS", classes="gen-config-label")
+                        yield Input(value="4", placeholder="3-10", id="words-input")
+                    with Vertical(classes="gen-config-field"):
+                        yield Label("> SEPARATOR", classes="gen-config-label")
+                        yield Input(value="-", id="separator-input")
 
-                        # Passphrase Options (hidden by default)
-                        with Vertical(id="passphrase-options", classes="config-panel"):
-                            yield Label("WORDS (3-10):", classes="config-label")
-                            yield Input(value="4", placeholder="3-10", id="words-input")
-                            yield Label("SEPARATOR:", classes="config-label")
-                            yield Input(value="-", id="separator-input")
-
-                        # PIN Options (hidden by default)
-                        with Vertical(id="pin-options", classes="config-panel"):
-                            yield Label("DIGITS (4-12):", classes="config-label")
-                            yield Input(
-                                value="6", placeholder="4-12", id="pin-length-input"
-                            )
-
-                    # Section B: Output Display
-                    with Vertical(id="output-section"):
-                        yield Static(
-                            "[dim #6b7280]> OUTPUT[/]",
-                            classes="console-section-label",
+                # PIN Options (hidden by default) - Compact layout
+                with Horizontal(id="pin-options", classes="gen-config-row"):
+                    with Vertical(classes="gen-config-field"):
+                        yield Label("> DIGITS", classes="gen-config-label")
+                        yield Input(
+                            value="6", placeholder="4-12", id="pin-length-input"
                         )
 
-                        # Result Display Box
-                        yield Static("", id="result-display")
+                # Secure Output Section - takes remaining space
+                yield Static(" :: SECURE_OUTPUT ", classes="pane-header-block-cyan")
 
-                        # Strength Analysis (matches passwords.py style)
-                        with Vertical(id="strength-section"):
-                            yield Static("", id="strength-bar")
-                            yield Static("", id="crack-time")
+                with Vertical(id="output-panel"):
+                    yield Static("", id="result-display")
+                    with Horizontal(id="strength-section"):
+                        yield Static("", id="strength-bar")
+                        yield Static("", id="crack-time")
 
-                    # Section C: Action Deck
-                    with Horizontal(id="action-deck"):
-                        yield Button(
-                            "GENERATE", id="generate-button", variant="primary"
-                        )
-                        yield Button("COPY", id="copy-button")
-                        yield Button("SAVE TO VAULT", id="save-button")
-
-        # 3. Global Footer
+        # Footer - Mechanical Keycap Command Strip
         with Horizontal(id="app-footer"):
-            yield Static(" TOOLS ", id="footer-version")
-            yield Static(
-                " \\[G] Generate  \\[C] Copy  \\[S] Save  \\[ESC] Back",
-                id="footer-keys-static",
-            )
+            yield Static(" GENERATOR ", id="footer-version")
+            with Horizontal(id="footer-keys"):
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #00FFFF] G [/]", classes="keycap")
+                    yield Static("[#666666]Generate[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #00FFFF] C [/]", classes="keycap")
+                    yield Static("[#666666]Copy[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #00FFFF] S [/]", classes="keycap")
+                    yield Static("[#666666]Save[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #00FFFF] ESC [/]", classes="keycap")
+                    yield Static("[#666666]Back[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Initialize the screen."""
         mode_select = self.query_one("#mode-select", OptionList)
         mode_select.focus()
-        # Highlight first option
         mode_select.highlighted = 0
 
         # Hide passphrase and pin options initially
@@ -308,9 +299,9 @@ class GeneratorScreen(Screen):
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
         if self._pulse_state:
-            header_lock.update("[#22c55e]* [bold]READY[/][/]")
+            header_lock.update("[#22c55e]● [bold]READY[/][/]")
         else:
-            header_lock.update("[#166534]o [bold]READY[/][/]")
+            header_lock.update("[#166534]○ [bold]READY[/][/]")
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         """Handle mode selection."""
@@ -352,14 +343,20 @@ class GeneratorScreen(Screen):
         # Auto-generate for new mode
         self.action_generate()
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle button press."""
-        if event.button.id == "generate-button":
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Auto-regenerate when config changes."""
+        if event.input.id in (
+            "length-input",
+            "words-input",
+            "separator-input",
+            "pin-length-input",
+        ):
             self.action_generate()
-        elif event.button.id == "copy-button":
-            self.action_copy()
-        elif event.button.id == "save-button":
-            self.action_save_to_vault()
+
+    def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
+        """Auto-regenerate when checkbox changes."""
+        if event.checkbox.id in ("exclude-ambiguous", "safe-symbols"):
+            self.action_generate()
 
     def action_generate(self) -> None:  # pylint: disable=too-many-locals
         """Generate based on current mode and options."""
@@ -396,29 +393,36 @@ class GeneratorScreen(Screen):
                 self._generated = generate_pin(max(4, min(12, length)))
 
             # Update result display with bright green terminal output
-            result_display.update(f"[bold #00ff00]{self._generated}[/]")
+            # Escape special chars to prevent Rich markup interpretation
+            safe_output = escape(self._generated)
+            result_display.update(f"[bold #22c55e]{safe_output}[/]")
+
+            # Flash effect on output panel
+            output_panel = self.query_one("#output-panel", Vertical)
+            output_panel.add_class("flash-generate")
+            self.set_timer(0.2, lambda: output_panel.remove_class("flash-generate"))
 
             # Show strength analysis (except for PIN)
             if self._mode != "pin":
                 strength = check_strength(self._generated)
                 color = _get_strength_color(strength.score)
 
-                # Build block progress bar (20 chars wide) - matches passwords.py
+                # Build block progress bar (20 chars wide)
                 filled_blocks = (strength.score + 1) * 4  # 0=4, 1=8, 2=12, 3=16, 4=20
                 empty_blocks = 20 - filled_blocks
 
-                filled = f"[{color}]" + ("=" * filled_blocks) + "[/]"
-                empty = "[#1e293b]" + ("-" * empty_blocks) + "[/]"
+                filled = f"[{color}]" + ("█" * filled_blocks) + "[/]"
+                empty = "[#333333]" + ("░" * empty_blocks) + "[/]"
                 progress = f"{filled}{empty}"
 
                 label = _get_strength_label(strength.score)
                 strength_bar.update(f"{progress} [{color}]{label}[/]")
                 crack_time.update(
-                    f"[dim #475569]Crack time:[/] [#94a3b8]{strength.crack_time}[/]"
+                    f"[dim #666666]Crack time:[/] [#94a3b8]{strength.crack_time}[/]"
                 )
             else:
                 # PIN doesn't get strength analysis
-                strength_bar.update("[dim #475569]PIN mode - strength N/A[/]")
+                strength_bar.update("[dim #666666]PIN mode - strength N/A[/]")
                 crack_time.update("")
 
         except (ValueError, TypeError) as e:
@@ -434,6 +438,10 @@ class GeneratorScreen(Screen):
 
         if copy_to_clipboard(self._generated, auto_clear=True, clear_after=30):
             self.notify("Copied! Auto-clears in 30s", title="CLIPBOARD")
+            # Flash effect on copy
+            output_panel = self.query_one("#output-panel", Vertical)
+            output_panel.add_class("flash-copy")
+            self.set_timer(0.3, lambda: output_panel.remove_class("flash-copy"))
         else:
             self.notify("Clipboard operation failed", severity="error")
 
@@ -456,5 +464,11 @@ class GeneratorScreen(Screen):
         self.app.push_screen(SaveGeneratedModal(self._generated), handle_result)
 
     def action_back(self) -> None:
-        """Go back to main menu."""
-        self.app.pop_screen()
+        """Handle escape - first focuses mode selector, second exits."""
+        mode_select = self.query_one("#mode-select", OptionList)
+        if self.focused != mode_select:
+            # First ESC: focus the mode selector
+            mode_select.focus()
+        else:
+            # Second ESC: exit to main menu
+            self.app.pop_screen()
