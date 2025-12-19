@@ -164,14 +164,14 @@ class LoginScreen(Screen):
         # Vertical layout with rain at top/bottom, horizontal with side strips
         with Vertical(id="matrix-bg"):
             yield MatrixRainStrip(
-                update_interval=0.05,
-                decay_rate=0.10,
+                update_interval=0.06,
+                decay_rate=0.12,
                 classes="matrix-strip-top",
             )
             with Horizontal(id="matrix-middle"):
                 yield MatrixRainStrip(
-                    update_interval=0.05,
-                    decay_rate=0.06,
+                    update_interval=0.06,
+                    decay_rate=0.08,
                     classes="matrix-strip-left",
                 )
                 with Center(id="login-form-pane"):
@@ -199,13 +199,14 @@ class LoginScreen(Screen):
                             id="status-footer",
                         )
                 yield MatrixRainStrip(
-                    update_interval=0.05,
-                    decay_rate=0.06,
+                    update_interval=0.06,
+                    decay_rate=0.08,
                     classes="matrix-strip-right",
                 )
             yield MatrixRainStrip(
-                update_interval=0.05,
-                decay_rate=0.10,
+                update_interval=0.06,
+                decay_rate=0.22,
+                start_delay=2.0,
                 classes="matrix-strip-bottom",
             )
 
