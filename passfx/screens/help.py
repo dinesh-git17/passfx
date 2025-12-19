@@ -14,6 +14,8 @@ from textual.screen import ModalScreen
 from textual.widgets import OptionList, Static
 from textual.widgets.option_list import Option
 
+from passfx.widgets.keycap_footer import KeycapFooter
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # HELP DATA - Single source of truth for all help content
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -225,16 +227,10 @@ class HelpScreen(ModalScreen[None]):
                 yield HelpContentPane(id="help-content")
 
             # Footer - Mechanical keycap hints
-            with Horizontal(id="help-footer"):
-                with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #00FFFF] ↑↓ [/]", classes="keycap")
-                    yield Static("[#666666]Navigate[/]", classes="keycap-label")
-                with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #00FFFF] ←→ [/]", classes="keycap")
-                    yield Static("[#666666]Switch Pane[/]", classes="keycap-label")
-                with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #00FFFF] ESC [/]", classes="keycap")
-                    yield Static("[#666666]Close[/]", classes="keycap-label")
+            yield KeycapFooter(
+                hints=[("↑↓", "Navigate"), ("←→", "Switch Pane"), ("ESC", "Close")],
+                footer_id="help-footer",
+            )
 
     def on_mount(self) -> None:
         """Focus sidebar on mount and highlight first option."""

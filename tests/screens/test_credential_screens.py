@@ -1087,45 +1087,45 @@ class TestNotesScreenBindingActions:
 
 
 # ---------------------------------------------------------------------------
-# Modal Color Configuration Tests
+# Screen Color Configuration Tests
 # ---------------------------------------------------------------------------
 
 
-class TestModalColorConfigurations:
-    """Tests for modal color configurations."""
+class TestScreenColorConfigurations:
+    """Tests for screen color configurations."""
 
     @pytest.mark.unit
-    def test_view_password_modal_has_colors(self) -> None:
-        """Verify ViewPasswordModal has color configuration."""
-        from passfx.screens.passwords import ViewPasswordModal
+    def test_passwords_screen_has_colors(self) -> None:
+        """Verify PasswordsScreen has color configuration."""
+        from passfx.screens.passwords import PasswordsScreen
 
-        assert hasattr(ViewPasswordModal, "COLORS")
-        assert "border" in ViewPasswordModal.COLORS
-        assert "accent" in ViewPasswordModal.COLORS
-
-    @pytest.mark.unit
-    def test_view_card_modal_has_colors(self) -> None:
-        """Verify ViewCardModal has color configuration."""
-        from passfx.screens.cards import ViewCardModal
-
-        assert hasattr(ViewCardModal, "COLORS")
-        assert "border" in ViewCardModal.COLORS
+        assert hasattr(PasswordsScreen, "COLORS")
+        assert "primary" in PasswordsScreen.COLORS
+        assert "accent" in PasswordsScreen.COLORS
 
     @pytest.mark.unit
-    def test_view_phone_modal_has_colors(self) -> None:
-        """Verify ViewPhoneModal has color configuration."""
-        from passfx.screens.phones import ViewPhoneModal
+    def test_cards_screen_has_colors(self) -> None:
+        """Verify CardsScreen has color configuration."""
+        from passfx.screens.cards import CardsScreen
 
-        assert hasattr(ViewPhoneModal, "COLORS")
-        assert "border" in ViewPhoneModal.COLORS
+        assert hasattr(CardsScreen, "COLORS")
+        assert "primary" in CardsScreen.COLORS
 
     @pytest.mark.unit
-    def test_view_note_modal_has_colors(self) -> None:
-        """Verify ViewNoteModal has color configuration."""
-        from passfx.screens.notes import ViewNoteModal
+    def test_phones_screen_has_colors(self) -> None:
+        """Verify PhonesScreen has color configuration."""
+        from passfx.screens.phones import PhonesScreen
 
-        assert hasattr(ViewNoteModal, "COLORS")
-        assert "border" in ViewNoteModal.COLORS
+        assert hasattr(PhonesScreen, "COLORS")
+        assert "primary" in PhonesScreen.COLORS
+
+    @pytest.mark.unit
+    def test_notes_screen_has_colors(self) -> None:
+        """Verify NotesScreen has color configuration."""
+        from passfx.screens.notes import NotesScreen
+
+        assert hasattr(NotesScreen, "COLORS")
+        assert "primary" in NotesScreen.COLORS
 
 
 # ---------------------------------------------------------------------------

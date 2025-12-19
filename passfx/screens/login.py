@@ -214,7 +214,36 @@ class LoginScreen(Screen):
 
     def on_mount(self) -> None:
         """Focus the password input on mount."""
+        self._clear_sensitive_fields()
         self.query_one("#password-input", Input).focus()
+
+    def on_show(self) -> None:
+        """Clear sensitive fields whenever screen becomes visible.
+
+        Security measure to prevent password persistence across auto-lock cycles.
+        """
+        self._clear_sensitive_fields()
+        self.query_one("#password-input", Input).focus()
+
+    def _clear_sensitive_fields(self) -> None:
+        """Clear all password input fields."""
+        try:
+            password_input = self.query_one("#password-input", Input)
+            password_input.value = ""
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass  # Widget may not exist yet
+
+        try:
+            confirm_input = self.query_one("#confirm-input", Input)
+            confirm_input.value = ""
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass  # Widget may not exist (unlock mode)
+
+        try:
+            error_label = self.query_one("#error-message", Static)
+            error_label.update("")
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass  # Widget may not exist yet
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""

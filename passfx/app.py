@@ -13,6 +13,7 @@ from typing import Any
 from textual.app import App
 from textual.binding import Binding
 
+from passfx.core.config import get_config
 from passfx.core.crypto import CryptoError
 from passfx.core.vault import Vault, VaultError
 from passfx.screens.login import LoginScreen
@@ -108,9 +109,47 @@ class PassFXApp(App):
         self.vault = Vault()
         self._unlocked = False
 
+        # Apply saved settings from config
+        config = get_config()
+        self.vault.set_lock_timeout(config.auto_lock_minutes * 60)
+
     def on_mount(self) -> None:
         """Called when app is mounted."""
         self.push_screen("login")
+        # Start auto-lock timer - checks every 10 seconds
+        self.set_interval(10, self._check_auto_lock)
+
+    def _check_auto_lock(self) -> None:
+        """Check if vault should auto-lock due to inactivity.
+
+        Called periodically to enforce auto-lock timeout.
+        Returns user to login screen when timeout exceeded.
+        """
+        if not self._unlocked:
+            return
+
+        if self.vault.check_timeout():
+            # Lock the vault
+            self.vault.lock()
+            self._unlocked = False
+
+            # Clear clipboard for security
+            clear_clipboard()
+
+            # Show notification
+            self.notify(
+                "Vault locked due to inactivity",
+                title="Auto-Lock",
+                severity="warning",
+            )
+
+            # Navigate back to login - pop all screens except the base
+            # then push a fresh login screen instance
+            while len(self.screen_stack) > 1:
+                self.pop_screen()
+
+            # Push fresh login screen instance (not named screen which may be cached)
+            self.push_screen(LoginScreen())
 
     async def action_back(self) -> None:
         """Go back to previous screen (but not from main menu)."""

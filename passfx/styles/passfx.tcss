@@ -4480,3 +4480,444 @@ Button.note-delete-btn:focus {
 .gauge-panel:focus-within {
     border: solid #00FFFF;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SETTINGS SCREEN - System Control Deck
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Settings Screen Background */
+SettingsScreen {
+    background: $operator-black;
+}
+
+/* Settings Header */
+#settings-header {
+    width: 100%;
+    height: 3;
+    dock: top;
+    background: $operator-black;
+    border-bottom: heavy $operator-primary;
+    align: left middle;
+    padding: 0 2;
+}
+
+#settings-header-title {
+    width: auto;
+    height: auto;
+    color: $operator-primary;
+    text-style: bold;
+}
+
+#settings-header-subtitle {
+    width: 1fr;
+    height: auto;
+    color: $operator-muted;
+    text-align: right;
+    padding-right: 2;
+}
+
+/* Settings Main Container - Dual Pane Layout */
+#settings-container {
+    width: 100%;
+    height: 1fr;
+    background: $operator-black;
+}
+
+/* Settings Sidebar - Category Navigation */
+#settings-sidebar {
+    width: 28;
+    height: 100%;
+    background: $operator-black;
+    padding: 1 1 0 1;
+    border: solid $operator-primary 30%;
+    border-title-align: center;
+    border-title-color: $operator-primary;
+    border-title-style: bold;
+}
+
+/* Category Menu */
+#category-menu {
+    background: transparent;
+    border: none;
+    height: auto;
+    padding: 0;
+    margin: 0;
+}
+
+#category-menu:focus {
+    border: none;
+}
+
+#category-menu > .option-list--option {
+    padding-left: 2;
+    color: $operator-text;
+}
+
+#category-menu > .option-list--option-highlighted {
+    background: #0a2a2a;
+    color: #00FFFF;
+    text-style: bold;
+    border-left: heavy #00FFFF;
+    padding-left: 1;
+}
+
+#category-menu > .option-list--option-hover {
+    background: #1a1a2e;
+    color: #FFFFFF;
+}
+
+/* Settings Content Area */
+#settings-content {
+    width: 1fr;
+    height: 100%;
+    background: $operator-black;
+    padding: 1 2;
+    overflow-y: auto;
+}
+
+#content-pane {
+    width: 100%;
+    height: auto;
+    background: $operator-black;
+    padding: 0;
+}
+
+/* Panel Header */
+.panel-header {
+    width: 100%;
+    height: auto;
+    color: $operator-primary;
+    text-style: bold;
+    padding: 0 0 1 0;
+    margin-bottom: 1;
+    border-bottom: solid $operator-primary 30%;
+}
+
+/* Setting Section */
+.setting-section {
+    width: 100%;
+    height: auto;
+    background: transparent;
+    padding: 1 0;
+    margin-bottom: 1;
+}
+
+.setting-title {
+    width: 100%;
+    height: 1;
+    color: $operator-primary;
+    text-style: bold;
+    padding: 0 0 0 1;
+}
+
+.setting-title-danger {
+    width: 100%;
+    height: 1;
+    color: #ef4444;
+    text-style: bold;
+    padding: 0 0 0 1;
+}
+
+.setting-desc {
+    width: 100%;
+    height: auto;
+    color: $operator-muted;
+    padding: 0 0 1 1;
+}
+
+/* Setting Row - Input with unit label */
+.setting-row {
+    width: 100%;
+    height: auto;
+    align: left middle;
+    padding: 0 0 0 1;
+}
+
+.setting-input {
+    width: 20;
+    height: 3;
+    background: $operator-surface;
+    border: solid $operator-muted 50%;
+    color: $operator-text;
+    margin-right: 1;
+}
+
+.setting-input:focus {
+    border: solid $operator-primary;
+    background: #0a0a12;
+}
+
+.setting-unit {
+    width: auto;
+    height: 1;
+    color: $operator-muted;
+    padding: 0 1;
+}
+
+/* Setting Row - Switch toggle */
+.setting-row-switch {
+    width: 100%;
+    height: auto;
+    align: left middle;
+    padding: 0 0 0 1;
+}
+
+.switch-label {
+    width: auto;
+    height: auto;
+    padding-left: 2;
+}
+
+/* Setting Row - Buttons */
+.setting-row-button {
+    width: 100%;
+    height: auto;
+    align: left middle;
+    padding: 1 0 0 1;
+}
+
+/* Stats Grid */
+.stats-grid {
+    width: 100%;
+    height: auto;
+    background: transparent;
+    padding: 0 0 0 1;
+}
+
+.stats-grid Static {
+    height: 1;
+    padding: 0;
+}
+
+/* Danger Zone Section */
+.danger-section {
+    width: 100%;
+    height: auto;
+    background: transparent;
+    padding: 2 0 1 0;
+    margin-top: 2;
+    border-top: solid #ef4444 50%;
+}
+
+.danger-header {
+    width: 100%;
+    height: auto;
+    text-align: center;
+    padding: 1 0;
+}
+
+/* Status Message */
+.status-message {
+    width: 100%;
+    height: 1;
+    padding: 1 0 0 1;
+}
+
+/* Settings Footer */
+#settings-footer {
+    width: 100%;
+    height: 3;
+    dock: bottom;
+    background: $operator-black;
+    border-top: heavy $operator-primary;
+    align: center middle;
+    padding: 0;
+    margin: 0;
+}
+
+#settings-footer-label {
+    width: 28;
+    height: 3;
+    background: $operator-black;
+    color: $operator-muted;
+    content-align: center middle;
+}
+
+#settings-footer-keys {
+    width: 1fr;
+    height: 3;
+    background: $operator-black;
+    align: left middle;
+    padding-left: 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SETTINGS MODALS - Secure Terminal Style
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#settings-modal.secure-terminal {
+    width: 64;
+    height: auto;
+    background: $operator-black;
+    border: heavy $operator-primary;
+    padding: 0;
+}
+
+#settings-modal .modal-header {
+    width: 100%;
+    height: auto;
+    background: $operator-black;
+    padding: 1 2;
+    border-bottom: heavy $operator-primary;
+}
+
+#settings-modal .modal-header-row {
+    width: 100%;
+    height: 1;
+    align: left middle;
+}
+
+#settings-modal #modal-title {
+    text-style: bold;
+    color: $operator-primary;
+    width: 1fr;
+}
+
+#settings-modal .modal-status {
+    width: auto;
+    color: $pfx-success;
+    text-style: bold;
+}
+
+#settings-modal .modal-status-warning {
+    width: auto;
+    color: $pfx-warning;
+    text-style: bold;
+}
+
+#settings-modal .modal-status-critical {
+    width: auto;
+    color: #ef4444;
+    text-style: bold;
+}
+
+#settings-modal #modal-form {
+    width: 100%;
+    height: auto;
+    padding: 2;
+}
+
+#settings-modal .input-label {
+    color: $operator-muted;
+    padding: 0 0 0 0;
+    margin: 1 0 0 0;
+}
+
+#settings-modal .warning-label {
+    color: #ef4444;
+    padding: 0;
+}
+
+#settings-modal Input {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 1 1 0 2;
+    margin: 0 0 1 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 3;
+}
+
+#settings-modal Input:focus {
+    border-left: heavy $operator-secondary;
+    background: #0a0a12;
+}
+
+#settings-modal #modal-buttons {
+    width: 100%;
+    height: auto;
+    align: right middle;
+    padding: 1 2 2 2;
+}
+
+#settings-modal #cancel-button {
+    background: transparent;
+    color: $operator-muted;
+    border: solid $operator-muted;
+    text-style: bold;
+    min-width: 14;
+}
+
+#settings-modal #cancel-button:hover {
+    color: $operator-text;
+    border: solid $operator-text;
+}
+
+#settings-modal #export-button,
+#settings-modal #import-button {
+    background: transparent;
+    color: $pfx-success;
+    border: solid $pfx-success;
+    text-style: bold;
+    min-width: 14;
+}
+
+#settings-modal #export-button:hover,
+#settings-modal #import-button:hover {
+    background: $pfx-success;
+    color: $operator-black;
+}
+
+#settings-modal #confirm-button,
+#settings-modal #reset-button {
+    background: transparent;
+    color: #ef4444;
+    border: solid #ef4444;
+    text-style: bold;
+    min-width: 18;
+}
+
+#settings-modal #confirm-button:hover,
+#settings-modal #reset-button:hover {
+    background: #ef4444;
+    color: $operator-black;
+}
+
+#settings-modal #format-select {
+    width: 100%;
+    height: auto;
+    max-height: 6;
+    background: $operator-surface;
+    border: solid $operator-muted 50%;
+    padding: 0;
+    margin: 0 0 1 0;
+}
+
+#settings-modal #format-select:focus {
+    border: solid $operator-primary;
+}
+
+#settings-modal #format-select > .option-list--option-highlighted {
+    background: $operator-primary;
+    color: $operator-black;
+}
+
+#settings-modal #error-message {
+    color: #ef4444;
+    text-style: bold;
+    padding: 1 0 0 0;
+}
+
+#settings-modal #export-status,
+#settings-modal #import-status {
+    padding: 1 0 0 0;
+}
+
+/* Switch Widget Styling - Operator Theme */
+Switch {
+    background: $operator-surface;
+    border: solid $operator-muted 50%;
+}
+
+Switch:focus {
+    border: solid $operator-primary;
+}
+
+Switch.-on {
+    background: $pfx-success 30%;
+}
+
+Switch.-on > .switch--slider {
+    background: $pfx-success;
+}
