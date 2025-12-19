@@ -43,6 +43,12 @@ flags:
     carryforward: true
 
 # Ignore files that don't need coverage
+# UI modules excluded - coverage focuses on security-critical code
+# (core crypto, vault, models, utils). UI rendering tests add
+# complexity without improving security guarantees.
 ignore:
   - "passfx/__main__.py"
   - "**/__init__.py"
+  - "passfx/screens/**/*"
+  - "passfx/ui/**/*"
+  - "passfx/widgets/**/*"
