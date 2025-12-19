@@ -97,10 +97,8 @@ jobs:
           pre-commit run --all-files
 
       # Step 10: Run test suite with coverage
-      # Coverage threshold starts at 0 for Phase 0 (infrastructure only).
-      # Threshold will be incrementally raised as tests are added:
-      # - Phase 1: After crypto/vault tests -> increase toward 90%
-      # - Final target: 90% overall, 100% for core/crypto.py and core/vault.py
+      # All tests must pass. Coverage threshold at 0 to allow gradual increase.
+      # Final target: 90% overall, 100% for core/crypto.py and core/vault.py
       - name: Run tests with coverage
         run: |
           pytest tests/ \
@@ -109,8 +107,7 @@ jobs:
             --cov-report=xml \
             --cov-fail-under=0 \
             -v \
-            --tb=short \
-            || echo "No tests collected - infrastructure-only phase"
+            --tb=short
 
       # Step 11: Upload coverage report
       # Coverage badge: https://codecov.io/gh/dinesh-git17/passfx
