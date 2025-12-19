@@ -1,6 +1,6 @@
 """Recovery Codes Screen for PassFX - Fail-Safe Protocol."""
 
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code,too-many-lines
 
 from __future__ import annotations
 
@@ -82,10 +82,10 @@ class ViewRecoveryModal(ModalScreen[None]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade view modal layout."""
-        # Get content preview (first 40 chars, masked)
+        # Get content preview (first 60 chars)
         preview = (
-            self.recovery.content[:40] + "..."
-            if len(self.recovery.content) > 40
+            self.recovery.content[:60] + "..."
+            if len(self.recovery.content) > 60
             else self.recovery.content
         )
         preview = preview.replace("\n", " ")
@@ -100,24 +100,24 @@ class ViewRecoveryModal(ModalScreen[None]):
             # Data Display Body
             with Vertical(id="pwd-form"):
                 # Row 1: Service Name
-                yield Label("> SERVICE_NAME", classes="input-label")
+                yield Label("> PROTOCOL_NAME", classes="input-label")
                 yield Static(
                     f"  {self.recovery.title}", classes="view-value", id="title-value"
                 )
 
                 # Row 2: Stats
-                yield Label("> CODE_STATS", classes="input-label")
+                yield Label("> FAIL_SAFE_STATS", classes="input-label")
                 yield Static(
-                    f"  [#fda4af]{self.recovery.line_count}[/] lines  "
-                    f"[#fda4af]{self.recovery.code_count}[/] codes",
+                    f"  [#ff6f6f]{self.recovery.line_count}[/] lines  "
+                    f"[#ff6f6f]{self.recovery.code_count}[/] codes",
                     classes="view-value",
                     id="stats-value",
                 )
 
                 # Row 3: Content Preview
-                yield Label("> CODES_PREVIEW", classes="input-label")
+                yield Label("> CONTENT_PREVIEW", classes="input-label")
                 yield Static(
-                    f"  [#f43f5e]{preview}[/]",
+                    f"  [#ff6f6f]{preview}[/]",
                     classes="view-value secret",
                     id="preview-value",
                 )
@@ -135,9 +135,9 @@ class ViewRecoveryModal(ModalScreen[None]):
             self._copy_content()
 
     def _copy_content(self) -> None:
-        """Copy content to clipboard."""
-        if copy_to_clipboard(self.recovery.content, auto_clear=False):
-            self.notify("Recovery codes copied to clipboard", title="Copied")
+        """Copy content to clipboard with auto-clear for security."""
+        if copy_to_clipboard(self.recovery.content, auto_clear=True):
+            self.notify("Codes copied! Clears in 15s", title="Copied")
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 
@@ -159,50 +159,42 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade modal layout with TextArea."""
-        with Vertical(id="recovery-edit-modal"):
+        with Vertical(id="pwd-modal", classes="secure-terminal recovery-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
-                    yield Static(
-                        "[bold #f43f5e][ :: SECURE WRITE PROTOCOL :: ][/]",
-                        id="recovery-edit-title",
-                    )
-                    yield Static("[#22c55e]STATUS: OPEN[/]", classes="modal-status")
+                    yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: OPEN", classes="modal-status")
 
-            # Form
-            with Vertical(id="recovery-form"):
-                # Title input
-                yield Label(
-                    "[#f43f5e]> PROTOCOL_NAME[/]", classes="recovery-input-label"
-                )
+            # Form - landscape layout
+            with Vertical(id="pwd-form"):
+                # Row 1: Title
+                yield Label("> PROTOCOL_NAME", classes="input-label")
                 yield Input(placeholder="e.g. GitHub 2FA Backup", id="title-input")
 
-                # Content TextArea
-                yield Label(
-                    "[#f43f5e]> RECOVERY_CODES[/]  [dim #64748b]paste or import[/]",
-                    classes="recovery-input-label",
-                )
+                # Row 2: Content TextArea
+                yield Label("> RECOVERY_CODES", classes="input-label")
                 yield TextArea(
                     "",
                     id="content-area",
-                    classes="recovery-code-editor",
+                    classes="note-code-editor",
                 )
 
-            # Footer Actions - right aligned
+            # Footer Actions
             with Horizontal(id="modal-buttons"):
-                yield Button(
-                    "[ IMPORT ]", id="import-button", classes="recovery-import-btn"
-                )
-                yield Button(r"\[ ABORT ]", id="cancel-button")
-                yield Button(
-                    r"\[ ENCRYPT & COMMIT ]",
-                    id="save-button",
-                    classes="recovery-save-btn",
-                )
+                yield Button(r"\[ FILE ]", id="import-button")
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
+                yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
 
     def on_mount(self) -> None:
         """Focus first input."""
         self.query_one("#title-input", Input).focus()
+
+    def on_drop(self, event: Any) -> None:
+        """Handle file drop events."""
+        if hasattr(event, "paths") and event.paths:
+            file_path = event.paths[0]
+            self._handle_import(str(file_path))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -237,7 +229,8 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
             text_area.load_text(content)
 
             self.notify(
-                f"Imported {len(content)} chars from {path.name}", title="Imported"
+                f"Imported {len(content)} chars from {path.name}",
+                title="Imported",
             )
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.notify(f"Failed to read file: {e}", severity="error")
@@ -275,48 +268,45 @@ class EditRecoveryModal(ModalScreen[dict | None]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade modal layout."""
-        with Vertical(id="recovery-edit-modal"):
+        with Vertical(id="pwd-modal", classes="secure-terminal recovery-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static(
-                        f"[bold #f43f5e][ :: MODIFY // {self.recovery.title.upper()[:18]} :: ][/]",
-                        id="recovery-edit-title",
+                        f"[ :: MODIFY // {self.recovery.title.upper()[:18]} :: ]",
+                        id="modal-title",
                     )
-                    yield Static("[#22c55e]STATUS: EDIT[/]", classes="modal-status")
+                    yield Static("STATUS: EDIT", classes="modal-status")
 
-            # Form
-            with Vertical(id="recovery-form"):
-                yield Label(
-                    "[#f43f5e]> PROTOCOL_NAME[/]", classes="recovery-input-label"
-                )
+            # Form - landscape layout
+            with Vertical(id="pwd-form"):
+                # Row 1: Title
+                yield Label("> PROTOCOL_NAME", classes="input-label")
                 yield Input(
                     value=self.recovery.title,
                     placeholder="e.g. GitHub 2FA Backup",
                     id="title-input",
                 )
 
-                yield Label(
-                    "[#f43f5e]> RECOVERY_CODES[/]  [dim #64748b]paste or import[/]",
-                    classes="recovery-input-label",
-                )
+                # Row 2: Content TextArea
+                yield Label("> RECOVERY_CODES", classes="input-label")
                 yield TextArea(
                     self.recovery.content,
                     id="content-area",
-                    classes="recovery-code-editor",
+                    classes="note-code-editor",
                 )
 
-            # Footer Actions - right aligned
+            # Footer Actions
             with Horizontal(id="modal-buttons"):
-                yield Button(
-                    "[ IMPORT ]", id="import-button", classes="recovery-import-btn"
-                )
-                yield Button(r"\[ ABORT ]", id="cancel-button")
-                yield Button(
-                    r"\[ ENCRYPT & COMMIT ]",
-                    id="save-button",
-                    classes="recovery-save-btn",
-                )
+                yield Button(r"\[ FILE ]", id="import-button")
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
+                yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
+
+    def on_drop(self, event: Any) -> None:
+        """Handle file drop events."""
+        if hasattr(event, "paths") and event.paths:
+            file_path = event.paths[0]
+            self._handle_import(str(file_path))
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -350,7 +340,8 @@ class EditRecoveryModal(ModalScreen[dict | None]):
             text_area = self.query_one("#content-area", TextArea)
             text_area.load_text(content)
             self.notify(
-                f"Imported {len(content)} chars from {path.name}", title="Imported"
+                f"Imported {len(content)} chars from {path.name}",
+                title="Imported",
             )
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.notify(f"Failed to read file: {e}", severity="error")
@@ -384,22 +375,26 @@ class ImportRecoveryPathModal(ModalScreen[str | None]):
 
     def compose(self) -> ComposeResult:
         """Create the path input modal."""
-        with Vertical(id="recovery-import-modal"):
-            yield Static(
-                "[bold #f43f5e]╔══ IMPORT FROM PATH ══╗[/]",
-                id="recovery-import-title",
-            )
-            yield Label("[#f43f5e]FILE_PATH[/]", classes="recovery-input-label")
-            yield Input(placeholder="/path/to/recovery_codes.txt", id="path-input")
-            yield Static(
-                "[dim #64748b]Enter absolute path to recovery codes file[/]",
-                id="recovery-import-hint",
-            )
-            with Horizontal(id="modal-buttons"):
-                yield Button(r"\[ESC] ABORT", id="cancel-button")
-                yield Button(
-                    "[ENTER] IMPORT", id="do-import-button", classes="recovery-save-btn"
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: IMPORT PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: READY", classes="modal-status")
+
+            # Form
+            with Vertical(id="pwd-form"):
+                yield Label("> FILE_PATH", classes="input-label")
+                yield Input(placeholder="/path/to/recovery_codes.txt", id="path-input")
+                yield Static(
+                    "[dim]Enter absolute path to recovery codes file[/]",
+                    classes="view-value",
                 )
+
+            # Footer Actions
+            with Horizontal(id="modal-buttons"):
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
+                yield Button(r"\[ IMPORT ]", variant="primary", id="do-import-button")
 
     def on_mount(self) -> None:
         """Focus input."""
@@ -444,29 +439,20 @@ class ConfirmDeleteRecoveryModal(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         """Create the Operator-grade modal layout."""
-        with Vertical(id="recovery-delete-modal"):
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
             # HUD Header with warning status
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
-                    yield Static(
-                        "[bold #f43f5e][ :: PURGE PROTOCOL :: ][/]",
-                        id="recovery-delete-title",
-                    )
-                    yield Static("[#ef4444]STATUS: ARMED[/]", classes="modal-status")
-            with Vertical(id="delete-content"):
-                yield Static(
-                    f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target"
-                )
-                yield Static(
-                    "[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning"
-                )
+                    yield Static(r"\[ :: PURGE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: ARMED", classes="modal-status")
+
+            with Vertical(id="pwd-form"):
+                yield Static(f"TARGET: '{self.item_name}'", classes="delete-target")
+                yield Static("THIS ACTION CANNOT BE UNDONE", classes="warning")
+
             with Horizontal(id="modal-buttons"):
                 yield Button(r"\[ ABORT ]", id="cancel-button")
-                yield Button(
-                    r"\[ CONFIRM PURGE ]",
-                    id="delete-button",
-                    classes="recovery-delete-btn",
-                )
+                yield Button(r"\[ CONFIRM PURGE ]", variant="error", id="delete-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -501,59 +487,89 @@ class RecoveryScreen(Screen):
         Binding("escape", "back", "Back"),
     ]
 
+    # Operator theme color tokens - Salmon accent (fail-safe protocol)
+    COLORS = {
+        "primary": "#00FFFF",  # Cyan - active selection, titles
+        "accent": "#ff6f6f",  # Salmon - labels, headers (fail-safe)
+        "success": "#22c55e",  # Green - decrypted status
+        "muted": "#666666",  # Dim grey - metadata, timestamps
+        "text": "#e0e0e0",  # Light text
+        "surface": "#0a0a0a",  # Dark surface
+    }
+
     def __init__(self) -> None:
         super().__init__()
         self._selected_row_key: str | None = None
         self._pulse_state: bool = True
 
+    # pylint: disable=too-many-locals
     def compose(self) -> ComposeResult:
         """Create the recovery screen layout."""
-        # 1. Global Header with Breadcrumbs
+        c = self.COLORS
+
+        # 1. Global Header with Breadcrumbs - Operator theme
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]>[/] [dim #64748b]VAULT[/] "
-                "[#475569]>[/] [bold #f43f5e]RECOVERY[/]",
+                f"[bold {c['accent']}]VAULT // FAIL_SAFE[/]",
                 id="header-branding",
+                classes="screen-header",
             )
-            yield Static("░░ FAIL-SAFE PROTOCOL ░░", id="header-status")
-            yield Static("", id="header-lock")
+            with Horizontal(id="header-right"):
+                yield Static("", id="header-lock")  # Will be updated with pulse
 
         # 2. Body (Master-Detail Split)
         with Horizontal(id="vault-body"):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
-                yield Static(" ≡ EMERGENCY_DATABASE ", classes="pane-header-block-rose")
                 yield DataTable(id="recovery-table", cursor_type="row")
-                # Empty state
+                # Empty state placeholder (hidden by default)
                 with Center(id="empty-state"):
                     yield Static(
-                        "[dim #475569]╔══════════════════════════════════════╗\n"
+                        f"[dim {c['muted']}]╔══════════════════════════════════════╗\n"
                         "║                                      ║\n"
-                        "║      NO RECOVERY CODES FOUND         ║\n"
+                        "║      NO FAIL-SAFES FOUND             ║\n"
                         "║                                      ║\n"
-                        "║      INITIATE SEQUENCE [A]           ║\n"
+                        f"║      INITIATE SEQUENCE [{c['primary']}]A[/]           ║\n"
                         "║                                      ║\n"
                         "╚══════════════════════════════════════╝[/]",
                         id="empty-state-text",
                     )
+                # Footer with object count
                 yield Static(
                     " └── SYSTEM_READY", classes="pane-footer", id="grid-footer"
                 )
 
             # Right Pane: Inspector (Detail) - 35%
             with Vertical(id="vault-inspector"):
+                # Inverted Block Header - Operator accent (salmon)
                 yield Static(
-                    " ≡ FAIL-SAFE_INSPECTOR ", classes="pane-header-block-rose"
+                    " ≡ FAIL_SAFE_INSPECTOR ", classes="pane-header-block-accent"
                 )
-                yield Vertical(id="inspector-content")
+                yield Vertical(id="inspector-content")  # Dynamic content here
 
-        # 3. Global Footer
+        # 3. Global Footer - Mechanical keycap style
         with Horizontal(id="app-footer"):
-            yield Static(" VAULT ", id="footer-version")
-            yield Static(
-                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  \\[V] View  \\[ESC] Back",
-                id="footer-keys-static",
-            )
+            yield Static(f" [{c['accent']}]FAIL-SAFE[/] ", id="footer-version")
+            with Horizontal(id="footer-keys"):
+                # Keycap groups for each command
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] A [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Add[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] C [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Copy[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] E [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Edit[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] D [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Del[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] V [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]View[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] ESC [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Back[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Initialize the data table."""
@@ -563,13 +579,14 @@ class RecoveryScreen(Screen):
         self.set_interval(1.0, self._update_pulse)
 
     def _update_pulse(self) -> None:
-        """Update the pulse indicator."""
+        """Update the pulse indicator in the header."""
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
+        c = self.COLORS
         if self._pulse_state:
-            header_lock.update("[#fda4af]● [bold]EMERGENCY[/][/]")
+            header_lock.update(f"[{c['success']}]● [bold]ENCRYPTED[/][/]")
         else:
-            header_lock.update("[#e11d48]○ [bold]EMERGENCY[/][/]")
+            header_lock.update(f"[#166534]○ [{c['success']}]ENCRYPTED[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector."""
@@ -587,21 +604,25 @@ class RecoveryScreen(Screen):
 
     # pylint: disable=too-many-locals
     def _refresh_table(self) -> None:
-        """Refresh the data table."""
+        """Refresh the data table with fail-safes."""
         app: PassFXApp = self.app  # type: ignore
         table = self.query_one("#recovery-table", DataTable)
         empty_state = self.query_one("#empty-state", Center)
+        c = self.COLORS
 
         table.clear(columns=True)
 
-        table.add_column("", width=3)
-        table.add_column("Title", width=32)
-        table.add_column("Codes", width=8)
-        table.add_column("Updated", width=12)
-        table.add_column("Notes", width=65)  # Wider to fill remaining space
+        # Column layout - data stream style (matching Envs total: 118)
+        table.add_column("", width=2)  # Selection indicator column
+        table.add_column("PROTOCOL", width=28)
+        table.add_column("CODES", width=8)
+        table.add_column("LINES", width=8)
+        table.add_column("SYNC", width=12)
+        table.add_column("PREVIEW", width=60)
 
         entries = app.vault.get_recovery_entries()
 
+        # Toggle visibility based on entry count
         if len(entries) == 0:
             table.display = False
             empty_state.display = True
@@ -610,54 +631,81 @@ class RecoveryScreen(Screen):
             empty_state.display = False
 
         for entry in entries:
+            # Selection indicator - will be updated dynamically
             is_selected = entry.id == self._selected_row_key
-            indicator = "[bold #f43f5e]▍[/]" if is_selected else " "
-            title_text = entry.title[:26] if len(entry.title) > 26 else entry.title
-            codes_text = f"[#f43f5e]{entry.code_count}[/]"
+            indicator = f"[bold {c['primary']}]▸[/]" if is_selected else " "
+
+            # Title - primary cyan for selected, white otherwise
+            title_text = entry.title[:22] if len(entry.title) > 22 else entry.title
+
+            # Codes count (muted grey)
+            codes_text = f"[{c['muted']}]{entry.code_count}[/]"
+
+            # Lines count (muted grey)
+            lines_text = f"[{c['muted']}]{entry.line_count}[/]"
+
+            # Relative time (dim muted)
             updated = _get_relative_time(entry.updated_at)
-            updated_text = f"[dim]{updated}[/]"
-            notes_preview = ""
-            if entry.notes:
-                notes_preview = entry.notes[:50] + (
-                    "..." if len(entry.notes) > 50 else ""
-                )
-                notes_text = f"[dim]{notes_preview}[/]"
+            updated_text = f"[dim {c['muted']}]{updated}[/]"
+
+            # Content preview (dim, masked)
+            preview = entry.content.replace("\n", " ")[:40]
+            if len(entry.content) > 40:
+                preview += "…"
+            if preview.strip():
+                # Mask partial content for security
+                if len(preview) > 8:
+                    masked = preview[:4] + "•" * (len(preview) - 8) + preview[-4:]
+                    preview_text = f"[dim {c['muted']}]{masked}[/]"
+                else:
+                    preview_text = f"[dim {c['muted']}]{preview}[/]"
             else:
-                notes_text = "[dim #555555]-[/]"
+                preview_text = f"[dim {c['muted']}]// EMPTY[/]"
 
             table.add_row(
                 indicator,
                 title_text,
                 codes_text,
+                lines_text,
                 updated_text,
-                notes_text,
+                preview_text,
                 key=entry.id,
             )
 
+        # Update the grid footer with object count
         footer = self.query_one("#grid-footer", Static)
         count = len(entries)
-        footer.update(f" └── [{count}] FAIL-SAFES LOADED")
+        footer.update(f" └── [{c['primary']}]{count}[/] FAIL-SAFES LOADED")
 
     def _update_row_indicators(self, old_key: str | None, new_key: str | None) -> None:
-        """Update indicator column for selection change."""
+        """Update only the indicator column for old and new selected rows.
+
+        This avoids rebuilding the entire table on selection change.
+        """
         table = self.query_one("#recovery-table", DataTable)
         app: PassFXApp = self.app  # type: ignore
         entries = app.vault.get_recovery_entries()
+        c = self.COLORS
+
+        # Build a map of id -> entry for quick lookup
         entry_map = {e.id: e for e in entries}
 
+        # Get column keys (first column is the indicator)
         if not table.columns:
             return
         indicator_col = list(table.columns.keys())[0]
 
+        # Clear old selection indicator
         if old_key and old_key in entry_map:
             try:
                 table.update_cell(old_key, indicator_col, " ")
             except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
                 pass  # Row may not exist during rapid navigation
 
+        # Set new selection indicator - cyan arrow for locked target feel
         if new_key and new_key in entry_map:
             try:
-                table.update_cell(new_key, indicator_col, "[bold #f43f5e]▍[/]")
+                table.update_cell(new_key, indicator_col, f"[bold {c['primary']}]▸[/]")
             except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
                 pass  # Row may not exist during rapid navigation
 
@@ -687,14 +735,14 @@ class RecoveryScreen(Screen):
         self.app.push_screen(AddRecoveryModal(), handle_result)
 
     def action_copy(self) -> None:
-        """Copy content to clipboard."""
+        """Copy content to clipboard with auto-clear for security."""
         entry = self._get_selected_entry()
         if not entry:
-            self.notify("No recovery codes selected", severity="warning")
+            self.notify("No fail-safe selected", severity="warning")
             return
 
-        if copy_to_clipboard(entry.content, auto_clear=False):
-            self.notify("Recovery codes copied to clipboard", title=entry.title)
+        if copy_to_clipboard(entry.content, auto_clear=True):
+            self.notify("Codes copied! Clears in 15s", title=entry.title)
         else:
             self.notify("Failed to copy to clipboard", severity="error")
 
@@ -702,7 +750,7 @@ class RecoveryScreen(Screen):
         """Edit selected recovery entry."""
         entry = self._get_selected_entry()
         if not entry:
-            self.notify("No recovery codes selected", severity="warning")
+            self.notify("No fail-safe selected", severity="warning")
             return
 
         def handle_result(changes: dict | None) -> None:
@@ -710,7 +758,7 @@ class RecoveryScreen(Screen):
                 app: PassFXApp = self.app  # type: ignore
                 app.vault.update_recovery(entry.id, **changes)
                 self._refresh_table()
-                self.notify("Recovery codes updated", title="Success")
+                self.notify("Fail-safe updated", title="Success")
 
         self.app.push_screen(EditRecoveryModal(entry), handle_result)
 
@@ -718,7 +766,7 @@ class RecoveryScreen(Screen):
         """Delete selected recovery entry."""
         entry = self._get_selected_entry()
         if not entry:
-            self.notify("No recovery codes selected", severity="warning")
+            self.notify("No fail-safe selected", severity="warning")
             return
 
         def handle_result(confirmed: bool | None) -> None:
@@ -734,7 +782,7 @@ class RecoveryScreen(Screen):
         """View recovery entry details."""
         entry = self._get_selected_entry()
         if not entry:
-            self.notify("No recovery codes selected", severity="warning")
+            self.notify("No fail-safe selected", severity="warning")
             return
 
         self.app.push_screen(ViewRecoveryModal(entry))
@@ -755,15 +803,25 @@ class RecoveryScreen(Screen):
         self._update_inspector(key_value)
         self._update_row_indicators(old_key, key_value)
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-statements
     def _update_inspector(self, row_key: Any) -> None:
-        """Update the inspector panel with recovery details."""
+        """Update the inspector panel with fail-safe details.
+
+        Renders a structured "Fail-Safe Inspector" with:
+        - Entry Header (large text, primary color)
+        - Field Grid (labels in accent, values in text)
+        - Fail-Safe Stats (lines, codes)
+        - Preview Section (terminal style)
+        """
         inspector = self.query_one("#inspector-content", Vertical)
         inspector.remove_children()
+        c = self.COLORS
 
+        # Get the entry by row key
         app: PassFXApp = self.app  # type: ignore
         entries = app.vault.get_recovery_entries()
 
+        # Find entry by ID
         entry = None
         for e in entries:
             if e.id == str(row_key):
@@ -771,106 +829,133 @@ class RecoveryScreen(Screen):
                 break
 
         if not entry:
+            # Empty state - styled for Operator theme
             inspector.mount(
                 Static(
-                    "[dim #555555]╔══════════════════════════╗\n"
-                    "║    SELECT A FAIL-SAFE    ║\n"
-                    "║    TO VIEW DETAILS       ║\n"
-                    "╚══════════════════════════╝[/]",
+                    f"[dim {c['muted']}]╔══════════════════════════════╗\n"
+                    "║                              ║\n"
+                    "║    SELECT A FAIL-SAFE        ║\n"
+                    "║    TO INSPECT DETAILS        ║\n"
+                    "║                              ║\n"
+                    "╚══════════════════════════════╝[/]",
                     classes="inspector-empty",
                 )
             )
             return
 
-        # Section 1: Recovery ID Card
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 1: Entry Header - Large title with underline
+        # ═══════════════════════════════════════════════════════════════
         inspector.mount(
             Vertical(
-                Horizontal(
-                    Vertical(
-                        Static(
-                            "[on #f43f5e][bold #000000] SOS [/][/]",
-                            classes="avatar-char",
-                        ),
-                        Static("[on #f43f5e]     [/]", classes="avatar-char"),
-                        classes="avatar-box",
-                    ),
-                    Vertical(
-                        Static(
-                            f"[bold #f8fafc]{entry.title}[/]", classes="id-label-text"
-                        ),
-                        Static(
-                            "[dim #94a3b8]Emergency Backup Codes[/]",
-                            classes="id-email-text",
-                        ),
-                        classes="id-details-stack",
-                    ),
-                    classes="id-card-header",
-                ),
-                classes="id-card-wrapper recovery-card",
-            )
-        )
-
-        # Section 2: Stats Widget
-        inspector.mount(
-            Vertical(
-                Static("[dim #6b7280]▸ FAIL-SAFE STATS[/]", classes="section-label"),
                 Static(
-                    f"[#f43f5e]LINES:[/] {entry.line_count}    "
-                    f"[#f43f5e]CODES:[/] {entry.code_count}",
-                    classes="strength-bar-widget",
+                    f"[bold underline {c['primary']}]{entry.title.upper()}[/]",
+                    classes="inspector-title",
                 ),
-                classes="security-widget",
+                classes="inspector-header",
             )
         )
 
-        # Section 3: Content Preview
-        preview_lines = []
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 2: Field Grid - Structured label/value pairs
+        # ═══════════════════════════════════════════════════════════════
+        inspector.mount(
+            Vertical(
+                # Type field
+                Horizontal(
+                    Static(f"[{c['accent']}]TYPE[/]", classes="field-label"),
+                    Static(f"[{c['text']}]FAIL_SAFE[/]", classes="field-value"),
+                    classes="field-row",
+                ),
+                # Protocol indicator
+                Horizontal(
+                    Static(f"[{c['accent']}]PROTOCOL[/]", classes="field-label"),
+                    Static(f"[{c['muted']}]2FA_BACKUP[/]", classes="field-value"),
+                    classes="field-row",
+                ),
+                # Content hint - masked
+                Horizontal(
+                    Static(f"[{c['accent']}]DATA[/]", classes="field-label"),
+                    Static(
+                        f"[{c['muted']}]●●●●●●●●●●●●[/]  " f"[dim]\\[V] to reveal[/]",
+                        classes="field-value",
+                    ),
+                    classes="field-row",
+                ),
+                classes="field-grid",
+            )
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 3: Fail-Safe Stats - Size metrics
+        # ═══════════════════════════════════════════════════════════════
+        inspector.mount(
+            Vertical(
+                Static(
+                    f"[{c['accent']}]FAIL_SAFE_STATS[/]",
+                    classes="strength-section-label",
+                ),
+                Static(
+                    f"[{c['text']}]{entry.line_count}[/] lines  "
+                    f"[{c['text']}]{entry.code_count}[/] codes",
+                    classes="strength-bar",
+                ),
+                classes="strength-section",
+            )
+        )
+
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 4: Preview Terminal - Styled like terminal output
+        # ═══════════════════════════════════════════════════════════════
         if entry.content:
-            lines = entry.content.split("\n")[:8]
-            for i, line in enumerate(lines, 1):
+            lines = entry.content.split("\n")
+            numbered_lines = []
+            for i, line in enumerate(lines[:8], 1):  # Limit to 8 lines
+                line_num = f"[dim {c['muted']}]{i:2}[/]"
                 line_preview = line[:35] if len(line) > 35 else line
+                # Mask recovery codes partially for security
                 if line.strip() and not line.strip().startswith("#"):
-                    # Mask part of the code for security
                     if len(line_preview) > 8:
                         masked = (
                             line_preview[:4]
                             + "•" * (len(line_preview) - 8)
                             + line_preview[-4:]
                         )
-                        preview_lines.append(
-                            f"[dim #475569]{i:2}[/] │ [#f43f5e]{masked}[/]"
-                        )
+                        line_content = f"[{c['success']}]{masked}[/]"
                     else:
-                        preview_lines.append(
-                            f"[dim #475569]{i:2}[/] │ [#f43f5e]{line_preview}[/]"
-                        )
+                        line_content = f"[{c['success']}]{line_preview}[/]"
                 else:
-                    preview_lines.append(
-                        f"[dim #475569]{i:2}[/] │ [dim #64748b]{line_preview}[/]"
+                    line_content = (
+                        f"[{c['success']}]{line_preview}[/]" if line.strip() else ""
                     )
-            if len(entry.content.split("\n")) > 8:
-                preview_lines.append(
-                    "[dim #475569]   [/]   [dim #64748b]... more codes[/]"
+                numbered_lines.append(f"{line_num} │ {line_content}")
+            if len(lines) > 8:
+                numbered_lines.append(
+                    f"[dim {c['muted']}]   │ ... {len(lines) - 8} more[/]"
                 )
+            content_display = "\n".join(numbered_lines)
         else:
-            preview_lines.append("[dim #64748b] 1[/] │ [dim #555555]// EMPTY[/]")
+            content_display = (
+                f"[dim {c['muted']}] 1[/] │ [dim {c['muted']}]// EMPTY[/] "
+            )
 
-        preview_content = "\n".join(preview_lines)
         notes_terminal = Vertical(
-            Static(preview_content, classes="notes-code"),
-            classes="notes-editor recovery-preview",
+            Static(content_display, classes="notes-code"),
+            classes="notes-terminal-box",
         )
-        notes_terminal.border_title = "CODE_PREVIEW"
+        notes_terminal.border_title = "PREVIEW"
 
         inspector.mount(
             Vertical(
-                Static("[dim #6b7280]▸ PREVIEW[/]", classes="section-label"),
+                Static(f"[{c['accent']}]CONTENT[/]", classes="notes-section-label"),
                 notes_terminal,
                 classes="notes-section",
             )
         )
 
-        # Section 4: Footer
+        # ═══════════════════════════════════════════════════════════════
+        # SECTION 5: Footer Metadata Bar (ID + Updated)
+        # ═══════════════════════════════════════════════════════════════
         try:
             updated_full = datetime.fromisoformat(entry.updated_at).strftime(
                 "%Y-%m-%d %H:%M"
@@ -881,10 +966,11 @@ class RecoveryScreen(Screen):
         inspector.mount(
             Horizontal(
                 Static(
-                    f"[dim #475569]ID:[/] [#64748b]{entry.id[:8]}[/]", classes="meta-id"
+                    f"[dim {c['muted']}]ID:[/] [{c['muted']}]{entry.id[:8]}[/]",
+                    classes="meta-id",
                 ),
                 Static(
-                    f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
+                    f"[dim {c['muted']}]SYNC:[/] [{c['muted']}]{updated_full}[/]",
                     classes="meta-updated",
                 ),
                 classes="inspector-footer-bar",

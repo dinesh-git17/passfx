@@ -439,7 +439,7 @@ class PhonesScreen(Screen):
         # 1. Global Header with Breadcrumbs - Operator theme
         with Horizontal(id="app-header"):
             yield Static(
-                f"[bold {c['primary']}]VAULT // COMMS[/]",
+                f"[bold {c['accent']}]VAULT // COMMS[/]",
                 id="header-branding",
                 classes="screen-header",
             )

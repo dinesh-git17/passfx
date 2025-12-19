@@ -556,7 +556,7 @@ class EnvsScreen(Screen):
         # 1. Global Header with Breadcrumbs - Operator theme
         with Horizontal(id="app-header"):
             yield Static(
-                f"[bold {c['primary']}]VAULT // CONFIG_FILES[/]",
+                f"[bold {c['accent']}]VAULT // CONFIG_FILES[/]",
                 id="header-branding",
                 classes="screen-header",
             )
