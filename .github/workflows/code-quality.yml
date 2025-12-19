@@ -113,10 +113,15 @@ jobs:
             || echo "No tests collected - infrastructure-only phase"
 
       # Step 11: Upload coverage report
+      # Coverage badge: https://codecov.io/gh/dinesh-git17/passfx
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         if: matrix.python-version == '3.11'
         with:
           files: ./coverage.xml
+          flags: unit
+          name: passfx-coverage
           fail_ci_if_error: false
           verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
