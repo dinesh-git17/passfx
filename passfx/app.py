@@ -144,12 +144,12 @@ class PassFXApp(App):
             )
 
             # Navigate back to login - pop all screens except the base
-            # then push a fresh login screen
+            # then push a fresh login screen instance
             while len(self.screen_stack) > 1:
                 self.pop_screen()
 
-            # Push login screen on top
-            self.push_screen("login")
+            # Push fresh login screen instance (not named screen which may be cached)
+            self.push_screen(LoginScreen())
 
     async def action_back(self) -> None:
         """Go back to previous screen (but not from main menu)."""
