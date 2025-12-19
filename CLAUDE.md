@@ -109,7 +109,7 @@ Claude must **ALWAYS** follow this exact workflow — no deviations:
 
 6. **After committing**
    - Always create a PR
-   - Use the github PR template and fill it out
+   - Use the github PR template and fill it out (.github/pull_request_template.md)
    - Do **NOT** mention Claude or AI when filling out the PR template
 
 🚫 **Hard Rules**
