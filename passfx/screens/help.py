@@ -1,95 +1,170 @@
-"""Help Screen for PassFX - System Operator's Manual."""
+"""Help Screen for PassFX - System Operator's Manual.
+
+Implements a sidebar + content pane layout matching the Operator console aesthetic.
+All content is data-driven for maintainability and consistency.
+"""
 
 from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Static, TabbedContent, TabPane
+from textual.widgets import OptionList, Static
+from textual.widgets.option_list import Option
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# CONTENT DATA
+# HELP DATA - Single source of truth for all help content
 # ═══════════════════════════════════════════════════════════════════════════════
 
-COMMANDS_CONTENT = """\
-[bold #00d4ff]> NAVIGATION[/]
-  [bold #00d4ff]UP/DOWN[/]    [#94a3b8]Navigate through list items[/]
-  [bold #00d4ff]ENTER[/]      [#94a3b8]Select / Confirm action[/]
-  [bold #00d4ff]ESC[/]        [#94a3b8]Go back / Cancel operation[/]
-  [bold #00d4ff]TAB[/]        [#94a3b8]Switch focus between panels[/]
+HELP_DATA: dict[str, dict[str, dict[str, str]]] = {
+    "commands": {
+        "Navigation": {
+            "UP / DOWN": "Navigate through list items",
+            "ENTER": "Select / Confirm action",
+            "ESC": "Go back / Close modal / Cancel",
+            "/": "Focus terminal (Main Menu only)",
+        },
+        "Credential Actions": {
+            "A": "Add new entry",
+            "E": "Edit selected entry",
+            "D": "Delete selected entry",
+            "V": "View entry details",
+            "C": "Copy to clipboard (auto-clear 15s)",
+        },
+        "Delete Confirmation": {
+            "Y": "Confirm deletion",
+            "N": "Cancel deletion",
+        },
+        "Generator Actions": {
+            "G": "Generate new password/passphrase/PIN",
+            "C": "Copy generated value (auto-clear 30s)",
+            "S": "Save generated value to vault",
+        },
+        "Global": {
+            "Q": "Quit application (locks vault)",
+            "?": "Open this help screen",
+        },
+        "Terminal Commands": {
+            "/key": "Passwords screen",
+            "/pin": "Phones/PINs screen",
+            "/crd": "Cards screen",
+            "/mem": "Secure Notes screen",
+            "/env": "Env Variables screen",
+            "/sos": "Recovery Codes screen",
+            "/gen": "Password Generator",
+            "/set": "Settings screen",
+            "/help": "Help screen",
+            "/clear": "Clear terminal output",
+            "/quit": "Exit application",
+        },
+    },
+    "legend": {
+        "Password Strength": {
+            "[on #ef4444]  [/] WEAK": "Easily cracked - change immediately",
+            "[on #f87171]  [/] POOR": "Below minimum security threshold",
+            "[on #f59e0b]  [/] FAIR": "Acceptable but could be stronger",
+            "[on #60a5fa]  [/] GOOD": "Meets security recommendations",
+            "[on #22c55e]  [/] STRONG": "Excellent protection level",
+        },
+        "Vault Status": {
+            "[#22c55e]●[/] ENCRYPTED": "Vault locked and secured",
+            "[#22c55e]DECRYPTED": "Vault unlocked (active session)",
+        },
+        "Visual Indicators": {
+            "[#00FFFF]▸[/]": "Currently selected row",
+            "[#8b5cf6]>[/]": "Active sidebar menu item",
+            "[dim]****[/]": "Masked sensitive data",
+        },
+    },
+    "system": {
+        "Encryption Protocol": {
+            "CIPHER": "Fernet (AES-128-CBC)",
+            "INTEGRITY": "HMAC-SHA256",
+            "KEY DERIVE": "PBKDF2-HMAC-SHA256",
+            "ITERATIONS": "480,000 (OWASP 2023)",
+            "SALT": "32 bytes (256-bit)",
+        },
+        "Storage Paths": {
+            "VAULT": "~/.passfx/vault.enc",
+            "SALT": "~/.passfx/salt",
+            "LOCK": "~/.passfx/vault.enc.lock",
+        },
+        "Security Features": {
+            "+ Clipboard": "Auto-clear after 15 seconds",
+            "+ Memory": "Secrets wiped on vault lock",
+            "+ Atomic": "Writes ensure data integrity",
+            "+ Permissions": "Files 0600, directories 0700",
+            "+ No Recovery": "By design - zero backdoors",
+        },
+    },
+}
 
-[bold #00d4ff]> ACTIONS[/]
-  [bold #00d4ff]A[/]          [#94a3b8]Add new credential entry[/]
-  [bold #00d4ff]E[/]          [#94a3b8]Edit selected credential[/]
-  [bold #00d4ff]D[/]          [#94a3b8]Delete selected credential[/]
-  [bold #00d4ff]V[/]          [#94a3b8]View credential details[/]
-  [bold #00d4ff]C[/]          [#94a3b8]Copy password to clipboard[/]
+# Section display names and order
+SECTIONS: list[tuple[str, str]] = [
+    ("commands", "COMMANDS"),
+    ("legend", "LEGEND"),
+    ("system", "SYSTEM"),
+]
 
-[bold #00d4ff]> GLOBAL[/]
-  [bold #00d4ff]Q[/]          [#94a3b8]Quit application[/]
-  [bold #00d4ff]?[/]          [#94a3b8]Open this help screen[/]
-  [bold #00d4ff]CTRL+P[/]     [#94a3b8]Open command palette[/]
 
-[bold #8b5cf6]> TERMINAL COMMANDS[/]
-  [bold #8b5cf6]/key[/]       [#94a3b8]Open Passwords screen[/]
-  [bold #8b5cf6]/pin[/]       [#94a3b8]Open Phones/PINs screen[/]
-  [bold #8b5cf6]/crd[/]       [#94a3b8]Open Cards screen[/]
-  [bold #8b5cf6]/mem[/]       [#94a3b8]Open Secure Notes screen[/]
-  [bold #8b5cf6]/env[/]       [#94a3b8]Open Env Variables screen[/]
-  [bold #8b5cf6]/sos[/]       [#94a3b8]Open Recovery Codes screen[/]
-  [bold #8b5cf6]/gen[/]       [#94a3b8]Open Password Generator[/]
-  [bold #8b5cf6]/set[/]       [#94a3b8]Open Settings screen[/]
-  [bold #8b5cf6]/help[/]      [#94a3b8]Open this help screen[/]
-  [bold #8b5cf6]/clear[/]     [#94a3b8]Clear terminal output[/]
-  [bold #8b5cf6]/quit[/]      [#94a3b8]Exit application[/]
-"""
+# ═══════════════════════════════════════════════════════════════════════════════
+# HELPER WIDGETS
+# ═══════════════════════════════════════════════════════════════════════════════
 
-LEGEND_CONTENT = """\
-[bold #00d4ff]> PASSWORD STRENGTH[/]
-  [on #ef4444]  [/] [bold #ef4444]WEAK[/]       [#94a3b8]Easily cracked - change immediately[/]
-  [on #f87171]  [/] [bold #f87171]POOR[/]       [#94a3b8]Below minimum security threshold[/]
-  [on #f59e0b]  [/] [bold #f59e0b]FAIR[/]       [#94a3b8]Acceptable but could be stronger[/]
-  [on #60a5fa]  [/] [bold #60a5fa]GOOD[/]       [#94a3b8]Meets security recommendations[/]
-  [on #22c55e]  [/] [bold #22c55e]STRONG[/]     [#94a3b8]Excellent protection level[/]
 
-[bold #00d4ff]> STATUS INDICATORS[/]
-  [#22c55e]●[/] [bold #22c55e]ENCRYPTED[/]     [#94a3b8]Vault is secured and encrypted[/]
-  [#ef4444]●[/] [bold #ef4444]DECRYPTED[/]     [#94a3b8]Vault unlocked (active session)[/]
-  [#f59e0b]![/] [bold #f59e0b]WARNING[/]       [#94a3b8]Security issue detected[/]
+class HelpSection(Static):
+    """A section block with header and key-value rows.
 
-[bold #00d4ff]> VISUAL ICONS[/]
-  [#60a5fa]LOCK[/]        [#94a3b8]Credential entry (secure)[/]
-  [#00d4ff]|[/]           [#94a3b8]Currently selected row[/]
-  [#8b5cf6]>[/]           [#94a3b8]Active menu item[/]
-"""
+    Renders a purple inverted header followed by cyan-highlighted key-value pairs.
+    """
 
-SYSTEM_CONTENT = """\
-[bold #00d4ff]> ENCRYPTION PROTOCOL[/]
-  [bold #8b5cf6]CIPHER[/]       [#22c55e]Fernet (AES-128-CBC)[/]
-                 [dim #64748b]128-bit AES, CBC mode[/]
+    def __init__(
+        self,
+        title: str,
+        items: dict[str, str],
+        *args: object,
+        **kwargs: object,
+    ) -> None:
+        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+        self._title = title
+        self._items = items
 
-  [bold #8b5cf6]INTEGRITY[/]    [#22c55e]HMAC-SHA256[/]
-                 [dim #64748b]Message authentication[/]
+    def compose(self) -> ComposeResult:
+        """Compose the section with header and rows."""
+        yield Static(f" {self._title} ", classes="help-section-header")
+        for key, value in self._items.items():
+            yield Static(
+                f"  [bold #00FFFF]{key:<16}[/] [#94a3b8]{value}[/]",
+                classes="help-row",
+            )
 
-  [bold #8b5cf6]KEY DERIVE[/]   [#22c55e]PBKDF2-HMAC-SHA256[/]
-                 [dim #64748b]480,000 iterations[/]
 
-  [bold #8b5cf6]SALT[/]         [#22c55e]32 bytes (256-bit)[/]
-                 [dim #64748b]Cryptographically secure[/]
+class HelpContentPane(VerticalScroll):
+    """Scrollable content pane that displays help sections based on selection."""
 
-[bold #00d4ff]> STORAGE PATHS[/]
-  [bold #8b5cf6]VAULT[/]        [#f8fafc]~/.passfx/vault.enc[/]
-  [bold #8b5cf6]SALT[/]         [#f8fafc]~/.passfx/salt[/]
-  [bold #8b5cf6]LOGS[/]         [#f8fafc]~/.passfx/logs/[/]
+    current_section: reactive[str] = reactive("commands")
 
-[bold #00d4ff]> SECURITY FEATURES[/]
-  [#22c55e]+[/] [#94a3b8]Auto-clear clipboard (15s default)[/]
-  [#22c55e]+[/] [#94a3b8]No password recovery (by design)[/]
-  [#22c55e]+[/] [#94a3b8]Zero-knowledge architecture[/]
-  [#22c55e]+[/] [#94a3b8]Memory wiping for secrets[/]
-  [#22c55e]+[/] [#94a3b8]Atomic file writes[/]
-"""
+    def compose(self) -> ComposeResult:
+        """Initial composition - content updated reactively."""
+        yield from self._build_sections(self.current_section)
+
+    def _build_sections(self, section_key: str) -> list[HelpSection]:
+        """Build HelpSection widgets for the given section."""
+        sections: list[HelpSection] = []
+        section_data = HELP_DATA.get(section_key, {})
+
+        for group_name, items in section_data.items():
+            sections.append(HelpSection(group_name, items))
+
+        return sections
+
+    def watch_current_section(self, section_key: str) -> None:
+        """React to section changes by rebuilding content."""
+        self.remove_children()
+        for section in self._build_sections(section_key):
+            self.mount(section)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -98,22 +173,35 @@ SYSTEM_CONTENT = """\
 
 
 class HelpScreen(ModalScreen[None]):
-    """System Operator's Manual - Help documentation modal."""
+    """System Operator's Manual - Help documentation modal.
+
+    Features a sidebar + content pane layout matching the Operator console theme.
+    Keyboard-first navigation with ESC to close.
+    """
 
     BINDINGS = [
-        Binding("escape", "close", "Close"),
+        Binding("escape", "close", "Close", priority=True),
         Binding("q", "close", "Close"),
         Binding("question_mark", "close", "Close"),
+        Binding("left", "focus_sidebar", "Sidebar", show=False),
+        Binding("right", "focus_content", "Content", show=False),
+        Binding("tab", "toggle_focus", "Toggle", show=False),
     ]
 
+    CSS = """
+    HelpScreen {
+        align: center middle;
+        background: rgba(0, 0, 0, 0.85);
+    }
+    """
+
     def compose(self) -> ComposeResult:
-        """Create the help modal layout."""
-        with Vertical(id="help-modal"):
-            # Header - using inverted block style like other screens
+        """Create the help modal layout with sidebar and content pane."""
+        with Vertical(id="help-dialog"):
+            # Header - Inverted cyan block
             yield Static(
                 " SYSTEM OPERATOR'S MANUAL ",
                 id="help-header",
-                classes="pane-header-block",
             )
 
             # Subtitle
@@ -122,31 +210,64 @@ class HelpScreen(ModalScreen[None]):
                 id="help-subtitle",
             )
 
-            # Tabbed content
-            with TabbedContent(id="help-tabs"):
-                with TabPane("COMMANDS", id="tab-commands"):
-                    with VerticalScroll(id="commands-scroll"):
-                        yield Static(COMMANDS_CONTENT, id="commands-content")
+            # Body - Sidebar + Content
+            with Horizontal(id="help-body"):
+                # Sidebar - Section selector
+                with Vertical(id="help-sidebar"):
+                    yield OptionList(
+                        Option("[ CMD ] Commands", id="commands"),
+                        Option("[ LGD ] Legend", id="legend"),
+                        Option("[ SYS ] System", id="system"),
+                        id="help-nav",
+                    )
 
-                with TabPane("LEGEND", id="tab-legend"):
-                    with VerticalScroll(id="legend-scroll"):
-                        yield Static(LEGEND_CONTENT, id="legend-content")
+                # Content pane
+                yield HelpContentPane(id="help-content")
 
-                with TabPane("SYSTEM", id="tab-system"):
-                    with VerticalScroll(id="system-scroll"):
-                        yield Static(SYSTEM_CONTENT, id="system-content")
-
-            # Footer
+            # Footer - Mechanical keycap hints
             with Horizontal(id="help-footer"):
-                yield Static(
-                    "[dim #475569]ESC[/] [dim #64748b]Close[/]",
-                    id="help-footer-left",
-                )
-                yield Static(
-                    "[dim #475569]<-/->[/] [dim #64748b]Switch tabs[/]",
-                    id="help-footer-right",
-                )
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #00FFFF] ↑↓ [/]", classes="keycap")
+                    yield Static("[#666666]Navigate[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #00FFFF] ←→ [/]", classes="keycap")
+                    yield Static("[#666666]Switch Pane[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #00FFFF] ESC [/]", classes="keycap")
+                    yield Static("[#666666]Close[/]", classes="keycap-label")
+
+    def on_mount(self) -> None:
+        """Focus sidebar on mount and highlight first option."""
+        nav = self.query_one("#help-nav", OptionList)
+        nav.focus()
+        nav.highlighted = 0
+
+    def on_option_list_option_highlighted(
+        self, event: OptionList.OptionHighlighted
+    ) -> None:
+        """Update content pane when sidebar selection changes."""
+        if event.option and event.option.id:
+            content = self.query_one("#help-content", HelpContentPane)
+            content.current_section = event.option.id
 
     def action_close(self) -> None:
         """Close the help modal."""
         self.dismiss(None)
+
+    def action_focus_sidebar(self) -> None:
+        """Focus the sidebar navigation."""
+        self.query_one("#help-nav", OptionList).focus()
+
+    def action_focus_content(self) -> None:
+        """Focus the content pane for scrolling."""
+        self.query_one("#help-content", HelpContentPane).focus()
+
+    def action_toggle_focus(self) -> None:
+        """Toggle focus between sidebar and content."""
+        nav = self.query_one("#help-nav", OptionList)
+        content = self.query_one("#help-content", HelpContentPane)
+
+        if nav.has_focus:
+            content.focus()
+        else:
+            nav.focus()
