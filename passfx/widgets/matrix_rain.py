@@ -21,8 +21,8 @@ MATRIX_CHARS = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅ�
 
 # Pre-computed styles - subtle ambient effect
 BG_COLOR = "#050505"
-STYLE_BRIGHT = Style(color="#004400", bgcolor=BG_COLOR)
-STYLE_DIM = Style(color="#002800", bgcolor=BG_COLOR)
+STYLE_BRIGHT = Style(color="#003d00", bgcolor=BG_COLOR)
+STYLE_DIM = Style(color="#002400", bgcolor=BG_COLOR)
 STYLE_EMPTY = Style(bgcolor=BG_COLOR)
 
 
@@ -39,7 +39,7 @@ class MatrixRainStrip(Widget):
 
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
-        update_interval: float = 0.05,
+        update_interval: float = 0.06,
         decay_rate: float = 0.03,
         name: str | None = None,
         id: str | None = None,  # noqa: A002  # pylint: disable=redefined-builtin
@@ -185,13 +185,13 @@ class MatrixRainContainer(Horizontal):
     def compose(self) -> ComposeResult:
         """Create the layout with rain strips on sides."""
         yield MatrixRainStrip(
-            update_interval=0.05,
-            decay_rate=0.03,
+            update_interval=0.06,
+            decay_rate=0.08,
             classes="matrix-strip-left",
         )
         yield Vertical(classes="matrix-center")
         yield MatrixRainStrip(
-            update_interval=0.05,
-            decay_rate=0.03,
+            update_interval=0.06,
+            decay_rate=0.08,
             classes="matrix-strip-right",
         )
