@@ -43,7 +43,7 @@ class SystemTerminal(Vertical, can_focus=True):
             auto_scroll=True,
         )
         with Horizontal(id="terminal-input-row"):
-            yield Label("➜", id="terminal-prompt", classes="terminal-prompt")
+            yield Label(">", id="terminal-prompt", classes="terminal-prompt")
             yield Input(
                 placeholder="",
                 id="terminal-input",

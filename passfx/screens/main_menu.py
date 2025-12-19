@@ -24,11 +24,9 @@ from passfx.widgets.terminal import SystemTerminal
 if TYPE_CHECKING:
     from passfx.app import PassFXApp
 
-# Compact sidebar logo
-SIDEBAR_LOGO = """[bold #00d4ff]╔══════════════════════╗
-║  P A S S F X  ║
-║  COMMAND CENTER  ║
-╚══════════════════════╝[/]"""
+# Compact ASCII Logo - 3 lines
+HEADER_LOGO = """[bold #00FFFF]█▀█ ▄▀█ █▀ █▀ █▀▀ ▀▄▀
+█▀▀ █▀█ ▄█ ▄█ █▀  █ █[/]"""
 
 VERSION = "v1.0.0"
 
@@ -62,7 +60,7 @@ class SecurityScore(Static):
         num_segments = 20
         filled = int((health.overall_score / 100) * num_segments)
         empty = num_segments - filled
-        bar_str = f"[{score_color}]{'▮' * filled}[/][dim #222222]{'·' * empty}[/]"
+        bar_str = f"[{score_color}]{'█' * filled}[/][#333333]{'░' * empty}[/]"
         lines.append(f"{bar_str}  [bold {score_color}]{health.overall_score}%[/]")
         lines.append("")  # Breathing room
 
@@ -85,14 +83,14 @@ class SecurityScore(Static):
         self.update("\n".join(lines))
 
     def _get_score_color(self, score: int) -> str:
-        """Get color based on security score."""
+        """Get color based on security score - Operator theme."""
         if score >= 80:
-            return "#22c55e"
+            return "#00FFFF"  # Operator primary (cyan)
         if score >= 60:
-            return "#60a5fa"
+            return "#00cc99"  # Teal
         if score >= 40:
-            return "#f59e0b"
-        return "#ef4444"
+            return "#8b5cf6"  # Operator secondary (purple)
+        return "#ef4444"  # Error red
 
     def _build_histogram(self, health: VaultHealthResult) -> list[str]:
         """Build strength distribution histogram."""
@@ -125,20 +123,21 @@ class SecurityScore(Static):
 
 
 def _make_menu_item(code: str, label: str) -> Text:
-    """Create a menu item with fixed-width icon and label columns.
+    """Create a menu item with Operator theme [ ] prefix decorators.
 
     Args:
         code: The short code (e.g., "KEY", "PIN")
         label: The menu item label
 
     Returns:
-        Rich Text object with consistent formatting
+        Rich Text object with [ CODE ] prefix decoration
     """
     text = Text()
-    # Icon part: Cyan/Blue, fixed width 7 chars, centered
-    text.append(f"{code:^7}", style="bold #3b82f6")
-    # Label part: White, bold
-    text.append(f" {label}", style="bold white")
+    # Operator theme: [ ] prefix with cyan accent
+    text.append("[", style="bold #00FFFF")
+    text.append(f"{code:^5}", style="bold #00FFFF")
+    text.append("]", style="bold #00FFFF")
+    text.append(f" {label}", style="white")
     return text
 
 
@@ -154,17 +153,17 @@ class MainMenuScreen(Screen):
 
     def compose(self) -> ComposeResult:  # pylint: disable=too-many-statements
         """Create the command center layout."""
-        # Custom header - System Status Bar with live telemetry
+        # Command Bar - Operator theme header with ASCII logo
         with Horizontal(id="app-header"):
-            yield Static("[bold #00d4ff]◄ PASSFX ►[/]", id="header-branding")
-            yield Static("░░ SECURITY COMMAND CENTER ░░", id="header-status")
-            yield Static("", id="header-clock")
-            yield Static("🔓 DECRYPTED", id="header-lock")
+            yield Static(HEADER_LOGO, id="header-branding")
+            with Horizontal(id="header-right"):
+                yield Static("", id="header-clock")
+                yield Static("[dim]│[/] [#22c55e]DECRYPTED[/]", id="header-lock")
 
         with Horizontal(id="main-container"):
             # Left pane: Navigation sidebar
-            with Vertical(id="sidebar"):
-                yield Static(SIDEBAR_LOGO, id="sidebar-logo")
+            with Vertical(id="sidebar") as sidebar:
+                sidebar.border_title = "COMMAND CENTRE"
                 yield OptionList(
                     Option(_make_menu_item("KEY", "Passwords"), id="passwords"),
                     Option(_make_menu_item("PIN", "Phones"), id="phones"),
@@ -182,7 +181,7 @@ class MainMenuScreen(Screen):
             # Right pane: Dashboard view (scrollable for smaller screens)
             with VerticalScroll(id="dashboard-view"):
                 yield Static(
-                    "[bold #60a5fa]━━━ VAULT STATUS ━━━[/]",
+                    "[bold #00FFFF][ VAULT STATUS ][/]",
                     id="dashboard-title",
                 )
 
@@ -232,23 +231,23 @@ class MainMenuScreen(Screen):
             # Right segment: Key hints as mechanical keycaps
             with Horizontal(id="footer-keys"):
                 with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #a78bfa] ↑↓ [/]", classes="keycap")
-                    yield Static("[#64748b]Navigate[/]", classes="keycap-label")
+                    yield Static("[bold #00FFFF] ↑↓ [/]", classes="keycap")
+                    yield Static("[#666666]Navigate[/]", classes="keycap-label")
                 with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #a78bfa] ⏎ [/]", classes="keycap")
-                    yield Static("[#64748b]Select[/]", classes="keycap-label")
+                    yield Static("[bold #00FFFF] ENTER [/]", classes="keycap")
+                    yield Static("[#666666]Select[/]", classes="keycap-label")
                 with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #a78bfa] / [/]", classes="keycap")
-                    yield Static("[#64748b]Terminal[/]", classes="keycap-label")
+                    yield Static("[bold #00FFFF] / [/]", classes="keycap")
+                    yield Static("[#666666]Terminal[/]", classes="keycap-label")
                 with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #a78bfa] ESC [/]", classes="keycap")
-                    yield Static("[#64748b]Back[/]", classes="keycap-label")
+                    yield Static("[bold #00FFFF] ESC [/]", classes="keycap")
+                    yield Static("[#666666]Back[/]", classes="keycap-label")
                 with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #a78bfa] ? [/]", classes="keycap")
-                    yield Static("[#64748b]Help[/]", classes="keycap-label")
+                    yield Static("[bold #00FFFF] ? [/]", classes="keycap")
+                    yield Static("[#666666]Help[/]", classes="keycap-label")
                 with Horizontal(classes="keycap-group"):
-                    yield Static("[bold #a78bfa] Q [/]", classes="keycap")
-                    yield Static("[#64748b]Quit[/]", classes="keycap-label")
+                    yield Static("[bold #00FFFF] Q [/]", classes="keycap")
+                    yield Static("[#666666]Quit[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Initialize dashboard data on mount."""
