@@ -121,7 +121,7 @@ class SaveGeneratedModal(ModalScreen[EmailCredential | None]):
                 yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
 
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ESC] ABORT", id="cancel-button")
                 yield Button(
                     "[ENTER] ENCRYPT & SAVE", variant="primary", id="save-button"
                 )

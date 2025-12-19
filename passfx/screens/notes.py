@@ -69,20 +69,7 @@ def _get_relative_time(
 
 
 class ViewNoteModal(ModalScreen[None]):
-    """Modal displaying secure note visualization matching password modal style."""
-
-    # Color configuration for the note modal (Amber/Yellow theme)
-    COLORS = {
-        "border": "#f59e0b",
-        "card_bg": "#0a0e27",
-        "section_border": "#475569",
-        "title_bg": "#fbbf24",
-        "title_fg": "#000000",
-        "label_dim": "#64748b",
-        "value_fg": "#f8fafc",
-        "accent": "#fcd34d",
-        "muted": "#94a3b8",
-    }
+    """Modal for viewing a note - Operator Grade Secure Read Console."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -93,152 +80,58 @@ class ViewNoteModal(ModalScreen[None]):
         super().__init__()
         self.note = note
 
-    def compose(
-        self,
-    ) -> ComposeResult:  # pylint: disable=too-many-locals,too-many-statements
-        """Create the secure note visualization layout."""
-        c = self.COLORS
+    def compose(self) -> ComposeResult:
+        """Create the Operator-grade view modal layout."""
+        # Get content preview (first 60 chars)
+        preview = (
+            self.note.content[:60] + "..."
+            if len(self.note.content) > 60
+            else self.note.content
+        )
+        preview = preview.replace("\n", " ")
 
-        # Format timestamp
-        try:
-            created = datetime.fromisoformat(self.note.created_at).strftime("%Y.%m.%d")
-        except (ValueError, TypeError):
-            created = "UNKNOWN"
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-        # Card dimensions (matching password modal)
-        width = 96
-        inner = width - 2
-        section_inner = width - 6
-        content_width = section_inner - 5
-
-        # Truncate title if needed
-        if len(self.note.title) > content_width:
-            title_display = self.note.title[:content_width]
-        else:
-            title_display = self.note.title
-
-        # Get content preview (first 80 chars per line, max 3 lines)
-        content_lines = self.note.content.split("\n")[:3]
-        preview_lines = []
-        for line in content_lines:
-            preview = line[:content_width] if len(line) > content_width else line
-            preview_lines.append(preview)
-
-        with Vertical(id="note-modal"):
-            with Vertical(id="physical-note-card"):
-                # Top border
-                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
-
-                # Title row
-                title = " ENCRYPTED DATA SHARD "
-                title_pad = inner - len(title) - 2
-                title_line = (
-                    f"[bold {c['border']}]║[/]  "
-                    f"[on {c['title_bg']}][bold {c['title_fg']}]{title}[/]"
-                    f"{' ' * title_pad}[bold {c['border']}]║[/]"
-                )
-                yield Static(title_line)
-
-                # Divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Shard label
-                shard_line = (
-                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SHARD:[/] "
-                    f"[bold {c['value_fg']}]{title_display:<{inner - 11}}[/] "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(shard_line)
-
-                # Spacer
+            # Data Display Body
+            with Vertical(id="pwd-form"):
+                # Row 1: Title
+                yield Label("> SHARD_TITLE", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  {self.note.title}", classes="view-value", id="title-value"
                 )
 
-                # Stats section
-                stats = (
-                    f"[{c['accent']}]{self.note.line_count}[/] lines  "
-                    f"[{c['accent']}]{self.note.char_count}[/] chars"
-                )
-                stats_line = (
-                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/] "
-                    f"{stats:<{inner - 11}}[bold {c['border']}]║[/]"
-                )
-                yield Static(stats_line)
-
-                # Spacer
+                # Row 2: Stats
+                yield Label("> SHARD_STATS", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  [#fcd34d]{self.note.line_count}[/] lines  "
+                    f"[#fcd34d]{self.note.char_count}[/] chars",
+                    classes="view-value",
+                    id="stats-value",
                 )
 
-                # Content section
-                content_header = (
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"┌─ CONTENT PREVIEW {'─' * (section_inner - 20)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(content_header)
-
-                # Show preview lines
-                for line in preview_lines:
-                    preview_line = (
-                        f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                        f"[{c['accent']}]►[/] [{c['value_fg']}]{line:<{content_width}}[/] "
-                        f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                    )
-                    yield Static(preview_line)
-
-                # If less than 3 lines, pad with empty lines
-                for _ in range(3 - len(preview_lines)):
-                    empty_line = (
-                        f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   "
-                        f"{' ' * content_width} [dim {c['section_border']}]│[/]  "
-                        f"[bold {c['border']}]║[/]"
-                    )
-                    yield Static(empty_line)
-
-                content_footer = (
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
-                )
-                yield Static(content_footer)
-
-                # Spacer
+                # Row 3: Content Preview
+                yield Label("> CONTENT_PREVIEW", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  [#f59e0b]{preview}[/]",
+                    classes="view-value secret",
+                    id="preview-value",
                 )
 
-                # Footer divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Footer row
-                footer_left = (
-                    f"  [dim {c['section_border']}]ID:[/] "
-                    f"[{c['muted']}]{self.note.id[:8]}[/]"
-                )
-                footer_right = (
-                    f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
-                )
-                footer_pad = inner - 32 - len(created)
-                footer_full = (
-                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}"
-                    f"{footer_right}  [bold {c['border']}]║[/]"
-                )
-                yield Static(footer_full)
-
-                # Bottom border
-                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
-
-            # Action Buttons
-            with Horizontal(id="note-modal-buttons"):
-                yield Button("COPY", id="copy-button")
-                yield Button("CLOSE", id="close-button")
+            # Footer Actions - right aligned
+            with Horizontal(id="modal-buttons"):
+                yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
+                yield Button(r"\[ COPY ]", variant="primary", id="save-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
-        if event.button.id == "close-button":
+        if event.button.id == "cancel-button":
             self.dismiss(None)
-        elif event.button.id == "copy-button":
+        elif event.button.id == "save-button":
             self._copy_content()
 
     def _copy_content(self) -> None:
@@ -258,30 +151,33 @@ class ViewNoteModal(ModalScreen[None]):
 
 
 class AddNoteModal(ModalScreen[NoteEntry | None]):
-    """Modal for adding a new secure note with TextArea support."""
+    """Modal for adding a new secure note - Operator Grade Secure Write Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout with TextArea."""
+        """Create the Operator-grade modal layout with TextArea."""
         with Vertical(id="note-edit-modal"):
-            # Header
-            yield Static(
-                "[bold #94a3b8]╔══ DATA_SHARD // NEW ENTRY ══╗[/]",
-                id="note-edit-title",
-            )
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        "[bold #94a3b8][ :: SECURE WRITE PROTOCOL :: ][/]",
+                        id="note-edit-title",
+                    )
+                    yield Static("[#22c55e]STATUS: OPEN[/]", classes="modal-status")
 
             # Form
             with Vertical(id="note-form"):
                 # Title input
-                yield Label("[#94a3b8]MEMO_TITLE[/]", classes="note-input-label")
+                yield Label("[#94a3b8]> MEMO_TITLE[/]", classes="note-input-label")
                 yield Input(placeholder="e.g. Office Wi-Fi Password", id="title-input")
 
                 # Content TextArea
                 yield Label(
-                    "[#94a3b8]CONTENT[/]  [dim #64748b]secure text[/]",
+                    "[#94a3b8]> CONTENT[/]  [dim #64748b]secure text[/]",
                     classes="note-input-label",
                 )
                 yield TextArea(
@@ -290,10 +186,12 @@ class AddNoteModal(ModalScreen[NoteEntry | None]):
                     classes="note-code-editor",
                 )
 
-            # All buttons on one line
+            # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
-                yield Button("ABORT", id="cancel-button")
-                yield Button("SAVE", id="save-button", classes="note-save-btn")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(
+                    r"\[ ENCRYPT & COMMIT ]", id="save-button", classes="note-save-btn"
+                )
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -327,7 +225,7 @@ class AddNoteModal(ModalScreen[NoteEntry | None]):
 
 
 class EditNoteModal(ModalScreen[dict | None]):
-    """Modal for editing an existing secure note."""
+    """Modal for editing an existing secure note - Operator Grade Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -338,17 +236,20 @@ class EditNoteModal(ModalScreen[dict | None]):
         self.note = note
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="note-edit-modal"):
-            # Header
-            yield Static(
-                f"[bold #94a3b8]╔══ MODIFY_SHARD // {self.note.title.upper()[:20]} ══╗[/]",
-                id="note-edit-title",
-            )
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        f"[bold #94a3b8][ :: MODIFY // {self.note.title.upper()[:18]} :: ][/]",
+                        id="note-edit-title",
+                    )
+                    yield Static("[#22c55e]STATUS: EDIT[/]", classes="modal-status")
 
             # Form
             with Vertical(id="note-form"):
-                yield Label("[#94a3b8]MEMO_TITLE[/]", classes="note-input-label")
+                yield Label("[#94a3b8]> MEMO_TITLE[/]", classes="note-input-label")
                 yield Input(
                     value=self.note.title,
                     placeholder="e.g. Office Wi-Fi Password",
@@ -356,7 +257,7 @@ class EditNoteModal(ModalScreen[dict | None]):
                 )
 
                 yield Label(
-                    "[#94a3b8]CONTENT[/]  [dim #64748b]secure text[/]",
+                    "[#94a3b8]> CONTENT[/]  [dim #64748b]secure text[/]",
                     classes="note-input-label",
                 )
                 yield TextArea(
@@ -365,10 +266,12 @@ class EditNoteModal(ModalScreen[dict | None]):
                     classes="note-code-editor",
                 )
 
-            # All buttons on one line
+            # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
-                yield Button("ABORT", id="cancel-button")
-                yield Button("SAVE", id="save-button", classes="note-save-btn")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(
+                    r"\[ ENCRYPT & COMMIT ]", id="save-button", classes="note-save-btn"
+                )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -398,7 +301,7 @@ class EditNoteModal(ModalScreen[dict | None]):
 
 
 class ConfirmDeleteNoteModal(ModalScreen[bool]):
-    """Modal for confirming deletion."""
+    """Modal for confirming deletion - Operator Grade Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -411,12 +314,16 @@ class ConfirmDeleteNoteModal(ModalScreen[bool]):
         self.item_name = item_name
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="note-delete-modal"):
-            yield Static(
-                "[bold #94a3b8]╔══ CONFIRM_DELETE // WARNING ══╗[/]",
-                id="note-delete-title",
-            )
+            # HUD Header with warning status
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        "[bold #94a3b8][ :: PURGE PROTOCOL :: ][/]",
+                        id="note-delete-title",
+                    )
+                    yield Static("[#ef4444]STATUS: ARMED[/]", classes="modal-status")
             with Vertical(id="delete-content"):
                 yield Static(
                     f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target"
@@ -425,9 +332,9 @@ class ConfirmDeleteNoteModal(ModalScreen[bool]):
                     "[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning"
                 )
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
-                    "[Y] CONFIRM DELETE", id="delete-button", classes="note-delete-btn"
+                    r"\[ CONFIRM PURGE ]", id="delete-button", classes="note-delete-btn"
                 )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

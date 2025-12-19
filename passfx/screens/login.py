@@ -191,7 +191,9 @@ class LoginScreen(Screen):
                             yield Label("> CONFIRM PASSPHRASE", classes="input-label")
                             yield Input(password=True, id="confirm-input")
                             with Center():
-                                yield Button("[ INITIALIZE VAULT ]", id="create-button")
+                                yield Button(
+                                    r"\[ INITIALIZE VAULT ]", id="create-button"
+                                )
 
                         yield Static("", id="error-message")
                         yield Label(

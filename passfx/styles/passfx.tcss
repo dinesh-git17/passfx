@@ -1700,39 +1700,73 @@ PasswordsScreen .keycap-label {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PASSWORD MODAL - IDENTITY TERMINAL THEME
+   SECURE WRITE CONSOLE - OPERATOR GRADE MODAL
+   Cyberpunk command console aesthetic for credential entry
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Secure Terminal Container */
+/* Secure Terminal Container - Pure black Operator theme */
 #pwd-modal.secure-terminal {
-    width: 60;
+    width: 64;
     height: auto;
-    background: $pfx-bg;
-    border: heavy $pfx-primary;
-    padding: 2 3;
+    background: $operator-black;
+    border: heavy $operator-primary;
+    padding: 0;
 }
 
-/* Terminal title bar */
+/* HUD Header Bar - Full width with status indicator */
+#pwd-modal .modal-header {
+    width: 100%;
+    height: auto;
+    background: $operator-black;
+    padding: 1 2;
+    border-bottom: heavy $operator-primary;
+}
+
+#pwd-modal .modal-header-row {
+    width: 100%;
+    height: 1;
+    align: left middle;
+}
+
 #pwd-modal #modal-title {
     text-style: bold;
-    color: $pfx-primary-light;
-    text-align: center;
-    padding: 0 0 1 0;
-    border-bottom: solid $pfx-primary-dim;
-    margin-bottom: 1;
+    color: $operator-primary;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    width: 1fr;
+    border: none;
 }
 
-/* Form container */
+#pwd-modal .modal-status {
+    width: auto;
+    height: 1;
+    color: $pfx-success;
+    text-style: bold;
+}
+
+/* Form container - padded content area */
 #pwd-form {
-    padding: 1 0;
+    padding: 2 3;
+    background: $operator-black;
 }
 
-/* Input labels - terminal style */
+/* Input labels - terminal style with prompt */
 #pwd-modal .input-label {
-    color: $pfx-primary-light;
+    color: $operator-secondary;
     text-style: bold;
     padding: 1 0 0 0;
     margin: 0;
+    height: 1;
+}
+
+/* Input label with active prompt indicator */
+#pwd-modal .input-label-active {
+    color: $operator-primary;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+    height: 1;
 }
 
 /* Input row for horizontal layouts */
@@ -1741,24 +1775,67 @@ PasswordsScreen .keycap-label {
     height: auto;
 }
 
-/* Terminal-style inputs - underline only */
+/* Terminal-style inputs - left border accent */
 #pwd-modal Input {
-    background: transparent;
+    background: $operator-surface;
     border: none;
-    border-bottom: solid $pfx-primary-dim;
-    padding: 0 1 0 1;
+    border-left: solid $operator-muted;
+    padding: 1 1 0 2;
     margin: 0 0 1 0;
     color: $pfx-fg;
     width: 100%;
-    height: 2;
+    height: 3;
 }
 
+/* Focus state - purple accent with highlighted left border */
 #pwd-modal Input:focus {
-    border-bottom: heavy $pfx-primary;
+    border-left: heavy $operator-secondary;
+    background: #0a0a12;
 }
 
+/* Invalid state */
 #pwd-modal Input.-invalid {
-    border-bottom: heavy $pfx-error;
+    border-left: heavy $pfx-error;
+}
+
+/* Sensitive field styling - ACCESS_KEY password inputs */
+#pwd-modal #password-input {
+    border-left: solid $pfx-success 50%;
+}
+
+#pwd-modal #password-input:focus {
+    border-left: heavy $pfx-success;
+    background: #0a120a;
+}
+
+/* CVV and PIN inputs - same treatment */
+#pwd-modal #cvv-input,
+#pwd-modal #pin-input {
+    border-left: solid $pfx-warning 50%;
+}
+
+#pwd-modal #cvv-input:focus,
+#pwd-modal #pin-input:focus {
+    border-left: heavy $pfx-warning;
+    background: #12100a;
+}
+
+/* View modal value display - terminal output style */
+#pwd-modal .view-value {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 0 1 0 2;
+    margin: 0 0 1 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 3;
+    content-align: left middle;
+}
+
+#pwd-modal .view-value.secret {
+    border-left: solid $pfx-success 50%;
+    color: $pfx-success;
 }
 
 /* Delete confirmation styling */
@@ -1775,41 +1852,72 @@ PasswordsScreen .keycap-label {
     padding: 1 0;
 }
 
-/* Modal buttons */
+/* Modal buttons container */
 #pwd-modal #modal-buttons {
-    padding: 2 0 0 0;
-    align: center middle;
+    padding: 1 3 2 3;
+    align: right middle;
+    background: $operator-black;
+    border-top: solid $operator-muted 30%;
+    width: 100%;
+    height: auto;
 }
 
+/* Secondary Action - ABORT button (muted, non-competing) */
 #pwd-modal #cancel-button {
     background: transparent;
-    color: $pfx-muted;
-    border: solid $pfx-surface-light;
+    color: #64748b;
+    border: solid #475569;
+    min-width: 14;
 }
 
 #pwd-modal #cancel-button:hover {
-    background: $pfx-surface;
-    color: $pfx-fg;
+    background: #1e293b;
+    color: #94a3b8;
+    border: solid #1e293b;
 }
 
+#pwd-modal #cancel-button:focus {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: solid #1e293b;
+}
+
+/* Primary Action - ENCRYPT & COMMIT button (green accent) */
 #pwd-modal #save-button {
-    background: $pfx-primary;
-    color: $pfx-bg;
-    border: solid $pfx-primary;
+    background: transparent;
+    color: $pfx-success;
+    border: solid $pfx-success;
+    text-style: bold;
+    min-width: 24;
 }
 
 #pwd-modal #save-button:hover {
-    background: $pfx-primary-light;
+    background: $pfx-success;
+    color: $operator-black;
 }
 
+#pwd-modal #save-button:focus {
+    background: $pfx-success;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* Delete confirmation button */
 #pwd-modal #delete-button {
-    background: $pfx-error;
-    color: $pfx-fg;
+    background: transparent;
+    color: $pfx-error;
     border: solid $pfx-error;
+    text-style: bold;
 }
 
 #pwd-modal #delete-button:hover {
-    background: #b91c1c;
+    background: $pfx-error;
+    color: $pfx-fg;
+}
+
+#pwd-modal #delete-button:focus {
+    background: $pfx-error;
+    color: $pfx-fg;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

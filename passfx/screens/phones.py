@@ -145,42 +145,44 @@ def _get_avatar_bg_color(label: str) -> str:
 
 
 class AddPhoneModal(ModalScreen[PhoneCredential | None]):
-    """Modal for adding a new phone credential."""
+    """Modal for adding a new phone credential - Operator Grade Secure Write Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            # Header
-            yield Static(":: SYSTEM_ENTRY // COMMS_DEVICE ::", id="modal-title")
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: OPEN", classes="modal-status")
 
             # Form Body
             with Vertical(id="pwd-form"):
                 # Row 1: Label (Device)
-                yield Label("TARGET_DEVICE", classes="input-label")
+                yield Label("> TARGET_DEVICE", classes="input-label")
                 yield Input(placeholder="e.g. BANK_HOTLINE", id="label-input")
 
                 # Row 2: Phone (Uplink)
-                yield Label("UPLINK_NUMBER", classes="input-label")
+                yield Label("> UPLINK_NUMBER", classes="input-label")
                 yield Input(placeholder="+1 555 000 0000", id="phone-input")
 
-                # Row 3: PIN (Access Code)
-                yield Label("ACCESS_PIN", classes="input-label")
-                with Horizontal(classes="input-row"):
-                    yield Input(placeholder="••••••", password=True, id="pin-input")
+                # Row 3: PIN (Access Code) - sensitive field
+                yield Label("> ACCESS_PIN", classes="input-label")
+                yield Input(placeholder="••••••", password=True, id="pin-input")
 
                 # Row 4: Notes
-                yield Label("METADATA", classes="input-label")
+                yield Label("> METADATA", classes="input-label")
                 yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
 
-            # Footer Actions
+            # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
-                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
 
     def on_mount(self) -> None:
@@ -219,7 +221,7 @@ class AddPhoneModal(ModalScreen[PhoneCredential | None]):
 
 
 class EditPhoneModal(ModalScreen[dict | None]):
-    """Modal for editing a phone credential."""
+    """Modal for editing a phone credential - Operator Grade Secure Write Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -230,33 +232,36 @@ class EditPhoneModal(ModalScreen[dict | None]):
         self.credential = credential
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            yield Static(
-                f":: MODIFY_ENTRY // {self.credential.label.upper()} ::",
-                id="modal-title",
-            )
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        f"[ :: MODIFY // {self.credential.label.upper()} :: ]",
+                        id="modal-title",
+                    )
+                    yield Static("STATUS: EDIT", classes="modal-status")
 
             with Vertical(id="pwd-form"):
-                yield Label("TARGET_DEVICE", classes="input-label")
+                yield Label("> TARGET_DEVICE", classes="input-label")
                 yield Input(
                     value=self.credential.label,
                     placeholder="e.g. BANK_HOTLINE",
                     id="label-input",
                 )
 
-                yield Label("UPLINK_NUMBER", classes="input-label")
+                yield Label("> UPLINK_NUMBER", classes="input-label")
                 yield Input(
                     value=self.credential.phone,
                     placeholder="+1 555 000 0000",
                     id="phone-input",
                 )
 
-                yield Label("ACCESS_PIN [BLANK = KEEP CURRENT]", classes="input-label")
-                with Horizontal(classes="input-row"):
-                    yield Input(placeholder="••••••", password=True, id="pin-input")
+                yield Label("> ACCESS_PIN [BLANK = KEEP]", classes="input-label")
+                yield Input(placeholder="••••••", password=True, id="pin-input")
 
-                yield Label("METADATA", classes="input-label")
+                yield Label("> METADATA", classes="input-label")
                 yield Input(
                     value=self.credential.notes or "",
                     placeholder="OPTIONAL_NOTES",
@@ -264,9 +269,9 @@ class EditPhoneModal(ModalScreen[dict | None]):
                 )
 
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
-                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -303,7 +308,7 @@ class EditPhoneModal(ModalScreen[dict | None]):
 
 
 class ConfirmDeleteModal(ModalScreen[bool]):
-    """Modal for confirming deletion."""
+    """Modal for confirming deletion - Operator Grade Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -316,17 +321,21 @@ class ConfirmDeleteModal(ModalScreen[bool]):
         self.item_name = item_name
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            yield Static(":: CONFIRM_DELETE // WARNING ::", id="modal-title")
+            # HUD Header with warning status
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: PURGE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: ARMED", classes="modal-status")
 
             with Vertical(id="pwd-form"):
                 yield Static(f"TARGET: '{self.item_name}'", classes="delete-target")
-                yield Static("⚠ THIS ACTION CANNOT BE UNDONE", classes="warning")
+                yield Static("THIS ACTION CANNOT BE UNDONE", classes="warning")
 
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[Y] CONFIRM DELETE", variant="error", id="delete-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(r"\[ CONFIRM PURGE ]", variant="error", id="delete-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -345,25 +354,7 @@ class ConfirmDeleteModal(ModalScreen[bool]):
 
 
 class ViewPhoneModal(ModalScreen[None]):
-    """Modal displaying a Secure Comms Uplink visualization."""
-
-    # Color configuration for the phone modal (Synthwave Purple/Pink theme)
-    COLORS = {
-        "border": "#8b5cf6",
-        "card_bg": "#0a0e27",
-        "section_border": "#475569",
-        "title_bg": "#8b5cf6",
-        "title_fg": "#000000",
-        "label_dim": "#64748b",
-        "value_fg": "#f8fafc",
-        "accent": "#d946ef",
-        "accent_dim": "#2d1f3d",
-        "muted": "#94a3b8",
-        "btn_primary_bg": "#2d1f4a",
-        "btn_primary_fg": "#d946ef",
-        "btn_secondary_bg": "#1e293b",
-        "btn_secondary_fg": "#94a3b8",
-    }
+    """Modal for viewing a phone credential - Operator Grade Secure Read Console."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -374,189 +365,72 @@ class ViewPhoneModal(ModalScreen[None]):
         super().__init__()
         self.credential = credential
 
-    # pylint: disable=too-many-locals,too-many-statements
     def compose(self) -> ComposeResult:
-        """Create the secure comms uplink layout."""
-        c = self.COLORS
-
+        """Create the Operator-grade view modal layout."""
         # Get PIN strength for visual indicator
         strength = check_strength(self.credential.password)
         strength_color = _get_strength_color(strength.score)
-
-        # Build signal strength indicator (synthwave style)
-        signal_bars = ""
-        for i in range(5):
-            if i < strength.score + 1:
-                signal_bars += f"[{c['accent']}]▓[/]"
-            else:
-                signal_bars += f"[{c['accent_dim']}]░[/]"
-
-        # Format timestamp
-        try:
-            created = datetime.fromisoformat(self.credential.created_at).strftime(
-                "%Y.%m.%d"
-            )
-        except (ValueError, TypeError):
-            created = "UNKNOWN"
-
-        # Build encryption lock visual
-        lock_icon = (
-            f"[{c['accent']}]◈[/]" if strength.score >= 2 else f"[{c['border']}]◇[/]"
+        filled = strength.score + 1
+        security_bars = (
+            f"[{strength_color}]{'█' * filled}[/][#1e293b]{'░' * (5 - filled)}[/]"
         )
 
-        # Card dimensions
-        width = 96
-        inner = width - 2
-        section_inner = width - 6
-        content_width = section_inner - 5
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-        with Vertical(id="phone-modal"):
-            with Vertical(id="physical-sim-card"):
-                # Top border
-                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
-
-                # Title row
-                title = " SECURE COMMS UPLINK "
-                title_pad = inner - len(title) - 2
-                title_line = (
-                    f"[bold {c['border']}]║[/]  "
-                    f"[on {c['title_bg']}][bold {c['title_fg']}]{title}[/]"
-                    f"{' ' * title_pad}[bold {c['border']}]║[/]"
-                )
-                yield Static(title_line)
-
-                # Divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Device label
-                device_val = self.credential.label.upper()
-                device_line = (
-                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]DEVICE:[/] "
-                    f"[bold {c['value_fg']}]{device_val:<{inner - 11}}[/] "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(device_line)
-
-                # Spacer
+            # Data Display Body
+            with Vertical(id="pwd-form"):
+                # Row 1: Label (Device)
+                yield Label("> DEVICE_NAME", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  {self.credential.label}", classes="view-value", id="label-value"
                 )
 
-                # Signal strength row
-                signal_content = (
-                    f"  [dim {c['section_border']}]SIGNAL:[/] {signal_bars}  "
-                    f"{lock_icon} [{c['accent']}]ENCRYPTED[/]"
-                )
-                signal_pad = inner - 40
-                signal_line = (
-                    f"[bold {c['border']}]║[/]{signal_content}"
-                    f"{' ' * signal_pad}[bold {c['border']}]║[/]"
-                )
-                yield Static(signal_line)
-
-                # Spacer
+                # Row 2: Phone Number
+                yield Label("> UPLINK_NUMBER", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  {self.credential.phone}", classes="view-value", id="phone-value"
                 )
 
-                # Uplink Number section
-                uplink_header = (
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]┌─ UPLINK NUMBER "
-                    f"{'─' * (section_inner - 17)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(uplink_header)
-                uplink_content = (
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                    f"[{c['accent']}]☎[/] "
-                    f"[bold {c['value_fg']}]{self.credential.phone:<{content_width}}[/] "
-                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                )
-                yield Static(uplink_content)
-                uplink_footer = (
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(uplink_footer)
-
-                # Spacer
+                # Row 3: PIN (Secret)
+                yield Label("> ACCESS_PIN", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  [#d946ef]{self.credential.password}[/]",
+                    classes="view-value secret",
+                    id="pin-value",
                 )
 
-                # Access PIN section
-                pin_header = (
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]┌─ ACCESS PIN "
-                    f"{'─' * (section_inner - 14)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(pin_header)
-                pin_content = (
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                    f"[{c['accent']}]►[/] "
-                    f"[bold {c['accent']}]{self.credential.password:<{content_width}}[/] "
-                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                )
-                yield Static(pin_content)
-                pin_footer = (
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(pin_footer)
-
-                # Spacer
+                # Row 4: Security Level
+                yield Label("> COMPLEXITY", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  {security_bars} [{strength_color}]{strength.label.upper()}[/]",
+                    classes="view-value",
+                    id="strength-value",
                 )
 
-                # Complexity row
-                complexity_content = (
-                    f"  [dim {c['label_dim']}]COMPLEXITY:[/] "
-                    f"[{strength_color}]{strength.label.upper():<16}[/]"
-                )
-                complexity_pad = inner - 32
-                complexity_line = (
-                    f"[bold {c['border']}]║[/]{complexity_content}"
-                    f"{' ' * complexity_pad}[bold {c['border']}]║[/]"
-                )
-                yield Static(complexity_line)
+                # Row 5: Notes (if present)
+                if self.credential.notes:
+                    yield Label("> METADATA", classes="input-label")
+                    yield Static(
+                        f"  {self.credential.notes}",
+                        classes="view-value",
+                        id="notes-value",
+                    )
 
-                # Footer divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Footer row
-                footer_left = (
-                    f"  [dim {c['section_border']}]ID:[/] "
-                    f"[{c['muted']}]{self.credential.id[:8]}[/]"
-                )
-                footer_right = (
-                    f"[dim {c['section_border']}]LINKED:[/] [{c['muted']}]{created}[/]"
-                )
-                footer_pad = inner - 30 - len(created)
-                footer_line = (
-                    f"[bold {c['border']}]║[/]{footer_left}"
-                    f"{' ' * footer_pad}{footer_right}  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(footer_line)
-
-                # Bottom border
-                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
-
-            # Action Buttons
-            with Horizontal(id="phone-modal-buttons"):
-                yield Button("COPY PIN", id="copy-button")
-                yield Button("CLOSE", id="close-button")
+            # Footer Actions - right aligned
+            with Horizontal(id="modal-buttons"):
+                yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
+                yield Button(r"\[ COPY PIN ]", variant="primary", id="save-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
-        if event.button.id == "close-button":
+        if event.button.id == "cancel-button":
             self.dismiss(None)
-        elif event.button.id == "copy-button":
+        elif event.button.id == "save-button":
             self._copy_pin()
 
     def _copy_pin(self) -> None:

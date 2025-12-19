@@ -69,20 +69,7 @@ def _get_relative_time(iso_timestamp: str | None) -> str:
 
 
 class ViewRecoveryModal(ModalScreen[None]):
-    """Modal displaying recovery codes visualization matching password modal style."""
-
-    # Color configuration for the recovery modal (Rose theme)
-    COLORS = {
-        "border": "#f43f5e",
-        "card_bg": "#0a0e27",
-        "section_border": "#475569",
-        "title_bg": "#fb7185",
-        "title_fg": "#000000",
-        "label_dim": "#64748b",
-        "value_fg": "#f8fafc",
-        "accent": "#fda4af",
-        "muted": "#94a3b8",
-    }
+    """Modal for viewing recovery codes - Operator Grade Secure Read Console."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -93,167 +80,58 @@ class ViewRecoveryModal(ModalScreen[None]):
         super().__init__()
         self.recovery = recovery
 
-    # pylint: disable=too-many-locals,too-many-statements
     def compose(self) -> ComposeResult:
-        """Create the recovery codes visualization layout."""
-        c = self.COLORS
-
-        # Format timestamp
-        try:
-            created = datetime.fromisoformat(self.recovery.created_at).strftime(
-                "%Y.%m.%d"
-            )
-        except (ValueError, TypeError):
-            created = "UNKNOWN"
-
-        # Card dimensions (matching password modal)
-        width = 96
-        inner = width - 2
-        section_inner = width - 6
-        content_width = section_inner - 5
-
-        # Truncate title if needed
-        title_display = (
-            self.recovery.title[:content_width]
-            if len(self.recovery.title) > content_width
-            else self.recovery.title
+        """Create the Operator-grade view modal layout."""
+        # Get content preview (first 40 chars, masked)
+        preview = (
+            self.recovery.content[:40] + "..."
+            if len(self.recovery.content) > 40
+            else self.recovery.content
         )
+        preview = preview.replace("\n", " ")
 
-        # Get content preview (first 5 lines for recovery codes)
-        content_lines = (
-            self.recovery.content.split("\n")[:5] if self.recovery.content else []
-        )
-        preview_lines = []
-        for line in content_lines:
-            # Mask recovery codes for security (show first 4 and last 4 chars)
-            line = line.strip()
-            if line and not line.startswith("#"):
-                if len(line) > 8:
-                    masked = line[:4] + "•" * (len(line) - 8) + line[-4:]
-                else:
-                    masked = line
-                preview_lines.append(masked[:content_width])
-            else:
-                preview_lines.append(
-                    line[:content_width] if len(line) > content_width else line
-                )
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-        with Vertical(id="recovery-modal"):
-            with Vertical(id="physical-recovery-card"):
-                # Top border
-                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
-
-                # Title row
-                title = " FAIL-SAFE PROTOCOL "
-                title_pad = inner - len(title) - 2
+            # Data Display Body
+            with Vertical(id="pwd-form"):
+                # Row 1: Service Name
+                yield Label("> SERVICE_NAME", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  "
-                    f"[on {c['title_bg']}][bold {c['title_fg']}]{title}[/]"
-                    f"{' ' * title_pad}[bold {c['border']}]║[/]"
+                    f"  {self.recovery.title}", classes="view-value", id="title-value"
                 )
 
-                # Divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Service label
+                # Row 2: Stats
+                yield Label("> CODE_STATS", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SERVICE:[/] "
-                    f"[bold {c['value_fg']}]{title_display:<{inner - 13}}[/] "
-                    f"[bold {c['border']}]║[/]"
+                    f"  [#fda4af]{self.recovery.line_count}[/] lines  "
+                    f"[#fda4af]{self.recovery.code_count}[/] codes",
+                    classes="view-value",
+                    id="stats-value",
                 )
 
-                # Spacer
+                # Row 3: Content Preview
+                yield Label("> CODES_PREVIEW", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  [#f43f5e]{preview}[/]",
+                    classes="view-value secret",
+                    id="preview-value",
                 )
 
-                # Stats section
-                stats = (
-                    f"[{c['accent']}]{self.recovery.line_count}[/] lines  "
-                    f"[{c['accent']}]{self.recovery.code_count}[/] codes"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/]   "
-                    f"{stats:<{inner - 13}}[bold {c['border']}]║[/]"
-                )
-
-                # Spacer
-                yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
-                )
-
-                # Content section
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"┌─ RECOVERY CODES {'─' * (section_inner - 19)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-
-                # Show preview lines (masked codes)
-                for line in preview_lines:
-                    if line and not line.startswith("#"):
-                        # Recovery code - show masked
-                        yield Static(
-                            f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                            f"[{c['accent']}]►[/] [{c['accent']}]{line:<{content_width}}[/] "
-                            f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                        )
-                    else:
-                        # Comment or empty
-                        yield Static(
-                            f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                            f"[{c['accent']}]►[/] [{c['muted']}]{line:<{content_width}}[/] "
-                            f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                        )
-
-                # If less than 5 lines, pad with empty lines
-                for _ in range(5 - len(preview_lines)):
-                    yield Static(
-                        f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   "
-                        f"{' ' * content_width} [dim {c['section_border']}]│[/]  "
-                        f"[bold {c['border']}]║[/]"
-                    )
-
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
-                )
-
-                # Spacer
-                yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
-                )
-
-                # Footer divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Footer row
-                footer_left = (
-                    f"  [dim {c['section_border']}]ID:[/] "
-                    f"[{c['muted']}]{self.recovery.id[:8]}[/]"
-                )
-                footer_right = (
-                    f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
-                )
-                footer_pad = inner - 32 - len(created)
-                yield Static(
-                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}"
-                    f"{footer_right}  [bold {c['border']}]║[/]"
-                )
-
-                # Bottom border
-                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
-
-            # Action Buttons
-            with Horizontal(id="recovery-modal-buttons"):
-                yield Button("COPY", id="copy-button")
-                yield Button("CLOSE", id="close-button")
+            # Footer Actions - right aligned
+            with Horizontal(id="modal-buttons"):
+                yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
+                yield Button(r"\[ COPY ]", variant="primary", id="save-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
-        if event.button.id == "close-button":
+        if event.button.id == "cancel-button":
             self.dismiss(None)
-        elif event.button.id == "copy-button":
+        elif event.button.id == "save-button":
             self._copy_content()
 
     def _copy_content(self) -> None:
@@ -273,30 +151,35 @@ class ViewRecoveryModal(ModalScreen[None]):
 
 
 class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
-    """Modal for adding new recovery codes with TextArea support."""
+    """Modal for adding new recovery codes - Operator Grade Secure Write Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout with TextArea."""
+        """Create the Operator-grade modal layout with TextArea."""
         with Vertical(id="recovery-edit-modal"):
-            # Header
-            yield Static(
-                "[bold #f43f5e]╔══ FAIL-SAFE // NEW ENTRY ══╗[/]",
-                id="recovery-edit-title",
-            )
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        "[bold #f43f5e][ :: SECURE WRITE PROTOCOL :: ][/]",
+                        id="recovery-edit-title",
+                    )
+                    yield Static("[#22c55e]STATUS: OPEN[/]", classes="modal-status")
 
             # Form
             with Vertical(id="recovery-form"):
                 # Title input
-                yield Label("[#f43f5e]PROTOCOL_NAME[/]", classes="recovery-input-label")
+                yield Label(
+                    "[#f43f5e]> PROTOCOL_NAME[/]", classes="recovery-input-label"
+                )
                 yield Input(placeholder="e.g. GitHub 2FA Backup", id="title-input")
 
                 # Content TextArea
                 yield Label(
-                    "[#f43f5e]RECOVERY_CODES[/]  [dim #64748b]paste or import[/]",
+                    "[#f43f5e]> RECOVERY_CODES[/]  [dim #64748b]paste or import[/]",
                     classes="recovery-input-label",
                 )
                 yield TextArea(
@@ -305,13 +188,17 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
                     classes="recovery-code-editor",
                 )
 
-            # All buttons on one line
+            # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
                 yield Button(
-                    "IMPORT", id="import-button", classes="recovery-import-btn"
+                    "[ IMPORT ]", id="import-button", classes="recovery-import-btn"
                 )
-                yield Button("ABORT", id="cancel-button")
-                yield Button("SAVE", id="save-button", classes="recovery-save-btn")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(
+                    r"\[ ENCRYPT & COMMIT ]",
+                    id="save-button",
+                    classes="recovery-save-btn",
+                )
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -376,7 +263,7 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
 
 
 class EditRecoveryModal(ModalScreen[dict | None]):
-    """Modal for editing existing recovery codes."""
+    """Modal for editing existing recovery codes - Operator Grade Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -387,17 +274,22 @@ class EditRecoveryModal(ModalScreen[dict | None]):
         self.recovery = recovery
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="recovery-edit-modal"):
-            # Header
-            yield Static(
-                f"[bold #f43f5e]╔══ MODIFY_PROTOCOL // {self.recovery.title.upper()[:20]} ══╗[/]",
-                id="recovery-edit-title",
-            )
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        f"[bold #f43f5e][ :: MODIFY // {self.recovery.title.upper()[:18]} :: ][/]",
+                        id="recovery-edit-title",
+                    )
+                    yield Static("[#22c55e]STATUS: EDIT[/]", classes="modal-status")
 
             # Form
             with Vertical(id="recovery-form"):
-                yield Label("[#f43f5e]PROTOCOL_NAME[/]", classes="recovery-input-label")
+                yield Label(
+                    "[#f43f5e]> PROTOCOL_NAME[/]", classes="recovery-input-label"
+                )
                 yield Input(
                     value=self.recovery.title,
                     placeholder="e.g. GitHub 2FA Backup",
@@ -405,7 +297,7 @@ class EditRecoveryModal(ModalScreen[dict | None]):
                 )
 
                 yield Label(
-                    "[#f43f5e]RECOVERY_CODES[/]  [dim #64748b]paste or import[/]",
+                    "[#f43f5e]> RECOVERY_CODES[/]  [dim #64748b]paste or import[/]",
                     classes="recovery-input-label",
                 )
                 yield TextArea(
@@ -414,13 +306,17 @@ class EditRecoveryModal(ModalScreen[dict | None]):
                     classes="recovery-code-editor",
                 )
 
-            # All buttons on one line
+            # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
                 yield Button(
-                    "IMPORT", id="import-button", classes="recovery-import-btn"
+                    "[ IMPORT ]", id="import-button", classes="recovery-import-btn"
                 )
-                yield Button("ABORT", id="cancel-button")
-                yield Button("SAVE", id="save-button", classes="recovery-save-btn")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(
+                    r"\[ ENCRYPT & COMMIT ]",
+                    id="save-button",
+                    classes="recovery-save-btn",
+                )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -500,7 +396,7 @@ class ImportRecoveryPathModal(ModalScreen[str | None]):
                 id="recovery-import-hint",
             )
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ESC] ABORT", id="cancel-button")
                 yield Button(
                     "[ENTER] IMPORT", id="do-import-button", classes="recovery-save-btn"
                 )
@@ -534,7 +430,7 @@ class ImportRecoveryPathModal(ModalScreen[str | None]):
 
 
 class ConfirmDeleteRecoveryModal(ModalScreen[bool]):
-    """Modal for confirming deletion."""
+    """Modal for confirming deletion - Operator Grade Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -547,12 +443,16 @@ class ConfirmDeleteRecoveryModal(ModalScreen[bool]):
         self.item_name = item_name
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="recovery-delete-modal"):
-            yield Static(
-                "[bold #f43f5e]╔══ CONFIRM_DELETE // WARNING ══╗[/]",
-                id="recovery-delete-title",
-            )
+            # HUD Header with warning status
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        "[bold #f43f5e][ :: PURGE PROTOCOL :: ][/]",
+                        id="recovery-delete-title",
+                    )
+                    yield Static("[#ef4444]STATUS: ARMED[/]", classes="modal-status")
             with Vertical(id="delete-content"):
                 yield Static(
                     f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target"
@@ -561,9 +461,9 @@ class ConfirmDeleteRecoveryModal(ModalScreen[bool]):
                     "[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning"
                 )
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
-                    "[Y] CONFIRM DELETE",
+                    r"\[ CONFIRM PURGE ]",
                     id="delete-button",
                     classes="recovery-delete-btn",
                 )
