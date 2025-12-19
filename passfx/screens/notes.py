@@ -383,7 +383,7 @@ class NotesScreen(Screen):
         # 1. Global Header with Breadcrumbs - Operator theme
         with Horizontal(id="app-header"):
             yield Static(
-                f"[bold {c['primary']}]VAULT // DATA_SHARDS[/]",
+                f"[bold {c['accent']}]VAULT // DATA_SHARDS[/]",
                 id="header-branding",
                 classes="screen-header",
             )

@@ -701,7 +701,7 @@ class CardsScreen(Screen):
         # 1. Global Header - Operator theme
         with Horizontal(id="app-header"):
             yield Static(
-                f"[bold {c['primary']}]VAULT // CARDS[/]",
+                f"[bold {c['accent']}]VAULT // CARDS[/]",
                 id="header-branding",
                 classes="screen-header",
             )

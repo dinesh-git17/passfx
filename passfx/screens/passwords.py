@@ -494,7 +494,7 @@ class PasswordsScreen(Screen):
         # 1. Global Header with Breadcrumbs - Operator theme
         with Horizontal(id="app-header"):
             yield Static(
-                f"[bold {c['primary']}]VAULT // DATABASE[/]",
+                f"[bold {c['accent']}]VAULT // DATABASE[/]",
                 id="header-branding",
                 classes="screen-header",
             )
