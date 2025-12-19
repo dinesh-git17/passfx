@@ -61,7 +61,7 @@ def check_strength(password: str) -> StrengthResult:
 
     try:
         # pylint: disable-next=import-outside-toplevel
-        from zxcvbn import zxcvbn  # type: ignore[import-untyped]
+        from zxcvbn import zxcvbn
 
         result = zxcvbn(password)
 

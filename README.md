@@ -1,6 +1,10 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="PassFX Logo" width="40%">
+<img
+  src="https://raw.githubusercontent.com/dinesh-git17/passfx/main/assets/logo.png"
+  alt="PassFX Logo"
+  width="200"
+/>
 
 **A terminal password manager for people who read the source code.**
 

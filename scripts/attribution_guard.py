@@ -40,6 +40,7 @@ EXCLUDED_FILES = {
     "docs/CONTRIBUTING.md",
     "docs/CHANGELOG.md",
     "README.md",
+    "pyproject.toml",
 }
 
 # Compile patterns for efficiency
