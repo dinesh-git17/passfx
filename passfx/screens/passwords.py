@@ -145,44 +145,46 @@ def _get_avatar_bg_color(label: str) -> str:
 
 
 class AddPasswordModal(ModalScreen[EmailCredential | None]):
-    """Modal for adding a new password."""
+    """Modal for adding a new password - Operator Grade Secure Write Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            # Header
-            yield Static(":: SYSTEM_ENTRY // CREDENTIAL ::", id="modal-title")
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: OPEN", classes="modal-status")
 
             # Form Body
             with Vertical(id="pwd-form"):
                 # Row 1: Label (System)
-                yield Label("TARGET_SYSTEM", classes="input-label")
+                yield Label("> TARGET_SYSTEM", classes="input-label")
                 yield Input(placeholder="e.g. GITHUB_MAIN", id="label-input")
 
                 # Row 2: Email (Identity)
-                yield Label("USER_IDENTITY", classes="input-label")
+                yield Label("> USER_IDENTITY", classes="input-label")
                 yield Input(placeholder="username@host", id="email-input")
 
-                # Row 3: Password (Secret)
-                yield Label("ACCESS_KEY", classes="input-label")
-                with Horizontal(classes="input-row"):
-                    yield Input(
-                        placeholder="••••••••••••", password=True, id="password-input"
-                    )
+                # Row 3: Password (Secret) - sensitive field
+                yield Label("> ACCESS_KEY", classes="input-label")
+                yield Input(
+                    placeholder="••••••••••••", password=True, id="password-input"
+                )
 
                 # Row 4: Notes
-                yield Label("METADATA", classes="input-label")
+                yield Label("> METADATA", classes="input-label")
                 yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
 
-            # Footer Actions
+            # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
                 yield Button(
-                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
 
     def on_mount(self) -> None:
@@ -221,7 +223,7 @@ class AddPasswordModal(ModalScreen[EmailCredential | None]):
 
 
 class EditPasswordModal(ModalScreen[dict | None]):
-    """Modal for editing a password."""
+    """Modal for editing a password - Operator Grade Secure Write Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -232,35 +234,38 @@ class EditPasswordModal(ModalScreen[dict | None]):
         self.credential = credential
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            yield Static(
-                f":: MODIFY_ENTRY // {self.credential.label.upper()} ::",
-                id="modal-title",
-            )
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        f"[ :: MODIFY // {self.credential.label.upper()} :: ]",
+                        id="modal-title",
+                    )
+                    yield Static("STATUS: EDIT", classes="modal-status")
 
             with Vertical(id="pwd-form"):
-                yield Label("TARGET_SYSTEM", classes="input-label")
+                yield Label("> TARGET_SYSTEM", classes="input-label")
                 yield Input(
                     value=self.credential.label,
                     placeholder="e.g. GITHUB_MAIN",
                     id="label-input",
                 )
 
-                yield Label("USER_IDENTITY", classes="input-label")
+                yield Label("> USER_IDENTITY", classes="input-label")
                 yield Input(
                     value=self.credential.email,
                     placeholder="username@host",
                     id="email-input",
                 )
 
-                yield Label("ACCESS_KEY [BLANK = KEEP CURRENT]", classes="input-label")
-                with Horizontal(classes="input-row"):
-                    yield Input(
-                        placeholder="••••••••••••", password=True, id="password-input"
-                    )
+                yield Label("> ACCESS_KEY [BLANK = KEEP]", classes="input-label")
+                yield Input(
+                    placeholder="••••••••••••", password=True, id="password-input"
+                )
 
-                yield Label("METADATA", classes="input-label")
+                yield Label("> METADATA", classes="input-label")
                 yield Input(
                     value=self.credential.notes or "",
                     placeholder="OPTIONAL_NOTES",
@@ -268,9 +273,9 @@ class EditPasswordModal(ModalScreen[dict | None]):
                 )
 
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
-                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -307,7 +312,7 @@ class EditPasswordModal(ModalScreen[dict | None]):
 
 
 class ConfirmDeleteModal(ModalScreen[bool]):
-    """Modal for confirming deletion."""
+    """Modal for confirming deletion - Operator Grade Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -320,17 +325,21 @@ class ConfirmDeleteModal(ModalScreen[bool]):
         self.item_name = item_name
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            yield Static(":: CONFIRM_DELETE // WARNING ::", id="modal-title")
+            # HUD Header with warning status
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(r"\[ :: PURGE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: ARMED", classes="modal-status")
 
             with Vertical(id="pwd-form"):
                 yield Static(f"TARGET: '{self.item_name}'", classes="delete-target")
-                yield Static("⚠ THIS ACTION CANNOT BE UNDONE", classes="warning")
+                yield Static("THIS ACTION CANNOT BE UNDONE", classes="warning")
 
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[Y] CONFIRM DELETE", variant="error", id="delete-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(r"\[ CONFIRM PURGE ]", variant="error", id="delete-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -349,24 +358,7 @@ class ConfirmDeleteModal(ModalScreen[bool]):
 
 
 class ViewPasswordModal(ModalScreen[None]):
-    """Modal displaying an Identity Access Token visualization."""
-
-    # Color configuration for the password modal (Cyberpunk Cyan/Green theme)
-    COLORS = {
-        "border": "#00d4ff",
-        "card_bg": "#0a0e27",
-        "section_border": "#475569",
-        "title_bg": "#00d4ff",
-        "title_fg": "#000000",
-        "label_dim": "#64748b",
-        "value_fg": "#f8fafc",
-        "accent": "#22c55e",
-        "muted": "#94a3b8",
-        "btn_primary_bg": "#0a2e1a",
-        "btn_primary_fg": "#22c55e",
-        "btn_secondary_bg": "#1e293b",
-        "btn_secondary_fg": "#94a3b8",
-    }
+    """Modal for viewing a password - Operator Grade Secure Read Console."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -377,154 +369,72 @@ class ViewPasswordModal(ModalScreen[None]):
         super().__init__()
         self.credential = credential
 
-    # pylint: disable=too-many-locals
     def compose(self) -> ComposeResult:
-        """Create the identity access token layout."""
-        c = self.COLORS
-
+        """Create the Operator-grade view modal layout."""
         # Get password strength for visual indicator
         strength = check_strength(self.credential.password)
         strength_color = _get_strength_color(strength.score)
-
-        # Build security level indicator bars
         filled = strength.score + 1
         security_bars = (
-            f"[{strength_color}]"
-            + ("█" * filled)
-            + "[/]"
-            + "[#1e293b]"
-            + ("░" * (5 - filled))
-            + "[/]"
+            f"[{strength_color}]{'█' * filled}[/][#1e293b]{'░' * (5 - filled)}[/]"
         )
 
-        # Format timestamp
-        try:
-            created = datetime.fromisoformat(self.credential.created_at).strftime(
-                "%Y.%m.%d"
-            )
-        except (ValueError, TypeError):
-            created = "UNKNOWN"
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-        # Card dimensions
-        width = 96
-        inner = width - 2
-        section_inner = width - 6
-        content_width = section_inner - 5
-
-        with Vertical(id="password-modal"):
-            with Vertical(id="physical-id-card"):
-                # Top border
-                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
-
-                # Title row
-                title = " IDENTITY ACCESS TOKEN "
-                title_pad = inner - len(title) - 2
+            # Data Display Body
+            with Vertical(id="pwd-form"):
+                # Row 1: Label (System)
+                yield Label("> TARGET_SYSTEM", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  [on {c['title_bg']}][bold "
-                    f"{c['title_fg']}]{title}[/]{' ' * title_pad}[bold {c['border']}]║[/]"
+                    f"  {self.credential.label}", classes="view-value", id="label-value"
                 )
 
-                # Divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # System label
-                system_val = self.credential.label.upper()
+                # Row 2: Email (Identity)
+                yield Label("> USER_IDENTITY", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]SYSTEM:[/] "
-                    f"[bold {c['value_fg']}]{system_val:<{inner - 12}}[/] "
-                    f"[bold {c['border']}]║[/]"
+                    f"  {self.credential.email}", classes="view-value", id="email-value"
                 )
 
-                # Spacer
+                # Row 3: Password (Secret)
+                yield Label("> ACCESS_KEY", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  [#22c55e]{self.credential.password}[/]",
+                    classes="view-value secret",
+                    id="password-value",
                 )
 
-                # User Identity section
+                # Row 4: Security Level
+                yield Label("> SECURITY_LEVEL", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"┌─ USER IDENTITY {'─' * (section_inner - 17)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                    f"[{c['accent']}]►[/] [bold {c['value_fg']}]"
-                    f"{self.credential.email:<{content_width}}[/] "
-                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
+                    f"  {security_bars} [{strength_color}]{strength.label.upper()}[/]",
+                    classes="view-value",
+                    id="strength-value",
                 )
 
-                # Spacer
-                yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
-                )
+                # Row 5: Notes (if present)
+                if self.credential.notes:
+                    yield Label("> METADATA", classes="input-label")
+                    yield Static(
+                        f"  {self.credential.notes}",
+                        classes="view-value",
+                        id="notes-value",
+                    )
 
-                # Access Key section
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"┌─ ACCESS KEY {'─' * (section_inner - 14)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                    f"[{c['accent']}]►[/] [bold {c['accent']}]"
-                    f"{self.credential.password:<{content_width}}[/] "
-                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
-                )
-
-                # Spacer
-                yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
-                )
-
-                # Security bar
-                sec_content = (
-                    f"  [dim {c['label_dim']}]SECURITY:[/] {security_bars} "
-                    f"[{strength_color}]{strength.label.upper():<12}[/]"
-                )
-                sec_pad = inner - 35
-                yield Static(
-                    f"[bold {c['border']}]║[/]{sec_content}{' ' * sec_pad}"
-                    f"[bold {c['border']}]║[/]"
-                )
-
-                # Footer divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Footer row
-                footer_left = (
-                    f"  [dim {c['section_border']}]ID:[/] "
-                    f"[{c['muted']}]{self.credential.id[:8]}[/]"
-                )
-                footer_right = (
-                    f"[dim {c['section_border']}]ISSUED:[/] [{c['muted']}]{created}[/]"
-                )
-                footer_pad = inner - 30 - len(created)
-                yield Static(
-                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}"
-                    f"{footer_right}  [bold {c['border']}]║[/]"
-                )
-
-                # Bottom border
-                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
-
-            # Action Buttons
-            with Horizontal(id="password-modal-buttons"):
-                yield Button("COPY KEY", id="copy-button")
-                yield Button("CLOSE", id="close-button")
+            # Footer Actions - right aligned
+            with Horizontal(id="modal-buttons"):
+                yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
+                yield Button(r"\[ COPY KEY ]", variant="primary", id="save-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
-        if event.button.id == "close-button":
+        if event.button.id == "cancel-button":
             self.dismiss(None)
-        elif event.button.id == "copy-button":
+        elif event.button.id == "save-button":
             self._copy_password()
 
     def _copy_password(self) -> None:

@@ -239,49 +239,52 @@ def _validate_cvv(cvv: str) -> tuple[bool, str]:
 
 
 class AddCardModal(ModalScreen[CreditCard | None]):
-    """Modal for adding a new credit card."""
+    """Modal for adding a new credit card - Operator Grade Secure Write Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            # Header
-            yield Static(":: NEW_ASSET_ENTRY ::", id="modal-title")
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: OPEN", classes="modal-status")
 
             # Form Body
             with Vertical(id="pwd-form"):
                 # Row 1: Label (Issuer)
-                yield Label("ISSUER_LABEL", classes="input-label")
+                yield Label("> ISSUER_LABEL", classes="input-label")
                 yield Input(placeholder="e.g. CHASE_SAPPHIRE", id="label-input")
 
                 # Row 2: Card Number (PAN)
-                yield Label("PAN_NUMBER", classes="input-label")
+                yield Label("> PAN_NUMBER", classes="input-label")
                 yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
 
                 # Row 3: Expiry Date
-                yield Label("EXPIRY_DATE", classes="input-label")
+                yield Label("> EXPIRY_DATE", classes="input-label")
                 yield Input(placeholder="MM/YY", id="expiry-input")
 
-                # Row 4: CVV (Security Code)
-                yield Label("SECURITY_CODE", classes="input-label")
+                # Row 4: CVV (Security Code) - sensitive field
+                yield Label("> SECURITY_CODE", classes="input-label")
                 yield Input(placeholder="•••", password=True, id="cvv-input")
 
                 # Row 5: Cardholder Name
-                yield Label("CARDHOLDER", classes="input-label")
+                yield Label("> CARDHOLDER", classes="input-label")
                 yield Input(placeholder="NAME ON CARD", id="name-input")
 
                 # Row 6: Notes
-                yield Label("METADATA", classes="input-label")
+                yield Label("> METADATA", classes="input-label")
                 yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
 
-            # Footer Actions
+            # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
-                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
 
     def on_mount(self) -> None:
@@ -349,7 +352,7 @@ class AddCardModal(ModalScreen[CreditCard | None]):
 
 
 class EditCardModal(ModalScreen[dict | None]):
-    """Modal for editing a credit card."""
+    """Modal for editing a credit card - Operator Grade Secure Write Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -360,43 +363,46 @@ class EditCardModal(ModalScreen[dict | None]):
         self.card = card
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            yield Static(
-                f":: MODIFY_ASSET // {self.card.label.upper()} ::", id="modal-title"
-            )
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        f"[ :: MODIFY // {self.card.label.upper()} :: ]",
+                        id="modal-title",
+                    )
+                    yield Static("STATUS: EDIT", classes="modal-status")
 
             with Vertical(id="pwd-form"):
-                yield Label("ISSUER_LABEL", classes="input-label")
+                yield Label("> ISSUER_LABEL", classes="input-label")
                 yield Input(
                     value=self.card.label,
                     placeholder="e.g. CHASE_SAPPHIRE",
                     id="label-input",
                 )
 
-                yield Label("PAN_NUMBER [BLANK = KEEP CURRENT]", classes="input-label")
+                yield Label("> PAN_NUMBER [BLANK = KEEP]", classes="input-label")
                 yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
 
-                yield Label("EXPIRY_DATE", classes="input-label")
+                yield Label("> EXPIRY_DATE", classes="input-label")
                 yield Input(
                     value=self.card.expiry,
                     placeholder="MM/YY",
                     id="expiry-input",
                 )
 
-                yield Label(
-                    "SECURITY_CODE [BLANK = KEEP CURRENT]", classes="input-label"
-                )
+                yield Label("> SECURITY_CODE [BLANK = KEEP]", classes="input-label")
                 yield Input(placeholder="•••", password=True, id="cvv-input")
 
-                yield Label("CARDHOLDER", classes="input-label")
+                yield Label("> CARDHOLDER", classes="input-label")
                 yield Input(
                     value=self.card.cardholder_name,
                     placeholder="NAME ON CARD",
                     id="name-input",
                 )
 
-                yield Label("METADATA", classes="input-label")
+                yield Label("> METADATA", classes="input-label")
                 yield Input(
                     value=self.card.notes or "",
                     placeholder="OPTIONAL_NOTES",
@@ -404,9 +410,9 @@ class EditCardModal(ModalScreen[dict | None]):
                 )
 
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
-                    "[ENTER] ENCRYPT & WRITE", variant="primary", id="save-button"
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -472,26 +478,7 @@ class EditCardModal(ModalScreen[dict | None]):
 
 
 class ViewCardModal(ModalScreen[None]):
-    """Modal displaying a physical credit card visualization."""
-
-    # Color configuration for the card modal (Emerald Green theme)
-    COLORS = {
-        "border": "#10b981",
-        "card_bg": "#0a0e27",
-        "section_border": "#475569",
-        "title_bg": "#4ade80",
-        "title_fg": "#000000",
-        "label_dim": "#64748b",
-        "value_fg": "#f8fafc",
-        "accent": "#34d399",
-        "accent_dim": "#064e3b",
-        "muted": "#94a3b8",
-        "chip": "#fbbf24",
-        "btn_primary_bg": "#064e3b",
-        "btn_primary_fg": "#34d399",
-        "btn_secondary_bg": "#1e293b",
-        "btn_secondary_fg": "#94a3b8",
-    }
+    """Modal for viewing a card - Operator Grade Secure Read Console."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -503,167 +490,65 @@ class ViewCardModal(ModalScreen[None]):
         self.card = card
 
     def compose(self) -> ComposeResult:
-        """Create the physical card layout with ASCII borders."""
-        c = self.COLORS
-
+        """Create the Operator-grade view modal layout."""
         # Format the card number with spaces
         formatted_number = _format_card_number(self.card.card_number)
 
-        # Card dimensions
-        width = 96
-        inner = width - 2
-        section_inner = width - 6
-        content_width = section_inner - 5
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-        with Vertical(id="card-modal"):
-            with Vertical(id="physical-credit-card"):
-                # Top border
-                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
-
-                # Title row
-                title = " FINANCIAL ASSET TOKEN "
-                title_pad = inner - len(title) - 2
+            # Data Display Body
+            with Vertical(id="pwd-form"):
+                # Row 1: Label (Issuer)
+                yield Label("> CARD_ISSUER", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  "
-                    f"[on {c['title_bg']}][bold {c['title_fg']}]{title}[/]"
-                    f"{' ' * title_pad}[bold {c['border']}]║[/]"
+                    f"  {self.card.label}", classes="view-value", id="label-value"
                 )
 
-                # Divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Card label
-                label_val = self.card.label.upper()
+                # Row 2: Cardholder Name
+                yield Label("> CARDHOLDER", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['label_dim']}]ISSUER:[/] "
-                    f"[bold {c['value_fg']}]{label_val:<{inner - 12}}[/] "
-                    f"[bold {c['border']}]║[/]"
+                    f"  {self.card.cardholder_name}",
+                    classes="view-value",
+                    id="holder-value",
                 )
 
-                # Spacer
+                # Row 3: Card Number (Secret)
+                yield Label("> CARD_NUMBER", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  [#22c55e]{formatted_number}[/]",
+                    classes="view-value secret",
+                    id="number-value",
                 )
 
-                # Chip visualization
+                # Row 4: Expiry
+                yield Label("> VALID_THRU", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  [bold {c['chip']}]▄▄▄▄▄▄▄[/]"
-                    f"{' ' * (inner - 11)}[bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [bold {c['chip']}]███████[/]"
-                    f"{' ' * (inner - 11)}[bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [bold {c['chip']}]▀▀▀▀▀▀▀[/]"
-                    f"{' ' * (inner - 11)}[bold {c['border']}]║[/]"
+                    f"  {self.card.expiry}", classes="view-value", id="expiry-value"
                 )
 
-                # Spacer
+                # Row 5: CVV (Secret)
+                yield Label("> CVV_CODE", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  [#f59e0b]{self.card.cvv}[/]",
+                    classes="view-value secret",
+                    id="cvv-value",
                 )
 
-                # Card Number section
-                yield Static(
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]┌─ CARD NUMBER {'─' * (section_inner - 16)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                    f"[{c['accent']}]►[/] [bold {c['accent']}]"
-                    f"{formatted_number:<{content_width}}[/] "
-                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-
-                # Spacer
-                yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
-                )
-
-                # Expiry and CVV section
-                expiry_cvv = (
-                    f"VALID THRU: [bold {c['value_fg']}]{self.card.expiry}[/]     "
-                    f"CVV: [bold {c['value_fg']}]{self.card.cvv}[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]┌─ SECURITY INFO "
-                    f"{'─' * (section_inner - 18)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                    f"[{c['accent']}]►[/] [dim {c['label_dim']}]{expiry_cvv}"
-                    f"{' ' * (content_width - 32)}[/] [dim {c['section_border']}]│[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-
-                # Spacer
-                yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
-                )
-
-                # Cardholder section
-                holder_name = self.card.cardholder_name.upper()
-                yield Static(
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]┌─ CARDHOLDER {'─' * (section_inner - 15)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                    f"[{c['accent']}]►[/] [bold {c['value_fg']}]{holder_name:<{content_width}}[/] "
-                    f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  "
-                    f"[dim {c['section_border']}]└{'─' * (section_inner - 1)}┘[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-
-                # Footer divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Footer row with ID
-                footer_left = (
-                    f"  [dim {c['section_border']}]ID:[/] "
-                    f"[{c['muted']}]{self.card.id[:8]}[/]"
-                )
-                footer_right = (
-                    f"[dim {c['section_border']}]STATUS:[/] [{c['accent']}]ACTIVE[/]"
-                )
-                footer_pad = inner - 32
-                yield Static(
-                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}{footer_right}  "
-                    f"[bold {c['border']}]║[/]"
-                )
-
-                # Bottom border
-                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
-
-            # Action Buttons
-            with Horizontal(id="card-modal-buttons"):
-                yield Button("COPY NUMBER", id="copy-button")
-                yield Button("CLOSE", id="close-button")
+            # Footer Actions - right aligned
+            with Horizontal(id="modal-buttons"):
+                yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
+                yield Button(r"\[ COPY NUMBER ]", variant="primary", id="save-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
-        if event.button.id == "close-button":
+        if event.button.id == "cancel-button":
             self.dismiss(None)
-        elif event.button.id == "copy-button":
+        elif event.button.id == "save-button":
             self._copy_number()
 
     def _copy_number(self) -> None:
@@ -683,7 +568,7 @@ class ViewCardModal(ModalScreen[None]):
 
 
 class ConfirmDeleteModal(ModalScreen[bool]):
-    """Modal for confirming deletion."""
+    """Modal for confirming deletion - Operator Grade Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -696,17 +581,21 @@ class ConfirmDeleteModal(ModalScreen[bool]):
         self.item_name = item_name
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
-            yield Static(":: CONFIRM_DELETE // WARNING ::", id="modal-title")
+            # HUD Header with warning status
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: PURGE PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: ARMED", classes="modal-status")
 
             with Vertical(id="pwd-form"):
                 yield Static(f"TARGET: '{self.item_name}'", classes="delete-target")
-                yield Static("⚠ THIS ACTION CANNOT BE UNDONE", classes="warning")
+                yield Static("THIS ACTION CANNOT BE UNDONE", classes="warning")
 
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
-                yield Button("[Y] CONFIRM DELETE", variant="error", id="delete-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(r"\[ CONFIRM PURGE ]", variant="error", id="delete-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""

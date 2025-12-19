@@ -69,198 +69,77 @@ def _get_relative_time(iso_timestamp: str | None) -> str:
 
 
 class ViewEnvModal(ModalScreen[None]):
-    """Modal displaying environment config visualization matching password modal style."""
+    """Modal for viewing env config - Operator Grade Secure Read Console."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
         Binding("c", "copy_content", "Copy"),
     ]
 
-    # Color configuration for the env modal (Indigo theme)
-    COLORS = {
-        "border": "#6366f1",
-        "card_bg": "#0a0e27",
-        "section_border": "#475569",
-        "title_bg": "#818cf8",
-        "title_fg": "#000000",
-        "label_dim": "#64748b",
-        "value_fg": "#f8fafc",
-        "accent": "#a5b4fc",
-        "muted": "#94a3b8",
-    }
-
     def __init__(self, env: EnvEntry) -> None:
         super().__init__()
         self.env = env
 
-    # pylint: disable=too-many-locals,too-many-statements
     def compose(self) -> ComposeResult:
-        """Create the config visualization layout."""
-        c = self.COLORS
-
-        # Format timestamp
-        try:
-            created = datetime.fromisoformat(self.env.created_at).strftime("%Y.%m.%d")
-        except (ValueError, TypeError):
-            created = "UNKNOWN"
-
-        # Card dimensions (matching password modal)
-        width = 96
-        inner = width - 2
-        section_inner = width - 6
-        content_width = section_inner - 5
-
-        # Truncate title if needed
-        title_display = (
-            self.env.title[:content_width]
-            if len(self.env.title) > content_width
-            else self.env.title
+        """Create the Operator-grade view modal layout."""
+        # Get content preview (first 40 chars, masked)
+        preview = (
+            self.env.content[:40] + "..."
+            if len(self.env.content) > 40
+            else self.env.content
         )
+        preview = preview.replace("\n", " ")
 
-        # Get content preview (first 5 lines for env files)
-        content_lines = self.env.content.split("\n")[:5] if self.env.content else []
-        preview_lines = []
-        for line in content_lines:
-            # Mask values in env files (show key=***)
-            if "=" in line and not line.strip().startswith("#"):
-                key = line.split("=", 1)[0]
-                preview = f"{key}=***"
-            else:
-                preview = line
-            preview = (
-                preview[:content_width] if len(preview) > content_width else preview
-            )
-            preview_lines.append(preview)
+        with Vertical(id="pwd-modal", classes="secure-terminal"):
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
+                    yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-        with Vertical(id="env-modal"):
-            with Vertical(id="physical-env-card"):
-                # Top border
-                yield Static(f"[bold {c['border']}]╔{'═' * inner}╗[/]")
-
-                # Title row
-                title = " CONFIG INJECTOR "
-                title_pad = inner - len(title) - 2
+            # Data Display Body
+            with Vertical(id="pwd-form"):
+                # Row 1: Config Name
+                yield Label("> CONFIG_NAME", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  [on {c['title_bg']}]"
-                    f"[bold {c['title_fg']}]{title}[/]{' ' * title_pad}"
-                    f"[bold {c['border']}]║[/]"
+                    f"  {self.env.title}", classes="view-value", id="title-value"
                 )
 
-                # Divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Config label
+                # Row 2: Filename
+                yield Label("> FILE_TARGET", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]CONFIG:[/] "
-                    f"[bold {c['value_fg']}]{title_display:<{inner - 12}}[/] "
-                    f"[bold {c['border']}]║[/]"
+                    f"  [#a5b4fc]{self.env.filename}[/]",
+                    classes="view-value",
+                    id="filename-value",
                 )
 
-                # Filename row
-                filename_display = (
-                    self.env.filename[:content_width]
-                    if len(self.env.filename) > content_width
-                    else self.env.filename
-                )
+                # Row 3: Stats
+                yield Label("> CONFIG_STATS", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]FILE:[/]   "
-                    f"[{c['accent']}]{filename_display:<{inner - 12}}[/] "
-                    f"[bold {c['border']}]║[/]"
+                    f"  [#a5b4fc]{self.env.line_count}[/] lines  "
+                    f"[#a5b4fc]{self.env.var_count}[/] vars",
+                    classes="view-value",
+                    id="stats-value",
                 )
 
-                # Spacer
+                # Row 4: Content Preview
+                yield Label("> CONTENT_PREVIEW", classes="input-label")
                 yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
+                    f"  [#6366f1]{preview}[/]",
+                    classes="view-value secret",
+                    id="preview-value",
                 )
 
-                # Stats section
-                stats = (
-                    f"[{c['accent']}]{self.env.line_count}[/] lines  "
-                    f"[{c['accent']}]{self.env.var_count}[/] vars"
-                )
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['label_dim']}]STATS:[/]  "
-                    f"{stats:<{inner - 12}}[bold {c['border']}]║[/]"
-                )
-
-                # Spacer
-                yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
-                )
-
-                # Content section
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"┌─ CONTENT PREVIEW {'─' * (section_inner - 20)}┐[/]  "
-                    f"[bold {c['border']}]║[/]"
-                )
-
-                # Show preview lines (masked values)
-                for line in preview_lines:
-                    if "=" in line and not line.strip().startswith("#"):
-                        # Highlight env var keys
-                        key = line.split("=", 1)[0]
-                        yield Static(
-                            f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                            f"[{c['accent']}]►[/] [{c['accent']}]{key}[/][{c['muted']}]=***"
-                            f"{' ' * (content_width - len(key) - 4)}[/] "
-                            f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                        )
-                    else:
-                        yield Static(
-                            f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/] "
-                            f"[{c['accent']}]►[/] [{c['muted']}]{line:<{content_width}}[/] "
-                            f"[dim {c['section_border']}]│[/]  [bold {c['border']}]║[/]"
-                        )
-
-                # If less than 5 lines, pad with empty lines
-                for _ in range(5 - len(preview_lines)):
-                    yield Static(
-                        f"[bold {c['border']}]║[/]  [dim {c['section_border']}]│[/]   "
-                        f"{' ' * content_width} [dim {c['section_border']}]│[/]  "
-                        f"[bold {c['border']}]║[/]"
-                    )
-
-                yield Static(
-                    f"[bold {c['border']}]║[/]  [dim {c['section_border']}]"
-                    f"└{'─' * (section_inner - 1)}┘[/]  [bold {c['border']}]║[/]"
-                )
-
-                # Spacer
-                yield Static(
-                    f"[bold {c['border']}]║[/]{' ' * inner}[bold {c['border']}]║[/]"
-                )
-
-                # Footer divider
-                yield Static(f"[bold {c['border']}]╠{'═' * inner}╣[/]")
-
-                # Footer row
-                footer_left = (
-                    f"  [dim {c['section_border']}]ID:[/] "
-                    f"[{c['muted']}]{self.env.id[:8]}[/]"
-                )
-                footer_right = (
-                    f"[dim {c['section_border']}]CREATED:[/] [{c['muted']}]{created}[/]"
-                )
-                footer_pad = inner - 32 - len(created)
-                yield Static(
-                    f"[bold {c['border']}]║[/]{footer_left}{' ' * footer_pad}"
-                    f"{footer_right}  [bold {c['border']}]║[/]"
-                )
-
-                # Bottom border
-                yield Static(f"[bold {c['border']}]╚{'═' * inner}╝[/]")
-
-            # Action Buttons
-            with Horizontal(id="env-modal-buttons"):
-                yield Button("COPY", id="copy-button")
-                yield Button("CLOSE", id="close-button")
+            # Footer Actions - right aligned
+            with Horizontal(id="modal-buttons"):
+                yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
+                yield Button(r"\[ COPY ]", variant="primary", id="save-button")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
-        if event.button.id == "close-button":
+        if event.button.id == "cancel-button":
             self.dismiss(None)
-        elif event.button.id == "copy-button":
+        elif event.button.id == "save-button":
             self._copy_content()
 
     def _copy_content(self) -> None:
@@ -280,34 +159,37 @@ class ViewEnvModal(ModalScreen[None]):
 
 
 class AddEnvModal(ModalScreen[EnvEntry | None]):
-    """Modal for adding a new environment config with TextArea support."""
+    """Modal for adding a new environment config - Operator Grade Secure Write Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout with TextArea."""
+        """Create the Operator-grade modal layout with TextArea."""
         with Vertical(id="env-edit-modal"):
-            # Header
-            yield Static(
-                "[bold #f59e0b]╔══ SYSTEM_CONFIG // NEW ENTRY ══╗[/]",
-                id="env-edit-title",
-            )
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        "[bold #f59e0b][ :: SECURE WRITE PROTOCOL :: ][/]",
+                        id="env-edit-title",
+                    )
+                    yield Static("[#22c55e]STATUS: OPEN[/]", classes="modal-status")
 
             # Form
             with Vertical(id="env-form"):
                 # Title input
-                yield Label("[#f59e0b]CONFIG_TITLE[/]", classes="env-input-label")
+                yield Label("[#f59e0b]> CONFIG_TITLE[/]", classes="env-input-label")
                 yield Input(placeholder="e.g. Project X Production", id="title-input")
 
                 # Filename input
-                yield Label("[#f59e0b]FILENAME[/]", classes="env-input-label")
+                yield Label("[#f59e0b]> FILENAME[/]", classes="env-input-label")
                 yield Input(placeholder="e.g. .env.production", id="filename-input")
 
                 # Content TextArea
                 yield Label(
-                    "[#f59e0b]CONTENT[/]  [dim #64748b]paste or drop file[/]",
+                    "[#f59e0b]> CONTENT[/]  [dim #64748b]paste or drop file[/]",
                     classes="env-input-label",
                 )
                 yield TextArea(
@@ -317,11 +199,13 @@ class AddEnvModal(ModalScreen[EnvEntry | None]):
                     classes="code-editor",
                 )
 
-            # All buttons on one line
+            # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
-                yield Button("IMPORT", id="import-button", classes="import-btn")
-                yield Button("ABORT", id="cancel-button")
-                yield Button("SAVE", id="save-button", classes="env-save-btn")
+                yield Button(r"\[ IMPORT ]", id="import-button", classes="import-btn")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(
+                    r"\[ ENCRYPT & COMMIT ]", id="save-button", classes="env-save-btn"
+                )
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -405,7 +289,7 @@ class AddEnvModal(ModalScreen[EnvEntry | None]):
 
 
 class EditEnvModal(ModalScreen[dict | None]):
-    """Modal for editing an existing environment config."""
+    """Modal for editing an existing environment config - Operator Grade Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -416,24 +300,27 @@ class EditEnvModal(ModalScreen[dict | None]):
         self.env = env
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="env-edit-modal"):
-            # Header
-            yield Static(
-                f"[bold #f59e0b]╔══ MODIFY_CONFIG // {self.env.title.upper()[:20]} ══╗[/]",
-                id="env-edit-title",
-            )
+            # HUD Header with status indicator
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        f"[bold #f59e0b][ :: MODIFY // {self.env.title.upper()[:18]} :: ][/]",
+                        id="env-edit-title",
+                    )
+                    yield Static("[#22c55e]STATUS: EDIT[/]", classes="modal-status")
 
             # Form
             with Vertical(id="env-form"):
-                yield Label("[#f59e0b]CONFIG_TITLE[/]", classes="env-input-label")
+                yield Label("[#f59e0b]> CONFIG_TITLE[/]", classes="env-input-label")
                 yield Input(
                     value=self.env.title,
                     placeholder="e.g. Project X Production",
                     id="title-input",
                 )
 
-                yield Label("[#f59e0b]FILENAME[/]", classes="env-input-label")
+                yield Label("[#f59e0b]> FILENAME[/]", classes="env-input-label")
                 yield Input(
                     value=self.env.filename,
                     placeholder="e.g. .env.production",
@@ -441,7 +328,7 @@ class EditEnvModal(ModalScreen[dict | None]):
                 )
 
                 yield Label(
-                    "[#f59e0b]CONTENT[/]  [dim #64748b]paste or drop file[/]",
+                    "[#f59e0b]> CONTENT[/]  [dim #64748b]paste or drop file[/]",
                     classes="env-input-label",
                 )
                 yield TextArea(
@@ -451,11 +338,13 @@ class EditEnvModal(ModalScreen[dict | None]):
                     classes="code-editor",
                 )
 
-            # All buttons on one line
+            # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
-                yield Button("IMPORT", id="import-button", classes="import-btn")
-                yield Button("ABORT", id="cancel-button")
-                yield Button("SAVE", id="save-button", classes="env-save-btn")
+                yield Button(r"\[ IMPORT ]", id="import-button", classes="import-btn")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
+                yield Button(
+                    r"\[ ENCRYPT & COMMIT ]", id="save-button", classes="env-save-btn"
+                )
 
     def on_drop(self, event: Any) -> None:
         """Handle file drop events."""
@@ -548,7 +437,7 @@ class ImportPathModal(ModalScreen[str | None]):
                 id="import-hint",
             )
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ESC] ABORT", id="cancel-button")
                 yield Button(
                     "[ENTER] IMPORT", id="do-import-button", classes="env-save-btn"
                 )
@@ -582,7 +471,7 @@ class ImportPathModal(ModalScreen[str | None]):
 
 
 class ConfirmDeleteEnvModal(ModalScreen[bool]):
-    """Modal for confirming deletion."""
+    """Modal for confirming deletion - Operator Grade Console."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -595,12 +484,16 @@ class ConfirmDeleteEnvModal(ModalScreen[bool]):
         self.item_name = item_name
 
     def compose(self) -> ComposeResult:
-        """Create the modal layout."""
+        """Create the Operator-grade modal layout."""
         with Vertical(id="env-delete-modal"):
-            yield Static(
-                "[bold #f59e0b]╔══ CONFIRM_DELETE // WARNING ══╗[/]",
-                id="delete-title",
-            )
+            # HUD Header with warning status
+            with Vertical(classes="modal-header"):
+                with Horizontal(classes="modal-header-row"):
+                    yield Static(
+                        "[bold #f59e0b][ :: PURGE PROTOCOL :: ][/]",
+                        id="delete-title",
+                    )
+                    yield Static("[#ef4444]STATUS: ARMED[/]", classes="modal-status")
             with Vertical(id="delete-content"):
                 yield Static(
                     f"[#f8fafc]TARGET: '{self.item_name}'[/]", classes="delete-target"
@@ -609,9 +502,9 @@ class ConfirmDeleteEnvModal(ModalScreen[bool]):
                     "[bold #ef4444]THIS ACTION CANNOT BE UNDONE[/]", classes="warning"
                 )
             with Horizontal(id="modal-buttons"):
-                yield Button("[ESC] ABORT", id="cancel-button")
+                yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
-                    "[Y] CONFIRM DELETE", id="delete-button", classes="env-delete-btn"
+                    r"\[ CONFIRM PURGE ]", id="delete-button", classes="env-delete-btn"
                 )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
