@@ -34,6 +34,12 @@ $operator-surface: #0a0a0a;
 $operator-text: #e0e0e0;
 $operator-muted: #666666;
 
+/* Strict Palette - Enforced across the application
+   Primary: Cyan (#00FFFF) - Primary actions, active focus, core highlights
+   Secondary: Purple (#8b5cf6) - System info, headers, terminal accents
+   Success: Green (#22c55e) - Secure states, healthy indicators
+*/
+
 /* ═══════════════════════════════════════════════════════════════════════════
    GLOBAL STYLES
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -3418,4 +3424,28 @@ Button.note-delete-btn:focus {
 #terminal-input > .input--cursor {
     background: $operator-primary;
     color: $operator-black;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SYSTEM ALIVE INDICATORS - Subtle life-affirming animations
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* DECRYPTED Status Pulse - Very subtle heartbeat glow
+   Indicates active encryption state monitoring */
+#header-lock.pulse-active {
+    text-opacity: 100%;
+}
+
+/* Clock Tick Glow - Micro brightness shift on update */
+#header-clock.tick-glow {
+    color: #FFFFFF;
+}
+
+/* Vault Health Panel Tooltip Styling */
+#security-gauge {
+    /* Tooltip appears on hover/focus */
+}
+
+.gauge-panel:focus-within {
+    border: solid #00FFFF;
 }
