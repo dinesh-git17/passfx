@@ -23,10 +23,23 @@ _cleanup_done: bool = False  # pylint: disable=invalid-name
 DEFAULT_CLEAR_TIMEOUT = 15
 
 
+def _get_clipboard_timeout() -> int:
+    """Get clipboard timeout from config, falling back to default.
+
+    Lazy import to avoid circular dependency during module initialization.
+    """
+    try:
+        from passfx.core.config import get_config
+
+        return get_config().clipboard_timeout_seconds
+    except Exception:  # pylint: disable=broad-exception-caught
+        return DEFAULT_CLEAR_TIMEOUT
+
+
 def copy_to_clipboard(
     text: str,
     auto_clear: bool = True,
-    clear_after: int = DEFAULT_CLEAR_TIMEOUT,
+    clear_after: int | None = None,
     on_clear: Callable[[], None] | None = None,
 ) -> bool:
     """Copy text to clipboard with optional auto-clear.
@@ -34,13 +47,17 @@ def copy_to_clipboard(
     Args:
         text: Text to copy to clipboard.
         auto_clear: Whether to automatically clear after timeout.
-        clear_after: Seconds before auto-clearing (default 15).
+        clear_after: Seconds before auto-clearing. If None, uses config value.
         on_clear: Optional callback when clipboard is cleared.
 
     Returns:
         True if successful, False otherwise.
     """
     global _active_timer  # pylint: disable=global-statement
+
+    # Use config timeout if not explicitly specified
+    if clear_after is None:
+        clear_after = _get_clipboard_timeout()
 
     try:
         import pyperclip
@@ -214,18 +231,20 @@ class ClipboardManager:
         self,
         text: str,
         auto_clear: bool = True,
-        clear_after: int = DEFAULT_CLEAR_TIMEOUT,
+        clear_after: int | None = None,
     ) -> None:
         """Initialize clipboard manager.
 
         Args:
             text: Text to copy.
             auto_clear: Whether to auto-clear on exit.
-            clear_after: Seconds before auto-clear (if not exited).
+            clear_after: Seconds before auto-clear. If None, uses config value.
         """
         self._text = text
         self._auto_clear = auto_clear
-        self._clear_after = clear_after
+        self._clear_after = (
+            clear_after if clear_after is not None else _get_clipboard_timeout()
+        )
         self._success = False
 
     def __enter__(self) -> ClipboardManager:
