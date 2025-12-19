@@ -36,12 +36,25 @@ def reset_module_state() -> Generator[None, None, None]:
     Ensures tests are isolated and do not affect each other through
     module-level state (_active_timer, _cleanup_done).
     """
-    # Cancel any existing timer before test
-    cancel_auto_clear()
+    # Directly reset module state to avoid calling methods on potentially mocked objects
+    # This is safer than calling cancel_auto_clear() which may fail on Mock objects
+    with clipboard._clipboard_lock:
+        if clipboard._active_timer is not None:
+            try:
+                clipboard._active_timer.cancel()
+            except (AttributeError, TypeError):
+                pass  # Timer might be a Mock without cancel method
+        clipboard._active_timer = None
     reset_cleanup_flag()
     yield
-    # Clean up after test
-    cancel_auto_clear()
+    # Clean up after test - same safe reset
+    with clipboard._clipboard_lock:
+        if clipboard._active_timer is not None:
+            try:
+                clipboard._active_timer.cancel()
+            except (AttributeError, TypeError):
+                pass
+        clipboard._active_timer = None
     reset_cleanup_flag()
 
 
