@@ -2969,25 +2969,27 @@ GeneratorScreen .keycap-label {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    HELP SCREEN - SYSTEM OPERATOR'S MANUAL
-   Theme: Holographic Cyan (#00d4ff) for informational overlay
+   Theme: Operator Console aesthetic with Sidebar + Content layout
+   Primary: Cyan (#00FFFF) | Secondary: Purple (#8b5cf6)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Help Modal Container */
-#help-modal {
-    width: 70;
+/* Help Dialog - Main container (centered modal overlay) */
+#help-dialog {
+    width: 80;
     height: auto;
-    max-height: 40;
-    background: #0a0e27;
-    border: heavy #00d4ff;
+    max-height: 38;
+    min-height: 24;
+    background: $operator-black;
+    border: heavy $operator-primary;
     padding: 0;
 }
 
-/* Help Header - Inverted block style */
-#help-modal #help-header {
+/* Help Header - Inverted cyan block style */
+#help-dialog #help-header {
     width: 100%;
     height: 1;
-    background: #00d4ff;
-    color: #000000;
+    background: $operator-primary;
+    color: $operator-black;
     text-style: bold;
     text-align: center;
     content-align: center middle;
@@ -2995,110 +2997,145 @@ GeneratorScreen .keycap-label {
 }
 
 /* Help Subtitle */
-#help-subtitle {
+#help-dialog #help-subtitle {
     width: 100%;
     height: 1;
     text-align: center;
     padding: 0;
-    margin-bottom: 1;
+    margin-bottom: 0;
+    background: $operator-black;
 }
 
-/* Help Footer */
-#help-footer {
+/* Help Body - Sidebar + Content horizontal layout */
+#help-body {
     width: 100%;
-    height: 1;
-    background: $pfx-surface;
-    padding: 0 2;
-    dock: bottom;
+    height: 1fr;
+    background: $operator-black;
+    padding: 0;
 }
 
-#help-footer-left {
+/* Help Sidebar - Section selector */
+#help-sidebar {
+    width: 22;
+    height: 100%;
+    background: $operator-black;
+    padding: 1 0 0 0;
+    border-right: solid $operator-primary 30%;
+}
+
+/* Help Navigation OptionList */
+#help-nav {
+    background: transparent;
+    border: none;
+    height: auto;
+    padding: 0;
+    margin: 0;
+}
+
+#help-nav:focus {
+    border: none;
+}
+
+/* Navigation items - default state */
+#help-nav > .option-list--option {
+    padding-left: 2;
+    color: $operator-text;
+    background: transparent;
+}
+
+/* Active/Highlighted state with left border glow (matches sidebar-menu) */
+#help-nav > .option-list--option-highlighted {
+    background: #0a2a2a;
+    color: $operator-primary;
+    text-style: bold;
+    border-left: heavy $operator-primary;
+    padding-left: 1;
+}
+
+/* Hover state */
+#help-nav > .option-list--option-hover {
+    background: #1a1a2e;
+    color: #FFFFFF;
+}
+
+/* Help Content Pane - Scrollable content area */
+#help-content {
     width: 1fr;
-    height: 1;
+    height: 100%;
+    background: $operator-black;
+    padding: 1 2;
+    scrollbar-gutter: stable;
 }
 
-#help-footer-right {
+#help-content:focus {
+    border: none;
+    background: #050505;
+}
+
+/* Help Section Widget */
+HelpSection {
+    width: 100%;
+    height: auto;
+    background: transparent;
+    margin-bottom: 1;
+    padding: 0;
+}
+
+/* Help Section Header - Inverted purple block */
+.help-section-header {
     width: auto;
     height: 1;
+    background: $operator-secondary;
+    color: $operator-black;
+    text-style: bold;
+    padding: 0 1;
+    margin-bottom: 0;
 }
 
-/* Tabbed Content Container */
-#help-tabs {
+/* Help Row - Key-value pair */
+.help-row {
     width: 100%;
-    height: 1fr;
+    height: auto;
     background: transparent;
     padding: 0;
+    margin: 0;
 }
 
-/* Tab Bar */
-#help-tabs Tabs {
-    background: #0a0e27;
+/* Help Footer - Mechanical keycap command strip */
+#help-footer {
     width: 100%;
     height: 3;
-    dock: top;
-}
-
-#help-tabs Tab {
-    background: $pfx-surface;
-    color: #64748b;
-    padding: 0 3;
-    margin: 0 1 0 0;
-    text-style: bold;
-    min-width: 12;
-}
-
-#help-tabs Tab:hover {
-    background: $pfx-surface-light;
-    color: #00d4ff;
-}
-
-#help-tabs Tab.-active {
-    background: #00d4ff;
-    color: #000000;
-    text-style: bold;
-}
-
-/* Tab Underline */
-#help-tabs Underline {
-    background: $pfx-surface;
-}
-
-#help-tabs Underline > .underline--bar {
-    background: #00d4ff;
-    color: #00d4ff;
-}
-
-/* Content Switcher */
-#help-tabs ContentSwitcher {
-    background: transparent;
-    height: 1fr;
+    dock: bottom;
+    background: $operator-black;
+    border-top: solid $operator-primary 50%;
+    align: center middle;
     padding: 0;
+    margin: 0;
 }
 
-/* Tab Panes */
-#help-tabs TabPane {
-    background: transparent;
-    padding: 0;
-    height: 1fr;
-}
-
-/* Scrollable areas inside tabs */
-#commands-scroll,
-#legend-scroll,
-#system-scroll {
-    background: transparent;
-    height: 1fr;
-    padding: 1 2;
-}
-
-/* Content Static widgets */
-#commands-content,
-#legend-content,
-#system-content {
-    background: transparent;
-    color: $pfx-fg;
-    padding: 0;
+/* Keycap styling within help screen */
+#help-footer .keycap-group {
+    width: auto;
     height: auto;
+    margin-right: 3;
+}
+
+#help-footer .keycap {
+    width: auto;
+    height: auto;
+    min-width: 5;
+    background: $operator-surface;
+    color: $operator-primary;
+    text-style: bold;
+    padding: 0 1;
+}
+
+#help-footer .keycap-label {
+    width: auto;
+    height: auto;
+    background: transparent;
+    margin-left: 1;
+    color: $operator-muted;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
