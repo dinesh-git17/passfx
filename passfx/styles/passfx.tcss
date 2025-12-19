@@ -1021,25 +1021,56 @@ CommandPalette OptionList > .option-list--option-hover {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PASSWORDS SCREEN - MASTER-DETAIL LAYOUT
+   PASSWORDS SCREEN - OPERATOR THEME DATA CONSOLE
    ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Screen-level background - pure black Operator theme */
+PasswordsScreen {
+    background: $operator-black;
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+/* Force background on all direct children */
+PasswordsScreen #app-header,
+PasswordsScreen #vault-body,
+PasswordsScreen #app-footer {
+    background: $operator-black;
+}
+
+/* Header for vault screen */
+PasswordsScreen #app-header {
+    background: $operator-black;
+    border-bottom: heavy $operator-primary;
+}
+
+PasswordsScreen #header-branding {
+    color: $operator-primary;
+    text-style: bold;
+}
+
+PasswordsScreen .screen-header {
+    text-style: bold;
+}
 
 #vault-body {
     width: 100%;
-    height: 1fr;
+    height: 100%;
+    background: $operator-black;
 }
 
 #vault-grid-pane {
     width: 65%;
     height: 100%;
-    background: $pfx-bg;
-    border-right: solid $pfx-surface-light;
+    background: $operator-black;
+    border-right: solid $operator-primary 30%;
 }
 
 #vault-inspector {
     width: 35%;
     height: 100%;
-    background: #0a0e27;
+    background: $operator-black;
     padding: 0;
     overflow-y: hidden;
 }
@@ -1049,6 +1080,29 @@ CommandPalette OptionList > .option-list--option-hover {
     width: 100%;
     height: 1;
     background: #00d4ff;
+    color: #000000;
+    text-style: bold;
+    padding: 0 1;
+}
+
+/* Cyan variant for passwords/vault screen - primary data */
+.pane-header-block-cyan {
+    width: 100%;
+    height: 1;
+    background: $operator-primary;
+    color: #000000;
+    text-style: bold;
+    padding: 0 1;
+}
+
+/* Accent variant for inspector pane */
+.pane-header-block-accent {
+    width: 100%;
+    height: 1;
+    background: $operator-secondary;
+    color: #000000;
+    text-style: bold;
+    padding: 0 1;
 }
 
 /* Pink variant for phones screen */
@@ -1117,13 +1171,20 @@ CommandPalette OptionList > .option-list--option-hover {
     padding: 0 1;
 }
 
-/* Pane Footer - Anchored at bottom */
+/* Pane Footer - Anchored at bottom - Operator theme */
 .pane-footer {
     width: 100%;
     height: 1;
-    background: $pfx-surface;
-    color: $pfx-muted;
+    background: $operator-surface;
+    color: $operator-muted;
     dock: bottom;
+}
+
+/* Passwords screen specific footer */
+PasswordsScreen .pane-footer {
+    background: $operator-black;
+    color: $operator-muted;
+    border-top: solid $operator-primary 30%;
 }
 
 /* Empty State - Centered message when no credentials exist */
@@ -1132,18 +1193,21 @@ CommandPalette OptionList > .option-list--option-hover {
     height: 1fr;
     display: none;
     align: center middle;
+    background: $operator-black;
 }
 
 #empty-state-text {
     text-align: center;
+    color: $operator-muted;
 }
 
 #inspector-content {
     width: 100%;
     height: 1fr;
-    padding: 1;
+    padding: 1 2;
     overflow-y: auto;
     scrollbar-gutter: stable;
+    background: $operator-black;
 }
 
 #footer-keys-static {
@@ -1155,13 +1219,55 @@ CommandPalette OptionList > .option-list--option-hover {
     padding-left: 2;
 }
 
+/* Passwords screen app footer - Operator theme */
+PasswordsScreen #app-footer {
+    width: 100%;
+    height: 3;
+    dock: bottom;
+    background: $operator-black;
+    border-top: heavy $operator-secondary;
+    align: left middle;
+    padding: 0;
+    margin: 0;
+}
+
+PasswordsScreen #footer-version {
+    background: $operator-black;
+    color: $operator-muted;
+    width: auto;
+    height: 3;
+    padding: 0 2;
+    content-align: center middle;
+}
+
+PasswordsScreen #footer-keys {
+    background: $operator-black;
+    width: 1fr;
+    height: 3;
+    align: left middle;
+    padding-left: 1;
+}
+
+PasswordsScreen .keycap-group {
+    background: $operator-black;
+    height: auto;
+}
+
+PasswordsScreen .keycap {
+    background: $operator-surface;
+}
+
+PasswordsScreen .keycap-label {
+    background: $operator-black;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   PASSWORDS TABLE - MAINFRAME TERMINAL LOOK
+   PASSWORDS TABLE - OPERATOR THEME DATA STREAM
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Passwords Table - Mainframe Terminal Look */
+/* Passwords Table - Pure black data stream terminal */
 #passwords-table {
-    background: $pfx-bg;
+    background: $operator-black;
     border: none;
     margin: 0;
     padding: 0;
@@ -1174,33 +1280,36 @@ CommandPalette OptionList > .option-list--option-hover {
     border: none;
 }
 
-/* Modern Selection: Subtle background highlight + indicator bar in first column */
+/* Data stream selection - locked target feel with left border */
 #passwords-table > .datatable--cursor {
-    background: #1e293b;
+    background: #0a1a1a;
     color: $pfx-fg;
-    text-style: none;
+    text-style: bold;
+    border-left: heavy $operator-primary;
 }
 
 #passwords-table > .datatable--cursor:hover {
-    background: #1e293b;
+    background: #0a1a1a;
 }
 
-/* High-contrast header for terminal look */
+/* Headers - Purple accent for system labels */
 #passwords-table > .datatable--header {
-    background: $pfx-primary-dim;
-    color: black;
+    background: $operator-secondary;
+    color: #000000;
     text-style: bold;
 }
 
-/* Row styling with separators - subtle alternating */
+/* Row styling - dark data stream with subtle separators and breathing room */
 #passwords-table > .datatable--even-row {
-    background: #02040a;
-    border-bottom: solid #1e293b;
+    background: $operator-black;
+    border-bottom: solid #1a1a1a;
+    height: 2;
 }
 
 #passwords-table > .datatable--odd-row {
-    background: #060a12;
-    border-bottom: solid #1e293b;
+    background: #050505;
+    border-bottom: solid #1a1a1a;
+    height: 2;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1293,13 +1402,119 @@ CommandPalette OptionList > .option-list--option-hover {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   INSPECTOR PANEL STYLES - MODERNIZED IDENTITY INSPECTOR
+   INSPECTOR PANEL STYLES - OPERATOR THEME IDENTITY INSPECTOR
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .inspector-empty {
-    color: $pfx-muted;
+    color: $operator-muted;
     text-align: center;
     padding: 4 2;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Inspector Header - Entry Title
+   ───────────────────────────────────────────────────────────────────────────── */
+.inspector-header {
+    width: 100%;
+    height: auto;
+    padding: 1 0;
+    margin-bottom: 1;
+    border-bottom: solid $operator-primary 30%;
+}
+
+.inspector-title {
+    height: 1;
+    text-style: bold;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Field Grid - Label/Value Pairs
+   ───────────────────────────────────────────────────────────────────────────── */
+.field-grid {
+    width: 100%;
+    height: auto;
+    padding: 0 0 1 0;
+}
+
+.field-row {
+    width: 100%;
+    height: 1;
+    align: left middle;
+    margin-bottom: 1;
+}
+
+.field-label {
+    width: 15;
+    height: 1;
+    text-style: bold;
+}
+
+.field-value {
+    width: 1fr;
+    height: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Strength Section - Entropy Level Progress Bar
+   ───────────────────────────────────────────────────────────────────────────── */
+.strength-section {
+    width: 100%;
+    height: auto;
+    padding: 0 0 1 0;
+    margin-bottom: 1;
+}
+
+.strength-section-label {
+    height: 1;
+    padding: 0;
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+.strength-bar {
+    height: 1;
+    padding: 0;
+}
+
+.strength-label {
+    height: 1;
+    padding: 0;
+    margin-top: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Notes Section - Terminal Style Output
+   ───────────────────────────────────────────────────────────────────────────── */
+.notes-section-label {
+    height: 1;
+    padding: 0;
+    margin-bottom: 1;
+    text-style: bold;
+}
+
+.notes-terminal-box {
+    background: #050505;
+    border: solid $operator-muted 50%;
+    width: 100%;
+    height: 1fr;
+    min-height: 5;
+    padding: 1;
+    overflow-y: auto;
+    border-title-align: center;
+    border-title-color: $operator-muted;
+}
+
+/* Blinking cursor for empty notes - operator terminal flourish */
+.blink-cursor {
+    color: $operator-muted;
+    text-opacity: 100%;
+    height: 1;
+    width: 1;
+    offset: 17 -1;
+}
+
+.blink-cursor.-blink-off {
+    text-opacity: 0%;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
