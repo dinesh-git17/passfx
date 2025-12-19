@@ -144,6 +144,39 @@ def _get_card_type_icon(card_number: str) -> str:
     return "💳"
 
 
+def _is_expiry_near(expiry: str, days: int = 60) -> bool:
+    """Check if card expiry is within specified days.
+
+    Args:
+        expiry: Expiry string in MM/YY format.
+        days: Number of days to consider "near term".
+
+    Returns:
+        True if expiry is within the specified days or already expired.
+    """
+    try:
+        # Parse MM/YY format
+        parts = expiry.split("/")
+        if len(parts) != 2:
+            return False
+        month = int(parts[0])
+        year = int(parts[1])
+        # Assume 20xx for 2-digit years
+        if year < 100:
+            year += 2000
+
+        # Card expires at end of month
+        if month == 12:
+            expiry_date = datetime(year + 1, 1, 1)
+        else:
+            expiry_date = datetime(year, month + 1, 1)
+
+        days_until = (expiry_date - datetime.now()).days
+        return days_until <= days
+    except (ValueError, TypeError):
+        return False
+
+
 def _format_card_number(card_number: str) -> str:
     """Format card number with spaces every 4 digits.
 
@@ -246,7 +279,7 @@ class AddCardModal(ModalScreen[CreditCard | None]):
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout."""
+        """Create the Operator-grade modal layout - compact horizontal design."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
@@ -254,31 +287,33 @@ class AddCardModal(ModalScreen[CreditCard | None]):
                     yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: OPEN", classes="modal-status")
 
-            # Form Body
+            # Form Body - compact layout
             with Vertical(id="pwd-form"):
-                # Row 1: Label (Issuer)
-                yield Label("> ISSUER_LABEL", classes="input-label")
-                yield Input(placeholder="e.g. CHASE_SAPPHIRE", id="label-input")
+                # Row 1: Label + Cardholder (side by side)
+                with Horizontal(classes="input-row"):
+                    with Vertical(classes="input-col"):
+                        yield Label("> ISSUER", classes="input-label")
+                        yield Input(placeholder="CHASE_SAPPHIRE", id="label-input")
+                    with Vertical(classes="input-col"):
+                        yield Label("> CARDHOLDER", classes="input-label")
+                        yield Input(placeholder="NAME ON CARD", id="name-input")
 
-                # Row 2: Card Number (PAN)
-                yield Label("> PAN_NUMBER", classes="input-label")
+                # Row 2: Card Number (full width)
+                yield Label("> CARD_NUMBER", classes="input-label")
                 yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
 
-                # Row 3: Expiry Date
-                yield Label("> EXPIRY_DATE", classes="input-label")
-                yield Input(placeholder="MM/YY", id="expiry-input")
+                # Row 3: Expiry + CVV (side by side)
+                with Horizontal(classes="input-row"):
+                    with Vertical(classes="input-col"):
+                        yield Label("> EXPIRY", classes="input-label")
+                        yield Input(placeholder="MM/YY", id="expiry-input")
+                    with Vertical(classes="input-col-small"):
+                        yield Label("> CVV", classes="input-label")
+                        yield Input(placeholder="•••", password=True, id="cvv-input")
 
-                # Row 4: CVV (Security Code) - sensitive field
-                yield Label("> SECURITY_CODE", classes="input-label")
-                yield Input(placeholder="•••", password=True, id="cvv-input")
-
-                # Row 5: Cardholder Name
-                yield Label("> CARDHOLDER", classes="input-label")
-                yield Input(placeholder="NAME ON CARD", id="name-input")
-
-                # Row 6: Notes
-                yield Label("> METADATA", classes="input-label")
-                yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
+                # Row 4: Notes (full width)
+                yield Label("> NOTES", classes="input-label")
+                yield Input(placeholder="OPTIONAL", id="notes-input")
 
             # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
@@ -363,7 +398,7 @@ class EditCardModal(ModalScreen[dict | None]):
         self.card = card
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout."""
+        """Create the Operator-grade modal layout - compact horizontal design."""
         with Vertical(id="pwd-modal", classes="secure-terminal"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
@@ -374,38 +409,47 @@ class EditCardModal(ModalScreen[dict | None]):
                     )
                     yield Static("STATUS: EDIT", classes="modal-status")
 
+            # Form Body - compact layout
             with Vertical(id="pwd-form"):
-                yield Label("> ISSUER_LABEL", classes="input-label")
-                yield Input(
-                    value=self.card.label,
-                    placeholder="e.g. CHASE_SAPPHIRE",
-                    id="label-input",
-                )
+                # Row 1: Label + Cardholder (side by side)
+                with Horizontal(classes="input-row"):
+                    with Vertical(classes="input-col"):
+                        yield Label("> ISSUER", classes="input-label")
+                        yield Input(
+                            value=self.card.label,
+                            placeholder="CHASE_SAPPHIRE",
+                            id="label-input",
+                        )
+                    with Vertical(classes="input-col"):
+                        yield Label("> CARDHOLDER", classes="input-label")
+                        yield Input(
+                            value=self.card.cardholder_name,
+                            placeholder="NAME ON CARD",
+                            id="name-input",
+                        )
 
-                yield Label("> PAN_NUMBER [BLANK = KEEP]", classes="input-label")
+                # Row 2: Card Number (full width) - blank to keep
+                yield Label("> CARD_NUMBER [BLANK = KEEP]", classes="input-label")
                 yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
 
-                yield Label("> EXPIRY_DATE", classes="input-label")
-                yield Input(
-                    value=self.card.expiry,
-                    placeholder="MM/YY",
-                    id="expiry-input",
-                )
+                # Row 3: Expiry + CVV (side by side)
+                with Horizontal(classes="input-row"):
+                    with Vertical(classes="input-col"):
+                        yield Label("> EXPIRY", classes="input-label")
+                        yield Input(
+                            value=self.card.expiry,
+                            placeholder="MM/YY",
+                            id="expiry-input",
+                        )
+                    with Vertical(classes="input-col-small"):
+                        yield Label("> CVV [BLANK = KEEP]", classes="input-label")
+                        yield Input(placeholder="•••", password=True, id="cvv-input")
 
-                yield Label("> SECURITY_CODE [BLANK = KEEP]", classes="input-label")
-                yield Input(placeholder="•••", password=True, id="cvv-input")
-
-                yield Label("> CARDHOLDER", classes="input-label")
-                yield Input(
-                    value=self.card.cardholder_name,
-                    placeholder="NAME ON CARD",
-                    id="name-input",
-                )
-
-                yield Label("> METADATA", classes="input-label")
+                # Row 4: Notes (full width)
+                yield Label("> NOTES", classes="input-label")
                 yield Input(
                     value=self.card.notes or "",
-                    placeholder="OPTIONAL_NOTES",
+                    placeholder="OPTIONAL",
                     id="notes-input",
                 )
 
@@ -490,7 +534,7 @@ class ViewCardModal(ModalScreen[None]):
         self.card = card
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade view modal layout."""
+        """Create the Operator-grade view modal layout - compact horizontal design."""
         # Format the card number with spaces
         formatted_number = _format_card_number(self.card.card_number)
 
@@ -501,23 +545,26 @@ class ViewCardModal(ModalScreen[None]):
                     yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-            # Data Display Body
+            # Data Display Body - compact layout
             with Vertical(id="pwd-form"):
-                # Row 1: Label (Issuer)
-                yield Label("> CARD_ISSUER", classes="input-label")
-                yield Static(
-                    f"  {self.card.label}", classes="view-value", id="label-value"
-                )
+                # Row 1: Issuer + Cardholder (side by side)
+                with Horizontal(classes="input-row"):
+                    with Vertical(classes="input-col"):
+                        yield Label("> ISSUER", classes="input-label")
+                        yield Static(
+                            f"  {self.card.label}",
+                            classes="view-value",
+                            id="label-value",
+                        )
+                    with Vertical(classes="input-col"):
+                        yield Label("> CARDHOLDER", classes="input-label")
+                        yield Static(
+                            f"  {self.card.cardholder_name}",
+                            classes="view-value",
+                            id="holder-value",
+                        )
 
-                # Row 2: Cardholder Name
-                yield Label("> CARDHOLDER", classes="input-label")
-                yield Static(
-                    f"  {self.card.cardholder_name}",
-                    classes="view-value",
-                    id="holder-value",
-                )
-
-                # Row 3: Card Number (Secret)
+                # Row 2: Card Number (Secret - full width)
                 yield Label("> CARD_NUMBER", classes="input-label")
                 yield Static(
                     f"  [#22c55e]{formatted_number}[/]",
@@ -525,19 +572,22 @@ class ViewCardModal(ModalScreen[None]):
                     id="number-value",
                 )
 
-                # Row 4: Expiry
-                yield Label("> VALID_THRU", classes="input-label")
-                yield Static(
-                    f"  {self.card.expiry}", classes="view-value", id="expiry-value"
-                )
-
-                # Row 5: CVV (Secret)
-                yield Label("> CVV_CODE", classes="input-label")
-                yield Static(
-                    f"  [#f59e0b]{self.card.cvv}[/]",
-                    classes="view-value secret",
-                    id="cvv-value",
-                )
+                # Row 3: Expiry + CVV (side by side)
+                with Horizontal(classes="input-row"):
+                    with Vertical(classes="input-col"):
+                        yield Label("> EXPIRY", classes="input-label")
+                        yield Static(
+                            f"  {self.card.expiry}",
+                            classes="view-value",
+                            id="expiry-value",
+                        )
+                    with Vertical(classes="input-col-small"):
+                        yield Label("> CVV", classes="input-label")
+                        yield Static(
+                            f"  [#f59e0b]{self.card.cvv}[/]",
+                            classes="view-value secret",
+                            id="cvv-value",
+                        )
 
             # Footer Actions - right aligned
             with Horizontal(id="modal-buttons"):
@@ -630,6 +680,16 @@ class CardsScreen(Screen):
         Binding("escape", "back", "Back"),
     ]
 
+    # Operator theme color tokens - Green accent for Financial Vault
+    COLORS = {
+        "primary": "#00FFFF",  # Cyan - global anchor, active selection
+        "accent": "#22c55e",  # Green - labels, headers (financial theme)
+        "success": "#22c55e",  # Green - positive states
+        "muted": "#666666",  # Dim grey - metadata, timestamps
+        "text": "#e0e0e0",  # Light text
+        "surface": "#0a0a0a",  # Dark surface
+    }
+
     def __init__(self) -> None:
         super().__init__()
         self._selected_row_key: str | None = None
@@ -637,24 +697,21 @@ class CardsScreen(Screen):
 
     def compose(self) -> ComposeResult:
         """Create the cards screen layout."""
-        # 1. Global Header with Breadcrumbs
+        c = self.COLORS
+        # 1. Global Header - Operator theme
         with Horizontal(id="app-header"):
             yield Static(
-                "[dim #64748b]HOME[/] [#475569]›[/] "
-                "[dim #64748b]VAULT[/] [#475569]›[/] [bold #10b981]CARDS[/]",
+                f"[bold {c['primary']}]VAULT // CARDS[/]",
                 id="header-branding",
+                classes="screen-header",
             )
-            yield Static("░░ FINANCIAL VAULT ░░", id="header-status")
-            yield Static("", id="header-lock")  # Will be updated with pulse
+            with Horizontal(id="header-right"):
+                yield Static("", id="header-lock")  # Will be updated with pulse
 
         # 2. Body (Master-Detail Split)
         with Horizontal(id="vault-body"):
             # Left Pane: Data Grid (Master) - 65%
             with Vertical(id="vault-grid-pane"):
-                # Inverted Block Header
-                yield Static(
-                    " ≡ FINANCIAL_DATABASE ", classes="pane-header-block-green"
-                )
                 yield DataTable(id="cards-table", cursor_type="row")
                 # Empty state placeholder (hidden by default)
                 with Center(id="empty-state"):
@@ -679,14 +736,29 @@ class CardsScreen(Screen):
                 yield Static(" ≡ ASSET_INSPECTOR ", classes="pane-header-block-green")
                 yield Vertical(id="inspector-content")  # Dynamic content here
 
-        # 3. Global Footer
+        # 3. Global Footer - Mechanical keycap style
         with Horizontal(id="app-footer"):
-            yield Static(" VAULT ", id="footer-version")
-            yield Static(
-                " \\[A] Add  \\[C] Copy  \\[E] Edit  \\[D] Delete  "
-                "\\[V] View  \\[ESC] Back",
-                id="footer-keys-static",
-            )
+            yield Static(f" [{c['accent']}]VAULT[/] ", id="footer-version")
+            with Horizontal(id="footer-keys"):
+                # Keycap groups for each command
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] A [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Add[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] C [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Copy[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] E [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Edit[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] D [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Del[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] V [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]View[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] ESC [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Back[/]", classes="keycap-label")
 
     def on_mount(self) -> None:
         """Initialize the data table."""
@@ -696,15 +768,26 @@ class CardsScreen(Screen):
         # Start pulse animation
         self._update_pulse()
         self.set_interval(1.0, self._update_pulse)
+        # Start cursor blink animation
+        self.set_interval(0.5, self._blink_cursor)
+
+    def _blink_cursor(self) -> None:
+        """Toggle the blinking cursor visibility in empty notes."""
+        try:
+            cursor = self.query_one(".blink-cursor", Static)
+            cursor.toggle_class("-blink-off")
+        except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
+            pass  # Cursor may not exist if notes have content
 
     def _update_pulse(self) -> None:
         """Update the pulse indicator in the header."""
+        c = self.COLORS
         self._pulse_state = not self._pulse_state
         header_lock = self.query_one("#header-lock", Static)
         if self._pulse_state:
-            header_lock.update("[#34d399]● [bold]ENCRYPTED[/][/]")
+            header_lock.update(f"[{c['success']}]● [bold]ENCRYPTED[/][/]")
         else:
-            header_lock.update("[#059669]○ [bold]ENCRYPTED[/][/]")
+            header_lock.update("[#166534]○ [bold]ENCRYPTED[/][/]")
 
     def _initialize_selection(self) -> None:
         """Initialize table selection and inspector after render."""
@@ -749,26 +832,27 @@ class CardsScreen(Screen):
             table.display = True
             empty_state.display = False
 
+        c = self.COLORS
         for card in cards:
             # Selection indicator - will be updated dynamically
             is_selected = card.id == self._selected_row_key
-            indicator = "[bold #10b981]▍[/]" if is_selected else " "
+            indicator = f"[bold {c['primary']}]▸[/]" if is_selected else " "
 
             # Label (white text)
             label_text = card.label
 
             # Masked Number (muted)
-            number_text = f"[#94a3b8]{card.masked_number}[/]"
+            number_text = f"[{c['muted']}]{card.masked_number}[/]"
 
-            # Expiry (cyan)
-            expiry_text = f"[#06b6d4]{card.expiry}[/]"
+            # Expiry (cyan for high visibility)
+            expiry_text = f"[{c['primary']}]{card.expiry}[/]"
 
             # Holder (dimmed)
-            holder_text = f"[dim]{card.cardholder_name}[/]"
+            holder_text = f"[dim {c['muted']}]{card.cardholder_name}[/]"
 
             # Relative time (dim)
             updated = _get_relative_time(card.updated_at)
-            updated_text = f"[dim]{updated}[/]"
+            updated_text = f"[dim {c['muted']}]{updated}[/]"
 
             table.add_row(
                 indicator,
@@ -783,7 +867,7 @@ class CardsScreen(Screen):
         # Update the grid footer with object count
         footer = self.query_one("#grid-footer", Static)
         count = len(cards)
-        footer.update(f" └── [{count}] ASSETS LOADED")
+        footer.update(f" └── [{c['primary']}]{count}[/] ASSETS LOADED")
 
     def _update_row_indicators(self, old_key: str | None, new_key: str | None) -> None:
         """Update only the indicator column for old and new selected rows.
@@ -793,9 +877,10 @@ class CardsScreen(Screen):
         table = self.query_one("#cards-table", DataTable)
         app: PassFXApp = self.app  # type: ignore
         cards = app.vault.get_cards()
+        colors = self.COLORS
 
         # Build a map of id -> card for quick lookup
-        card_map = {c.id: c for c in cards}
+        card_map = {card.id: card for card in cards}
 
         # Get column keys (first column is the indicator)
         if not table.columns:
@@ -809,10 +894,12 @@ class CardsScreen(Screen):
             except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
                 pass  # Row may not exist during rapid navigation
 
-        # Set new selection indicator
+        # Set new selection indicator - cyan arrow for locked target feel
         if new_key and new_key in card_map:
             try:
-                table.update_cell(new_key, indicator_col, "[bold #10b981]▍[/]")
+                table.update_cell(
+                    new_key, indicator_col, f"[bold {colors['primary']}]▸[/]"
+                )
             except Exception:  # pylint: disable=broad-exception-caught  # nosec B110
                 pass  # Row may not exist during rapid navigation
 
@@ -917,14 +1004,15 @@ class CardsScreen(Screen):
     def _update_inspector(self, row_key: Any) -> None:
         """Update the inspector panel with card details.
 
-        Renders a modernized "Asset Inspector" with:
-        - Digital ID Card header with 2-char avatar
-        - Payment Details widget (replaces security strength)
-        - Notes terminal with line numbers
-        - Footer metadata (ID, Updated)
+        Renders structured inspector matching Passwords screen:
+        - Entry Header (large title with underline)
+        - Field Grid (structured label/value pairs)
+        - Notes Section (terminal style)
+        - Footer Metadata Bar (ID + SYNC)
         """
         inspector = self.query_one("#inspector-content", Vertical)
         inspector.remove_children()
+        c = self.COLORS
 
         # Get the card by row key
         app: PassFXApp = self.app  # type: ignore
@@ -932,116 +1020,117 @@ class CardsScreen(Screen):
 
         # Find card by ID
         card = None
-        for c in cards:
-            if c.id == str(row_key):
-                card = c
+        for crd in cards:
+            if crd.id == str(row_key):
+                card = crd
                 break
 
         if not card:
-            # Empty state
+            # Empty state - styled for Operator theme
             inspector.mount(
                 Static(
-                    "[dim #555555]╔══════════════════════════╗\n"
-                    "║    SELECT AN ASSET       ║\n"
-                    "║    TO VIEW DETAILS       ║\n"
-                    "╚══════════════════════════╝[/]",
+                    f"[dim {c['muted']}]╔══════════════════════════════╗\n"
+                    "║                              ║\n"
+                    "║    SELECT AN ENTRY           ║\n"
+                    "║    TO INSPECT DETAILS        ║\n"
+                    "║                              ║\n"
+                    "╚══════════════════════════════╝[/]",
                     classes="inspector-empty",
                 )
             )
             return
 
         # ═══════════════════════════════════════════════════════════════
-        # SECTION 1: Digital ID Card Header with Avatar
+        # SECTION 1: Entry Header - Large title with underline
         # ═══════════════════════════════════════════════════════════════
-        initials = _get_avatar_initials(card.label)
-        avatar_bg = _get_avatar_bg_color(card.label)
-
-        # Build avatar box (2-line tall for visual weight)
-        avatar_top = f"[on {avatar_bg}][bold #ffffff] {initials} [/][/]"
-        avatar_bot = f"[on {avatar_bg}]     [/]"
-
         inspector.mount(
             Vertical(
-                Horizontal(
-                    Vertical(
-                        Static(avatar_top, classes="avatar-char"),
-                        Static(avatar_bot, classes="avatar-char"),
-                        classes="avatar-box",
-                    ),
-                    Vertical(
-                        Static(
-                            f"[bold #f8fafc]{card.label}[/]", classes="id-label-text"
-                        ),
-                        Static(
-                            f"[dim #94a3b8]{card.cardholder_name}[/]",
-                            classes="id-email-text",
-                        ),
-                        classes="id-details-stack",
-                    ),
-                    classes="id-card-header",
+                Static(
+                    f"[bold underline {c['primary']}]{card.label.upper()}[/]",
+                    classes="inspector-title",
                 ),
-                classes="id-card-wrapper",
+                classes="inspector-header",
             )
         )
 
         # ═══════════════════════════════════════════════════════════════
-        # SECTION 2: Payment Details Widget (replaces Security Strength)
+        # SECTION 2: Field Grid - Structured label/value pairs
         # ═══════════════════════════════════════════════════════════════
-        icon = _get_card_type_icon(card.card_number)
-
-        # Build card details display
-        card_number_display = f"[#94a3b8]{card.masked_number}[/]"
-        expiry_display = f"[#06b6d4]{card.expiry}[/]"
-        cvv_display = "[#f59e0b]•••[/]"  # Always hidden
+        # Expiry with near-term warning (amber if ≤60 days)
+        expiry_near = _is_expiry_near(card.expiry, 60)
+        expiry_color = "#f59e0b" if expiry_near else c["text"]
 
         inspector.mount(
             Vertical(
-                Static("[dim #6b7280]▸ PAYMENT DETAILS[/]", classes="section-label"),
-                Static(f"{icon} {card_number_display}", classes="strength-bar-widget"),
+                # Holder field
                 Horizontal(
+                    Static(f"[{c['accent']}]HOLDER[/]", classes="field-label"),
                     Static(
-                        f"[dim #475569]EXPIRY:[/] {expiry_display}", classes="meta-id"
+                        f"[{c['text']}]{card.cardholder_name}[/]", classes="field-value"
                     ),
-                    Static(
-                        f"[dim #475569]CVV:[/] {cvv_display}", classes="meta-updated"
-                    ),
-                    classes="inspector-footer-bar",
+                    classes="field-row",
                 ),
-                classes="security-widget",
+                # Card number field - masked
+                Horizontal(
+                    Static(f"[{c['accent']}]CARD NUMBER[/]", classes="field-label"),
+                    Static(
+                        f"[{c['muted']}]{card.masked_number}[/]  [dim]\\[V] to reveal[/]",
+                        classes="field-value",
+                    ),
+                    classes="field-row",
+                ),
+                # Expiry field
+                Horizontal(
+                    Static(f"[{c['accent']}]EXPIRY[/]", classes="field-label"),
+                    Static(f"[{expiry_color}]{card.expiry}[/]", classes="field-value"),
+                    classes="field-row",
+                ),
+                # CVV field - always masked
+                Horizontal(
+                    Static(f"[{c['accent']}]CVV[/]", classes="field-label"),
+                    Static(
+                        f"[{c['muted']}]•••[/]  [dim]\\[V] to reveal[/]",
+                        classes="field-value",
+                    ),
+                    classes="field-row",
+                ),
+                classes="field-grid",
             )
         )
 
         # ═══════════════════════════════════════════════════════════════
-        # SECTION 3: Notes Terminal with Line Numbers
+        # SECTION 3: Notes Terminal - Styled like terminal output
         # ═══════════════════════════════════════════════════════════════
         if card.notes:
-            # Split notes into lines and add line numbers
             lines = card.notes.split("\n")
             numbered_lines = []
-            for i, line in enumerate(lines[:10], 1):  # Limit to 10 lines
-                line_num = f"[dim #475569]{i:2}[/]"
-                line_content = f"[#34d399]{line}[/]" if line.strip() else ""
+            for i, line in enumerate(lines[:8], 1):  # Limit to 8 lines
+                line_num = f"[dim {c['muted']}]{i:2}[/]"
+                line_content = f"[{c['success']}]{line}[/]" if line.strip() else ""
                 numbered_lines.append(f"{line_num} │ {line_content}")
             notes_content = "\n".join(numbered_lines)
         else:
-            notes_content = "[dim #475569] 1[/] │ [dim #64748b]// NO NOTES[/]"
+            notes_content = (
+                f"[dim {c['muted']}] 1[/] │ [dim {c['muted']}]// NO NOTES[/] "
+            )
 
         notes_terminal = Vertical(
             Static(notes_content, classes="notes-code"),
-            classes="notes-editor",
+            Static("▌", classes="blink-cursor") if not card.notes else Static(""),
+            classes="notes-terminal-box",
         )
-        notes_terminal.border_title = "ENCRYPTED_MEMO"
+        notes_terminal.border_title = "NOTES"
 
         inspector.mount(
             Vertical(
-                Static("[dim #6b7280]▸ METADATA[/]", classes="section-label"),
+                Static(f"[{c['accent']}]METADATA[/]", classes="notes-section-label"),
                 notes_terminal,
                 classes="notes-section",
             )
         )
 
         # ═══════════════════════════════════════════════════════════════
-        # SECTION 4: Footer Metadata Bar (ID + Updated)
+        # SECTION 4: Footer Metadata Bar (ID + SYNC)
         # ═══════════════════════════════════════════════════════════════
         try:
             updated_full = datetime.fromisoformat(card.updated_at).strftime(
@@ -1053,10 +1142,11 @@ class CardsScreen(Screen):
         inspector.mount(
             Horizontal(
                 Static(
-                    f"[dim #475569]ID:[/] [#64748b]{card.id[:8]}[/]", classes="meta-id"
+                    f"[dim {c['muted']}]ID:[/] [{c['muted']}]{card.id[:8]}[/]",
+                    classes="meta-id",
                 ),
                 Static(
-                    f"[dim #475569]UPDATED:[/] [#64748b]{updated_full}[/]",
+                    f"[dim {c['muted']}]SYNC:[/] [{c['muted']}]{updated_full}[/]",
                     classes="meta-updated",
                 ),
                 classes="inspector-footer-bar",
