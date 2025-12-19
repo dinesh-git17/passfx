@@ -205,7 +205,8 @@ class LoginScreen(Screen):
                 )
             yield MatrixRainStrip(
                 update_interval=0.06,
-                decay_rate=0.12,
+                decay_rate=0.22,
+                start_delay=2.0,
                 classes="matrix-strip-bottom",
             )
 

@@ -41,6 +41,7 @@ class MatrixRainStrip(Widget):
         self,
         update_interval: float = 0.06,
         decay_rate: float = 0.03,
+        start_delay: float = 0.0,
         name: str | None = None,
         id: str | None = None,  # noqa: A002  # pylint: disable=redefined-builtin
         classes: str | None = None,
@@ -49,15 +50,25 @@ class MatrixRainStrip(Widget):
         super().__init__(name=name, id=id, classes=classes)
         self._update_interval = update_interval
         self._decay_rate = decay_rate
+        self._start_delay = start_delay
         self._buffer: list[list[str]] = []
         self._streams: list[dict] = []
         self._timer: Timer | None = None
         self._enabled = os.environ.get("PASSFX_REDUCE_MOTION", "0") != "1"
 
     def on_mount(self) -> None:
-        """Start animation timer."""
+        """Start animation timer, with optional delay."""
         if self._enabled:
-            self.call_after_refresh(self._start_rain)
+            # Always create buffer immediately for background rendering
+            self.call_after_refresh(self._init_buffer)
+            if self._start_delay > 0:
+                self.set_timer(self._start_delay, self._start_rain)
+            else:
+                self.call_after_refresh(self._start_rain)
+
+    def _init_buffer(self) -> None:
+        """Initialize buffer for background, without starting animation."""
+        self._ensure_buffer()
 
     def _start_rain(self) -> None:
         """Initialize and start the rain effect."""
@@ -136,7 +147,8 @@ class MatrixRainStrip(Widget):
     def render_line(self, y: int) -> Strip:
         """Render a single line from the buffer."""
         if not self._buffer or y >= len(self._buffer):
-            return Strip.blank(self.size.width)
+            # Return black background instead of transparent
+            return Strip([Segment(" " * self.size.width, STYLE_EMPTY)])
 
         segments: list[Segment] = []
         row = self._buffer[y]
