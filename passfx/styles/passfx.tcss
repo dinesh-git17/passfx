@@ -2478,15 +2478,55 @@ NotesScreen #notes-table > .datatable--odd-row {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   GENERATOR SCREEN - MASTER-DETAIL LAYOUT
+   GENERATOR SCREEN - OPERATOR THEME CRYPTO CONSOLE
+   Theme: Cyan (#00FFFF) primary, Pure Black background
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Left Pane: Mode Selector */
+/* Screen-level background - pure black Operator theme */
+GeneratorScreen {
+    background: $operator-black;
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+/* Force background on all direct children */
+GeneratorScreen #app-header,
+GeneratorScreen #vault-body,
+GeneratorScreen #app-footer {
+    background: $operator-black;
+}
+
+/* Header for Generator screen - cyan accent */
+GeneratorScreen #app-header {
+    background: $operator-black;
+    border-bottom: heavy $operator-primary;
+}
+
+GeneratorScreen #header-branding {
+    color: $operator-primary;
+    text-style: bold;
+    width: 1fr;
+    padding: 1 2;
+}
+
+GeneratorScreen #header-right {
+    width: auto;
+    align: right middle;
+    padding: 0 2;
+}
+
+GeneratorScreen #header-lock {
+    color: $pfx-success;
+}
+
+/* Left Pane: Mode Selector - Operator Theme */
 #generator-mode-pane {
     width: 30%;
     height: 100%;
-    background: $pfx-bg;
-    border-right: solid $pfx-surface-light;
+    background: $operator-black;
+    border-right: solid $operator-primary 30%;
+    padding: 0;
 }
 
 #mode-select {
@@ -2501,152 +2541,193 @@ NotesScreen #notes-table > .datatable--odd-row {
     border: none;
 }
 
-#mode-select > .option-list--option-highlighted {
-    background: #3b82f6;
-    color: #0f172a;
-    text-style: bold;
+/* Mode list items - default state */
+#mode-select > .option-list--option {
+    padding-left: 2;
+    color: $operator-text;
 }
 
-/* Right Pane: Generator Console */
+/* Active/Highlighted state with cyan left border glow */
+#mode-select > .option-list--option-highlighted {
+    background: #0a2a2a;
+    color: #00FFFF;
+    text-style: bold;
+    border-left: heavy #00FFFF;
+    padding-left: 1;
+}
+
+/* Hover state */
+#mode-select > .option-list--option-hover {
+    background: #1a1a2e;
+    color: #FFFFFF;
+}
+
+/* Generator pane footer */
+GeneratorScreen .pane-footer {
+    background: $operator-black;
+    color: $operator-muted;
+    border-top: solid $operator-primary 30%;
+}
+
+/* Right Pane: Generator Console - Operator Theme */
 #generator-console {
     width: 70%;
     height: 100%;
-    background: #0a0e27;
-    padding: 0;
+    background: $operator-black;
+    padding: 0 1;
 }
 
-#console-content {
-    width: 100%;
-    height: 1fr;
-    padding: 1 2;
-    overflow-y: auto;
-}
-
-/* Configuration Section */
-#config-section {
+/* Configuration Row - Horizontal compact layout */
+.gen-config-row {
     width: 100%;
     height: auto;
-    margin-bottom: 1;
+    min-height: 5;
+    background: $operator-surface;
+    border: solid $operator-primary 30%;
+    padding: 1;
+    margin: 0 0 1 0;
 }
 
-.console-section-label {
-    height: 1;
-    padding: 0;
-    margin-bottom: 1;
+.gen-config-field {
+    width: 1fr;
+    height: auto;
+    min-height: 3;
+    padding: 0 1;
 }
 
-.config-panel {
-    background: $pfx-surface;
-    padding: 1 2;
-    margin-bottom: 1;
-}
-
-.config-label {
-    color: $pfx-primary-light;
+.gen-config-label {
+    color: $operator-primary;
     text-style: bold;
     padding: 0;
     height: 1;
 }
 
-.config-panel Input {
+.gen-config-row Input {
     background: transparent;
     border: none;
-    border-bottom: heavy $pfx-primary-dim;
-    padding: 0 1 0 1;
-    margin: 0 0 1 0;
+    border-left: heavy $operator-primary;
+    padding: 0 1;
     color: $pfx-fg;
     width: 100%;
-    height: 2;
+    height: 1;
 }
 
-.config-panel Input:focus {
-    border-bottom: heavy $pfx-primary;
+.gen-config-row Input:focus {
+    border-left: heavy #FFFFFF;
+    background: #0a1a1a;
 }
 
-.config-panel Checkbox {
+.gen-config-row Checkbox {
     padding: 0;
     height: auto;
-    margin: 1 0;
+    min-height: 1;
+    margin: 0 0 1 0;
+    color: $operator-text;
 }
 
-/* Output Section */
-#output-section {
-    width: 100%;
-    height: auto;
-    margin-bottom: 1;
+.gen-config-row Checkbox:focus {
+    color: $operator-primary;
+}
+
+.gen-config-row Checkbox > .toggle--label {
+    color: $operator-text;
+}
+
+/* Output Panel - Vault Inspector Style - Takes remaining space */
+#output-panel {
+    background: #050505;
+    border: solid $operator-primary;
+    padding: 1 2;
+    height: 1fr;
+    min-height: 6;
+}
+
+/* Flash effect on generate */
+#output-panel.flash-generate {
+    border: double #22c55e;
+}
+
+/* Flash effect on copy */
+#output-panel.flash-copy {
+    border: double #22c55e;
+    background: #0a1a0a;
 }
 
 #result-display {
-    background: #000000;
-    color: #00ff00;
-    border: double #00ff00;
-    padding: 2 3;
-    margin: 1 0;
+    background: transparent;
+    color: #22c55e;
+    padding: 1 0;
+    margin: 0;
     text-align: center;
-    min-height: 3;
+    height: 1fr;
+    min-height: 2;
     text-style: bold;
+    content-align: center middle;
 }
 
+/* Strength Section - Horizontal layout */
 #strength-section {
     width: 100%;
     height: auto;
     padding: 0;
+    border-top: solid $operator-muted 30%;
+    dock: bottom;
 }
 
 #strength-bar {
+    width: 1fr;
     height: 1;
     padding: 0;
 }
 
 #crack-time {
+    width: auto;
     height: 1;
-    padding: 0;
+    padding: 0 0 0 2;
 }
 
-/* Action Deck */
-#action-deck {
+/* Generator Footer - Operator Theme */
+GeneratorScreen #app-footer {
     width: 100%;
-    height: auto;
-    padding: 1 0;
-    align: center middle;
+    height: 3;
     dock: bottom;
+    background: $operator-black;
+    border-top: heavy $operator-primary;
+    align: left middle;
+    padding: 0;
+    margin: 0;
 }
 
-#action-deck Button {
-    margin: 0 1;
-    min-width: 18;
+GeneratorScreen #footer-version {
+    background: $operator-black;
+    color: $operator-muted;
+    width: auto;
+    height: 3;
+    padding: 0 2;
+    content-align: center middle;
 }
 
-#action-deck #generate-button {
-    background: $pfx-primary;
-    color: $pfx-bg;
-    border: solid $pfx-primary;
+GeneratorScreen #footer-keys {
+    background: $operator-black;
+    width: 1fr;
+    height: 3;
+    align: left middle;
+    padding-left: 1;
 }
 
-#action-deck #generate-button:hover {
-    background: $pfx-primary-light;
+GeneratorScreen .keycap-group {
+    background: $operator-black;
+    height: auto;
 }
 
-#action-deck #copy-button {
-    background: $pfx-surface;
-    color: $pfx-success;
-    border: solid $pfx-success;
+GeneratorScreen .keycap {
+    background: $operator-surface;
+    color: $operator-primary;
 }
 
-#action-deck #copy-button:hover {
-    background: $pfx-success;
-    color: $pfx-bg;
-}
-
-#action-deck #save-button {
-    background: $pfx-surface;
-    color: $pfx-accent;
-    border: solid $pfx-accent;
-}
-
-#action-deck #save-button:hover {
-    background: $pfx-accent;
-    color: $pfx-bg;
+GeneratorScreen .keycap-label {
+    background: $operator-black;
+    color: $operator-muted;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
