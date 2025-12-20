@@ -1752,3 +1752,740 @@ class TestAutoLock:
 
                     # When push_screen is called, _unlocked should already be False
                     assert unlocked_states == [False]
+
+
+# ---------------------------------------------------------------------------
+# Navigation Guard Tests
+# ---------------------------------------------------------------------------
+
+
+class TestNavigationGuards:
+    """Tests for PassFXApp.action_back() navigation guard behavior.
+
+    Validates that action_back() correctly prevents navigation from protected
+    screens (MainMenuScreen, LoginScreen) while allowing normal back navigation
+    from other screens when the stack depth permits.
+    """
+
+    @pytest.mark.unit
+    def test_no_pop_on_main_menu_screen(self) -> None:
+        """Verify action_back() does not call pop_screen() on MainMenuScreen.
+
+        Guard invariant: MainMenuScreen is a navigation boundary - users cannot
+        navigate back from it using the back action.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            # Create a mock screen with MainMenuScreen class name
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "MainMenuScreen"
+
+            # Stack with multiple screens (would allow pop otherwise)
+            screen_stack_data = [MagicMock(), MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    # pop_screen must NOT be called
+                    app.pop_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_no_pop_on_login_screen(self) -> None:
+        """Verify action_back() does not call pop_screen() on LoginScreen.
+
+        Guard invariant: LoginScreen is a security boundary - users cannot
+        navigate back from the authentication screen.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            # Create a mock screen with LoginScreen class name
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "LoginScreen"
+
+            # Stack with multiple screens
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_pop_screen_on_passwords_screen_with_stack_depth(self) -> None:
+        """Verify action_back() calls pop_screen() on PasswordsScreen with stack > 1.
+
+        Normal navigation: Non-guarded screens with sufficient stack depth allow
+        back navigation.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            # Stack depth > 1 (base + current)
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_pop_screen_on_cards_screen_with_stack_depth(self) -> None:
+        """Verify action_back() calls pop_screen() on CardsScreen with stack > 1."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "CardsScreen"
+
+            screen_stack_data = [MagicMock(), MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_no_pop_on_non_guarded_screen_with_base_only(self) -> None:
+        """Verify action_back() does not pop when stack length is exactly 1.
+
+        Edge case: Even non-guarded screens cannot pop when they are the only
+        screen on the stack.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "SettingsScreen"
+
+            # Only one screen on stack
+            screen_stack_data = [mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_pop_screen_on_notes_screen(self) -> None:
+        """Verify action_back() calls pop_screen() on NotesScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "NotesScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_pop_screen_on_phones_screen(self) -> None:
+        """Verify action_back() calls pop_screen() on PhonesScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PhonesScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_pop_screen_on_envs_screen(self) -> None:
+        """Verify action_back() calls pop_screen() on EnvsScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "EnvsScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_pop_screen_on_recovery_screen(self) -> None:
+        """Verify action_back() calls pop_screen() on RecoveryScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "RecoveryScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_pop_screen_on_generator_screen(self) -> None:
+        """Verify action_back() calls pop_screen() on GeneratorScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "GeneratorScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_pop_screen_on_settings_screen(self) -> None:
+        """Verify action_back() calls pop_screen() on SettingsScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "SettingsScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_main_menu_guard_with_deep_stack(self) -> None:
+        """Verify MainMenuScreen guard works regardless of stack depth.
+
+        Even with a deep stack, MainMenuScreen should not allow back navigation.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "MainMenuScreen"
+
+            # Deep stack - 5 screens
+            screen_stack_data = [MagicMock() for _ in range(5)]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_login_guard_with_deep_stack(self) -> None:
+        """Verify LoginScreen guard works regardless of stack depth."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "LoginScreen"
+
+            # Deep stack
+            screen_stack_data = [MagicMock() for _ in range(10)]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_pop_screen_called_exactly_once(self) -> None:
+        """Verify action_back() calls pop_screen() exactly once, not multiple times."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            # Stack with 5 screens
+            screen_stack_data = [MagicMock() for _ in range(5)]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    # Exactly one call, not multiple
+                    assert app.pop_screen.call_count == 1
+
+    @pytest.mark.unit
+    def test_guard_uses_class_name_not_instance(self) -> None:
+        """Verify guard checks __class__.__name__, not instance type.
+
+        Implementation detail: The guard uses string comparison on class name,
+        not isinstance() checks.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            # Create a mock that is not actually a MainMenuScreen instance
+            # but has the same class name
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "MainMenuScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    # Guard should trigger based on class name
+                    app.pop_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_arbitrary_screen_name_not_guarded(self) -> None:
+        """Verify arbitrary screen names are not guarded."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "SomeRandomScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_case_sensitive_guard_check(self) -> None:
+        """Verify guard check is case-sensitive.
+
+        'mainmenuscreen' should not be guarded, only 'MainMenuScreen'.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "mainmenuscreen"  # lowercase
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    # Should NOT be guarded (case matters)
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_empty_screen_stack_no_pop(self) -> None:
+        """Verify action_back() handles empty screen stack gracefully.
+
+        Edge case: Empty stack should not cause errors or call pop_screen.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            # Empty stack
+            screen_stack_data: list[MagicMock] = []
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    app.pop_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_multiple_action_back_calls(self) -> None:
+        """Verify multiple action_back() calls are independent.
+
+        Each call should evaluate conditions fresh.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+                    run_async(app.action_back())
+                    run_async(app.action_back())
+
+                    # Each call should have invoked pop_screen (3 calls total)
+                    assert app.pop_screen.call_count == 3
+
+    @pytest.mark.unit
+    def test_action_back_is_async(self) -> None:
+        """Verify action_back() is an async method.
+
+        Implementation requirement: action_back must be awaitable.
+        """
+        import inspect
+
+        from passfx.app import PassFXApp
+
+        assert inspect.iscoroutinefunction(PassFXApp.action_back)
+
+    @pytest.mark.unit
+    def test_vault_interceptor_screen_not_guarded(self) -> None:
+        """Verify VaultInterceptorScreen is not guarded by action_back().
+
+        Only MainMenuScreen and LoginScreen are explicitly guarded.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "VaultInterceptorScreen"
+
+            screen_stack_data = [MagicMock(), mock_screen]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    # VaultInterceptorScreen should NOT be guarded
+                    app.pop_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_guard_evaluated_before_stack_check(self) -> None:
+        """Verify guard check happens before stack length check.
+
+        Order matters: Even with stack > 1, guard should prevent pop.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "LoginScreen"
+
+            # Large stack that would otherwise allow pop
+            screen_stack_data = [MagicMock() for _ in range(100)]
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+
+                    run_async(app.action_back())
+
+                    # Guard should have blocked, regardless of stack depth
+                    app.pop_screen.assert_not_called()
