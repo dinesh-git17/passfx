@@ -1112,6 +1112,15 @@ PasswordsScreen #header-branding {
     text-style: bold;
 }
 
+PasswordsScreen #header-right {
+    background: $operator-black;
+    color: $operator-muted;
+    width: 1fr;
+    height: 100%;
+    align: right middle;
+    padding-right: 2;
+}
+
 PasswordsScreen .screen-header {
     text-style: bold;
 }
@@ -1390,6 +1399,15 @@ PhonesScreen #app-header {
 PhonesScreen #header-branding {
     color: $operator-primary;
     text-style: bold;
+}
+
+PhonesScreen #header-right {
+    background: $operator-black;
+    color: $operator-muted;
+    width: 1fr;
+    height: 100%;
+    align: right middle;
+    padding-right: 2;
 }
 
 PhonesScreen .screen-header {
@@ -3223,6 +3241,15 @@ EnvsScreen #header-branding {
     background: $operator-black;
 }
 
+EnvsScreen #header-right {
+    background: $operator-black;
+    color: $operator-muted;
+    width: 1fr;
+    height: 100%;
+    align: right middle;
+    padding-right: 2;
+}
+
 EnvsScreen #app-footer {
     background: $operator-black;
     border-top: heavy $pfx-indigo-dim;
@@ -3357,16 +3384,16 @@ EnvsScreen #envs-table:focus {
     border: none;
 }
 
-/* Data stream selection - prominent indigo highlight with cyan border */
+/* Data stream selection - locked target feel with left border */
 EnvsScreen #envs-table > .datatable--cursor {
-    background: #3730a3;
+    background: #0a0a1a;
     color: $pfx-fg;
     text-style: bold;
     border-left: heavy $operator-primary;
 }
 
 EnvsScreen #envs-table > .datatable--cursor:hover {
-    background: #4338ca;
+    background: #0a0a1a;
 }
 
 /* Headers - Indigo accent for system labels */
@@ -3864,6 +3891,15 @@ RecoveryScreen #header-branding {
     background: $operator-black;
 }
 
+RecoveryScreen #header-right {
+    background: $operator-black;
+    color: $operator-muted;
+    width: 1fr;
+    height: 100%;
+    align: right middle;
+    padding-right: 2;
+}
+
 RecoveryScreen #app-footer {
     background: $operator-black;
     border-top: heavy $pfx-salmon-dim;
@@ -3998,16 +4034,16 @@ RecoveryScreen #recovery-table:focus {
     border: none;
 }
 
-/* Data stream selection - prominent salmon highlight with cyan border */
+/* Data stream selection - locked target feel with left border */
 RecoveryScreen #recovery-table > .datatable--cursor {
-    background: #993f3f;
+    background: #1a0a0a;
     color: $pfx-fg;
     text-style: bold;
     border-left: heavy $operator-primary;
 }
 
 RecoveryScreen #recovery-table > .datatable--cursor:hover {
-    background: #b34d4d;
+    background: #1a0a0a;
 }
 
 /* Headers - Salmon accent for fail-safe labels */
