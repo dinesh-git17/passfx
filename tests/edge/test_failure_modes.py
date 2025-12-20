@@ -954,23 +954,30 @@ class TestPathValidationEdgeCases:
             # Some systems reject null bytes at Path construction
             pass
 
-    def test_relative_path_resolved(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_relative_path_resolved(self, tmp_path: Path) -> None:
         """Relative paths are resolved to absolute."""
-        # Change to home directory for test
-        home = Path.home()
-        monkeypatch.chdir(home)
+        import os
+        from unittest.mock import patch
 
-        # Create a temp file in home
-        test_file = home / "passfx_test_temp.txt"
+        # Create a temp file
+        test_file = tmp_path / "passfx_test_temp.txt"
         test_file.write_text("test")
 
+        # Get current directory safely (may not exist if previous test deleted it)
         try:
-            resolved = validate_path(Path("passfx_test_temp.txt"), must_exist=True)
-            assert resolved.is_absolute()
+            original_cwd = os.getcwd()
+        except OSError:
+            original_cwd = None
+
+        try:
+            os.chdir(tmp_path)
+            with patch("passfx.utils.io.Path.home", return_value=tmp_path):
+                resolved = validate_path(Path("passfx_test_temp.txt"), must_exist=True)
+                assert resolved.is_absolute()
         finally:
-            test_file.unlink()
+            # Restore original directory if it still exists
+            if original_cwd and os.path.exists(original_cwd):
+                os.chdir(original_cwd)
 
     def test_symlink_parent_rejected(self, tmp_path: Path) -> None:
         """Parent directory that is symlink is rejected."""
