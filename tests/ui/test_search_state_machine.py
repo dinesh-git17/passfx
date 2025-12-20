@@ -342,16 +342,42 @@ class TestFocusState:
                         # Value should still be preserved
                         assert mock_input.value == "github"
 
-    def test_esc_pending_reset_on_mode_change(self, search_index: SearchIndex) -> None:
-        """_esc_pending flag must be reset when mode changes."""
+    def test_esc_pending_reset_on_enter_command(
+        self, search_index: SearchIndex
+    ) -> None:
+        """_esc_pending must reset only when entering COMMAND mode.
+
+        This ensures double-ESC pattern works: first ESC from COMMAND returns
+        to SEARCH with _esc_pending=True preserved, second ESC closes modal.
+        """
         screen = VaultInterceptorScreen(search_index=search_index)
         screen._esc_pending = True
 
+        # Entering COMMAND mode resets _esc_pending
+        with patch.object(screen, "_blur_input"):
+            with patch.object(screen, "query_one"):
+                screen.watch_mode(InterceptorMode.COMMAND)
+
+        assert screen._esc_pending is False
+
+    def test_esc_pending_preserved_on_enter_search(
+        self, search_index: SearchIndex
+    ) -> None:
+        """_esc_pending must be preserved when entering SEARCH mode.
+
+        This is critical for double-ESC pattern: first ESC from COMMAND sets
+        _esc_pending=True and transitions to SEARCH. watch_mode must not
+        reset _esc_pending, so second ESC can close the modal.
+        """
+        screen = VaultInterceptorScreen(search_index=search_index)
+        screen._esc_pending = True
+
+        # Entering SEARCH mode preserves _esc_pending
         with patch.object(screen, "_focus_input"):
             with patch.object(screen, "query_one"):
                 screen.watch_mode(InterceptorMode.SEARCH)
 
-        assert screen._esc_pending is False
+        assert screen._esc_pending is True
 
 
 # =============================================================================
@@ -786,3 +812,211 @@ class TestEdgeCases:
         with patch.object(screen, "_get_selected_result", return_value=None):
             # Should not raise
             screen._copy_secondary_field()
+
+
+# =============================================================================
+# SECTION 9: DOUBLE-ESC REGRESSION TESTS (Issue #94)
+# Validates the double-ESC pattern works correctly from COMMAND mode.
+# =============================================================================
+
+
+@pytest.mark.unit
+@pytest.mark.regression
+class TestDoubleEscapePattern:
+    """Regression tests for Issue #94: Double-ESC pattern fix.
+
+    The double-ESC pattern allows users to quickly exit from COMMAND mode:
+    1. First ESC from COMMAND → returns to SEARCH mode with _esc_pending=True
+    2. Second ESC in SEARCH mode → closes modal (regardless of input text)
+
+    Bug: watch_mode() was unconditionally resetting _esc_pending=False,
+    breaking the double-ESC detection in SEARCH mode.
+    """
+
+    def test_double_esc_from_command_closes_modal(
+        self, search_index: SearchIndex, sample_results: list[SearchResult]
+    ) -> None:
+        """Double-ESC from COMMAND mode must close the modal.
+
+        This is the primary regression test for Issue #94.
+        Simulates: COMMAND → ESC → SEARCH → ESC → Modal closes
+        """
+        screen = VaultInterceptorScreen(search_index=search_index)
+        screen.mode = InterceptorMode.COMMAND
+        screen._esc_pending = False
+
+        # First ESC: should transition to SEARCH with _esc_pending=True
+        with patch.object(screen, "_focus_input"):
+            with patch.object(screen, "query_one"):
+                screen.action_handle_escape()
+
+        assert screen.mode == InterceptorMode.SEARCH
+        assert screen._esc_pending is True  # Critical: preserved after mode change
+
+        # Second ESC: should close modal
+        with patch.object(screen, "dismiss") as mock_dismiss:
+            screen.action_handle_escape()
+            mock_dismiss.assert_called_once_with(None)
+
+    def test_double_esc_closes_even_with_input_text(
+        self, search_index: SearchIndex, sample_results: list[SearchResult]
+    ) -> None:
+        """Double-ESC must close modal even if input has text.
+
+        The double-ESC pattern is a "force close" - it bypasses the
+        normal behavior of clearing input text on first ESC in SEARCH mode.
+        """
+        screen = VaultInterceptorScreen(search_index=search_index)
+        screen.mode = InterceptorMode.COMMAND
+        screen._esc_pending = False
+
+        # First ESC: transition to SEARCH
+        with patch.object(screen, "_focus_input"):
+            with patch.object(screen, "query_one"):
+                screen.action_handle_escape()
+
+        assert screen._esc_pending is True
+
+        # Mock input with text (would normally be cleared, not closed)
+        mock_input = MagicMock()
+        mock_input.value = "github"
+
+        # Second ESC: should close despite input having text
+        with patch.object(screen, "_get_input", return_value=mock_input):
+            with patch.object(screen, "dismiss") as mock_dismiss:
+                screen.action_handle_escape()
+                mock_dismiss.assert_called_once_with(None)
+                # Input value should NOT be modified
+                assert mock_input.value == "github"
+
+    def test_typing_after_first_esc_cancels_double_esc(
+        self, search_index: SearchIndex, sample_results: list[SearchResult]
+    ) -> None:
+        """Typing after first ESC must cancel the double-ESC pattern.
+
+        If user presses ESC from COMMAND, then starts typing, they're
+        actively engaging with search. The second ESC should behave
+        normally (clear text if present, close if empty).
+        """
+        screen = VaultInterceptorScreen(search_index=search_index)
+        screen.mode = InterceptorMode.COMMAND
+        screen._esc_pending = False
+
+        # First ESC: transition to SEARCH
+        with patch.object(screen, "_focus_input"):
+            with patch.object(screen, "query_one"):
+                screen.action_handle_escape()
+
+        assert screen._esc_pending is True
+
+        # Simulate typing (triggers on_input_changed)
+        mock_event = MagicMock()
+        mock_event.input.id = "interceptor-input"
+        mock_event.value = "git"
+
+        container = MagicMock(spec=InterceptorResultsContainer)
+        container.results = []
+
+        with patch.object(screen, "_get_results_container", return_value=container):
+            screen.on_input_changed(mock_event)
+
+        # Typing should reset _esc_pending
+        assert screen._esc_pending is False
+
+        # Now second ESC should clear input, not close
+        mock_input = MagicMock()
+        mock_input.value = "git"
+
+        with patch.object(screen, "_get_input", return_value=mock_input):
+            with patch.object(screen, "dismiss") as mock_dismiss:
+                screen.action_handle_escape()
+                # Should clear input, not dismiss
+                assert mock_input.value == ""
+                mock_dismiss.assert_not_called()
+
+    def test_entering_command_mode_resets_esc_pending(
+        self, search_index: SearchIndex, sample_results: list[SearchResult]
+    ) -> None:
+        """Entering COMMAND mode (via DOWN/TAB) must reset _esc_pending.
+
+        This prevents stale _esc_pending state from a previous
+        COMMAND→SEARCH transition from incorrectly closing the modal.
+        """
+        screen = VaultInterceptorScreen(search_index=search_index)
+        screen.mode = InterceptorMode.SEARCH
+        screen._esc_pending = True  # Stale from previous interaction
+
+        container = MagicMock(spec=InterceptorResultsContainer)
+        container.results = sample_results
+        container.selected_index = 0
+
+        # Enter COMMAND mode via DOWN
+        with patch.object(screen, "_get_results_container", return_value=container):
+            with patch.object(screen, "_blur_input"):
+                with patch.object(screen, "query_one"):
+                    screen.action_move_down()
+
+        assert screen.mode == InterceptorMode.COMMAND
+        assert screen._esc_pending is False  # Reset on COMMAND entry
+
+    def test_rapid_double_esc_sequence(
+        self, search_index: SearchIndex, sample_results: list[SearchResult]
+    ) -> None:
+        """Rapid double-ESC sequence must work reliably.
+
+        Simulates fast typist pressing ESC twice in quick succession.
+        The fix ensures _esc_pending survives the mode transition.
+        """
+        screen = VaultInterceptorScreen(search_index=search_index)
+        screen.mode = InterceptorMode.COMMAND
+        screen._esc_pending = False
+
+        dismiss_called = False
+
+        def mock_dismiss(result: object) -> None:
+            nonlocal dismiss_called
+            dismiss_called = True
+
+        with patch.object(screen, "_focus_input"):
+            with patch.object(screen, "query_one"):
+                with patch.object(screen, "dismiss", side_effect=mock_dismiss):
+                    # First ESC
+                    screen.action_handle_escape()
+                    assert not dismiss_called
+                    assert screen.mode == InterceptorMode.SEARCH
+                    assert screen._esc_pending is True
+
+                    # Second ESC (rapid)
+                    screen.action_handle_escape()
+                    assert dismiss_called
+
+    def test_single_esc_in_search_mode_normal_behavior(
+        self, search_index: SearchIndex
+    ) -> None:
+        """Single ESC in SEARCH mode (not from COMMAND) behaves normally.
+
+        Without _esc_pending set, ESC in SEARCH mode should:
+        - Clear input if it has text
+        - Close modal if input is empty
+        """
+        screen = VaultInterceptorScreen(search_index=search_index)
+        screen.mode = InterceptorMode.SEARCH
+        screen._esc_pending = False  # Not from COMMAND
+
+        # With text: should clear
+        mock_input = MagicMock()
+        mock_input.value = "github"
+
+        with patch.object(screen, "_get_input", return_value=mock_input):
+            with patch.object(screen, "dismiss") as mock_dismiss:
+                screen.action_handle_escape()
+                assert mock_input.value == ""
+                mock_dismiss.assert_not_called()
+
+        # With empty: should close
+        mock_input.value = ""
+
+        with patch.object(screen, "_get_input", return_value=mock_input):
+            with patch.object(screen, "dismiss") as mock_dismiss:
+                screen.action_handle_escape()
+                mock_dismiss.assert_called_once_with(None)
