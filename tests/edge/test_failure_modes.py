@@ -958,19 +958,18 @@ class TestPathValidationEdgeCases:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Relative paths are resolved to absolute."""
-        # Change to home directory for test
-        home = Path.home()
-        monkeypatch.chdir(home)
+        from unittest.mock import patch
 
-        # Create a temp file in home
-        test_file = home / "passfx_test_temp.txt"
+        # Use tmp_path as mock home for CI compatibility
+        monkeypatch.chdir(tmp_path)
+
+        # Create a temp file in working directory
+        test_file = tmp_path / "passfx_test_temp.txt"
         test_file.write_text("test")
 
-        try:
+        with patch("passfx.utils.io.Path.home", return_value=tmp_path):
             resolved = validate_path(Path("passfx_test_temp.txt"), must_exist=True)
             assert resolved.is_absolute()
-        finally:
-            test_file.unlink()
 
     def test_symlink_parent_rejected(self, tmp_path: Path) -> None:
         """Parent directory that is symlink is rejected."""
