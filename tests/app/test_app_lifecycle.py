@@ -1086,3 +1086,669 @@ class TestEdgeCases:
 
         # Only one cleanup should have run
         assert cleanup_count == 1
+
+
+# ---------------------------------------------------------------------------
+# Auto-Lock Tests
+# ---------------------------------------------------------------------------
+
+
+class TestAutoLock:
+    """Tests for PassFXApp._check_auto_lock() method.
+
+    Validates the auto-lock security invariant: vault auto-locks after
+    inactivity, returning user to login screen with clipboard cleared.
+    This is a critical security boundary.
+    """
+
+    @pytest.mark.unit
+    def test_early_return_when_vault_locked(self) -> None:
+        """Verify _check_auto_lock returns immediately when _unlocked is False.
+
+        Security invariant: No side effects occur when vault is already locked.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = False  # Vault is locked
+
+            # Call auto-lock check
+            app._check_auto_lock()
+
+            # Verify no timeout check occurred
+            mock_vault.check_timeout.assert_not_called()
+            # Verify vault.lock() was not called
+            mock_vault.lock.assert_not_called()
+
+    @pytest.mark.unit
+    def test_calls_check_timeout_when_unlocked(self) -> None:
+        """Verify vault.check_timeout() is called when app is unlocked."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = False
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = True
+
+            app._check_auto_lock()
+
+            mock_vault.check_timeout.assert_called_once()
+
+    @pytest.mark.unit
+    def test_no_action_when_timeout_not_exceeded(self) -> None:
+        """Verify no locking actions when check_timeout() returns False."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = False
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = True
+            app.notify = MagicMock()  # type: ignore[method-assign]
+
+            app._check_auto_lock()
+
+            # Verify no locking occurred
+            mock_vault.lock.assert_not_called()
+            assert app._unlocked is True
+            app.notify.assert_not_called()
+
+    @pytest.mark.unit
+    def test_locks_vault_when_timeout_exceeded(self) -> None:
+        """Verify vault.lock() is invoked when timeout is exceeded."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                # Create mutable list for screen_stack simulation
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    mock_vault.lock.assert_called_once()
+
+    @pytest.mark.unit
+    def test_sets_unlocked_false_after_timeout(self) -> None:
+        """Verify _unlocked flag is set to False after timeout."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    assert app._unlocked is False
+
+    @pytest.mark.unit
+    def test_clears_clipboard_on_timeout(self) -> None:
+        """Verify clear_clipboard() is called on timeout.
+
+        Security invariant: Sensitive data must be cleared from clipboard.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard") as mock_clear_clipboard:
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    mock_clear_clipboard.assert_called_once()
+
+    @pytest.mark.unit
+    def test_notifies_user_with_correct_message(self) -> None:
+        """Verify notify() is called with expected message."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    app.notify.assert_called_once()
+                    call_args = app.notify.call_args
+                    assert call_args[0][0] == "Vault locked due to inactivity"
+
+    @pytest.mark.unit
+    def test_notification_uses_warning_severity(self) -> None:
+        """Verify notification uses severity='warning' parameter."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    call_kwargs = app.notify.call_args[1]
+                    assert call_kwargs.get("severity") == "warning"
+
+    @pytest.mark.unit
+    def test_pops_all_screens_except_base(self) -> None:
+        """Verify screen stack is reduced to base screen only.
+
+        All non-base screens must be popped before pushing login.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                # Simulate 4 screens on stack (base + 3 others)
+                base_screen = MagicMock()
+                screen_2 = MagicMock()
+                screen_3 = MagicMock()
+                screen_4 = MagicMock()
+                screen_stack_data = [base_screen, screen_2, screen_3, screen_4]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+
+                    pop_count = 0
+
+                    def mock_pop() -> None:
+                        nonlocal pop_count
+                        pop_count += 1
+                        screen_stack_data.pop()
+
+                    app.pop_screen = mock_pop  # type: ignore[method-assign, assignment]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    # Should have popped 3 times (4 screens -> 1 base screen)
+                    assert pop_count == 3
+                    assert len(screen_stack_data) == 1
+                    assert screen_stack_data[0] is base_screen
+
+    @pytest.mark.unit
+    def test_pushes_fresh_login_screen_instance(self) -> None:
+        """Verify a fresh LoginScreen() instance is pushed, not a cached one.
+
+        Security invariant: Login screen must be a new instance to ensure
+        clean state (no residual data from previous session).
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+                from passfx.screens.login import LoginScreen
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    # Verify push_screen was called once
+                    app.push_screen.assert_called_once()
+
+                    # Verify the argument is an instance of LoginScreen
+                    pushed_screen = app.push_screen.call_args[0][0]
+                    assert isinstance(pushed_screen, LoginScreen)
+
+    @pytest.mark.unit
+    def test_login_screen_is_new_instance_each_time(self) -> None:
+        """Verify each auto-lock creates a new LoginScreen instance."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+                from passfx.screens.login import LoginScreen
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    # First auto-lock
+                    app._unlocked = True
+                    app._check_auto_lock()
+                    first_screen = app.push_screen.call_args[0][0]
+
+                    # Reset for second auto-lock
+                    app.push_screen.reset_mock()
+                    app._unlocked = True
+                    app._check_auto_lock()
+                    second_screen = app.push_screen.call_args[0][0]
+
+                    # Verify both are LoginScreen instances but different objects
+                    assert isinstance(first_screen, LoginScreen)
+                    assert isinstance(second_screen, LoginScreen)
+                    assert first_screen is not second_screen
+
+    @pytest.mark.unit
+    def test_complete_auto_lock_sequence(self) -> None:
+        """Verify complete auto-lock sequence executes in correct order.
+
+        Order: lock vault -> clear clipboard -> notify -> pop screens -> push login
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            call_order: list[str] = []
+
+            def track_lock() -> None:
+                call_order.append("vault_lock")
+
+            def track_clipboard() -> None:
+                call_order.append("clear_clipboard")
+
+            mock_vault.lock.side_effect = track_lock
+
+            with patch("passfx.app.clear_clipboard", side_effect=track_clipboard):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock(), MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+
+                    def track_notify(*args: object, **kwargs: object) -> None:
+                        call_order.append("notify")
+
+                    def track_pop() -> None:
+                        call_order.append("pop_screen")
+                        screen_stack_data.pop()
+
+                    def track_push(screen: object) -> None:
+                        call_order.append("push_screen")
+
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = track_notify  # type: ignore[method-assign]
+                    app.pop_screen = track_pop  # type: ignore[method-assign, assignment]
+                    app.push_screen = track_push  # type: ignore[method-assign, assignment]
+
+                    app._check_auto_lock()
+
+            # Verify order matches implementation
+            assert call_order == [
+                "vault_lock",
+                "clear_clipboard",
+                "notify",
+                "pop_screen",
+                "push_screen",
+            ]
+
+    @pytest.mark.unit
+    def test_notification_includes_title(self) -> None:
+        """Verify notification includes 'Auto-Lock' title."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    call_kwargs = app.notify.call_args[1]
+                    assert call_kwargs.get("title") == "Auto-Lock"
+
+    @pytest.mark.unit
+    def test_no_pop_when_only_base_screen(self) -> None:
+        """Verify no pop_screen when only base screen exists."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    # pop_screen should not be called
+                    app.pop_screen.assert_not_called()
+                    # But push_screen should still be called
+                    app.push_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_multiple_auto_lock_checks_when_locked(self) -> None:
+        """Verify multiple auto-lock checks are safe when already locked."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = False
+
+            # Call multiple times
+            for _ in range(5):
+                app._check_auto_lock()
+
+            # check_timeout should never be called
+            mock_vault.check_timeout.assert_not_called()
+
+    @pytest.mark.unit
+    def test_auto_lock_state_transition(self) -> None:
+        """Verify state transitions correctly during auto-lock.
+
+        State: unlocked=True -> [timeout] -> unlocked=False
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    # Initial state: unlocked
+                    app._unlocked = True
+                    assert app._unlocked is True
+
+                    # Trigger auto-lock
+                    app._check_auto_lock()
+
+                    # Final state: locked
+                    assert app._unlocked is False
+
+                    # Second call should be no-op
+                    mock_vault.check_timeout.reset_mock()
+                    app._check_auto_lock()
+                    mock_vault.check_timeout.assert_not_called()
+
+    @pytest.mark.unit
+    def test_handles_empty_screen_stack_gracefully(self) -> None:
+        """Verify auto-lock handles edge case of empty screen stack.
+
+        This shouldn't happen in practice, but defensive code should not crash.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data: list[MagicMock] = []
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    # Should not raise
+                    app._check_auto_lock()
+
+                    # Verify core security actions still occurred
+                    mock_vault.lock.assert_called_once()
+                    assert app._unlocked is False
+                    app.push_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_vault_lock_exception_does_not_crash(self) -> None:
+        """Verify exceptions in vault.lock() don't crash the application.
+
+        Note: Current implementation does not wrap vault.lock() in try/except.
+        This test documents the current behavior for regression detection.
+        If exception handling is added, update this test accordingly.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault.lock.side_effect = RuntimeError("Vault lock failed")
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    # Current behavior: exception propagates
+                    # If exception handling is added, this should not raise
+                    with pytest.raises(RuntimeError, match="Vault lock failed"):
+                        app._check_auto_lock()
+
+    @pytest.mark.unit
+    def test_clipboard_cleared_even_with_many_screens(self) -> None:
+        """Verify clipboard is cleared regardless of screen stack depth.
+
+        Security invariant: Clipboard must be cleared in all cases.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard") as mock_clear_clipboard:
+                from passfx.app import PassFXApp
+
+                # Deep screen stack (10 screens)
+                screen_stack_data = [MagicMock() for _ in range(10)]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = lambda: screen_stack_data.pop()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app._check_auto_lock()
+
+                    # Clipboard must be cleared
+                    mock_clear_clipboard.assert_called_once()
+
+    @pytest.mark.unit
+    def test_unlocked_flag_set_before_ui_actions(self) -> None:
+        """Verify _unlocked is set to False before screen manipulation.
+
+        Security invariant: Internal state must be locked before UI transitions.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            unlocked_states: list[bool] = []
+
+            def capture_state_on_push(screen: object) -> None:
+                unlocked_states.append(app._unlocked)
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = capture_state_on_push  # type: ignore[method-assign, assignment]
+
+                    app._check_auto_lock()
+
+                    # When push_screen is called, _unlocked should already be False
+                    assert unlocked_states == [False]
