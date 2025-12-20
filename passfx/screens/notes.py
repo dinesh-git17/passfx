@@ -365,6 +365,7 @@ class NotesScreen(Screen):
         super().__init__()
         self._selected_row_key: str | None = None
         self._pulse_state: bool = True
+        self._pending_select_id: str | None = None  # For search navigation
 
     # pylint: disable=too-many-locals
     def compose(self) -> ComposeResult:
@@ -466,13 +467,29 @@ class NotesScreen(Screen):
         """Initialize table selection and inspector."""
         table = self.query_one("#notes-table", DataTable)
         table.focus()
+
+        app: PassFXApp = self.app  # type: ignore
+        entries = app.vault.get_notes()
+
         if table.row_count > 0:
-            table.move_cursor(row=0)
-            app: PassFXApp = self.app  # type: ignore
-            entries = app.vault.get_notes()
-            if entries:
-                self._selected_row_key = entries[0].id
-                self._update_inspector(entries[0].id)
+            # Check for pending selection from search
+            target_row = 0
+            target_id = entries[0].id if entries else None
+
+            if self._pending_select_id:
+                for i, entry in enumerate(entries):
+                    if entry.id == self._pending_select_id:
+                        target_row = i
+                        target_id = entry.id
+                        break
+                self._pending_select_id = None  # Clear pending selection
+
+            # Move cursor to target row
+            table.move_cursor(row=target_row)
+
+            if target_id:
+                self._selected_row_key = target_id
+                self._update_inspector(target_id)
         else:
             self._update_inspector(None)
 
