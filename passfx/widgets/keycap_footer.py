@@ -11,6 +11,9 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Static
 
+# Global search shortcut - single source of truth for all footer displays
+GLOBAL_SEARCH_HINT: tuple[str, str] = ("^K", "Search")
+
 
 class KeycapHint(Horizontal):
     """Single keycap hint showing a key and its action."""

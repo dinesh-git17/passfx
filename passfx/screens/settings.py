@@ -465,7 +465,12 @@ class SettingsScreen(Screen):
 
         # Footer with keycaps
         yield KeycapFooter(
-            hints=[("↑↓", "Navigate"), ("TAB", "Focus"), ("ESC", "Back")],
+            hints=[
+                ("↑↓", "Navigate"),
+                ("TAB", "Focus"),
+                ("^K", "Search"),
+                ("ESC", "Back"),
+            ],
             footer_id="settings-footer",
             label=" SETTINGS ",
         )

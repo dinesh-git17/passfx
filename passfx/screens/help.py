@@ -228,7 +228,12 @@ class HelpScreen(ModalScreen[None]):
 
             # Footer - Mechanical keycap hints
             yield KeycapFooter(
-                hints=[("↑↓", "Navigate"), ("←→", "Switch Pane"), ("ESC", "Close")],
+                hints=[
+                    ("↑↓", "Navigate"),
+                    ("←→", "Switch Pane"),
+                    ("^K", "Search"),
+                    ("ESC", "Close"),
+                ],
                 footer_id="help-footer",
             )
 

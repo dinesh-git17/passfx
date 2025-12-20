@@ -274,6 +274,9 @@ class GeneratorScreen(Screen):
                     yield Static("[bold #00FFFF] S [/]", classes="keycap")
                     yield Static("[#666666]Save[/]", classes="keycap-label")
                 with Horizontal(classes="keycap-group"):
+                    yield Static("[bold #00FFFF] ^K [/]", classes="keycap")
+                    yield Static("[#666666]Search[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
                     yield Static("[bold #00FFFF] ESC [/]", classes="keycap")
                     yield Static("[#666666]Back[/]", classes="keycap-label")
 
