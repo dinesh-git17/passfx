@@ -550,6 +550,13 @@ class Vault:  # pylint: disable=too-many-public-methods
         """
         self._lock_timeout = seconds
 
+    def reset_activity(self) -> None:
+        """Reset the activity timer to prevent auto-lock.
+
+        Call this on any user interaction to extend the auto-lock timeout.
+        """
+        self._update_activity()
+
     # --- Email Credentials ---
 
     def add_email(self, credential: EmailCredential) -> None:
