@@ -185,6 +185,7 @@ jobs:
         run: |
           pytest tests/ui tests/app tests/screens \
             --cov=passfx.screens \
+            --cov=passfx.app \
             --cov-report=term-missing \
             --cov-report=xml:coverage-ui.xml \
             --cov-fail-under=0 \
