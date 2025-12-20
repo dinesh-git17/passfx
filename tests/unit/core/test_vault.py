@@ -1214,6 +1214,51 @@ class TestTimeout:
 
         assert unlocked_vault.check_timeout() is False
 
+    def test_get_remaining_lock_time_returns_none_when_locked(
+        self, vault: Vault
+    ) -> None:
+        """get_remaining_lock_time returns None when vault is locked."""
+        assert vault.get_remaining_lock_time() is None
+
+    def test_get_remaining_lock_time_returns_none_when_disabled(
+        self, unlocked_vault: Vault
+    ) -> None:
+        """get_remaining_lock_time returns None when auto-lock is disabled."""
+        unlocked_vault.set_lock_timeout(0)
+        assert unlocked_vault.get_remaining_lock_time() is None
+
+    def test_get_remaining_lock_time_returns_remaining_seconds(
+        self, unlocked_vault: Vault
+    ) -> None:
+        """get_remaining_lock_time returns correct remaining seconds."""
+        unlocked_vault._lock_timeout = 300
+        unlocked_vault._last_activity = time.time()
+
+        remaining = unlocked_vault.get_remaining_lock_time()
+
+        assert remaining is not None
+        assert 298 <= remaining <= 300
+
+    def test_get_remaining_lock_time_returns_none_when_exceeded(
+        self, unlocked_vault: Vault
+    ) -> None:
+        """get_remaining_lock_time returns None when timeout exceeded."""
+        unlocked_vault._lock_timeout = 300
+        unlocked_vault._last_activity = time.time() - 400
+
+        assert unlocked_vault.get_remaining_lock_time() is None
+
+    def test_get_remaining_lock_time_returns_integer(
+        self, unlocked_vault: Vault
+    ) -> None:
+        """get_remaining_lock_time returns integer, not float."""
+        unlocked_vault._lock_timeout = 300
+        unlocked_vault._last_activity = time.time()
+
+        remaining = unlocked_vault.get_remaining_lock_time()
+
+        assert isinstance(remaining, int)
+
 
 class TestFileLocking:
     """Tests for vault file locking behavior."""

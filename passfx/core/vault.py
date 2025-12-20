@@ -557,6 +557,23 @@ class Vault:  # pylint: disable=too-many-public-methods
         """
         self._update_activity()
 
+    def get_remaining_lock_time(self) -> int | None:
+        """Get remaining seconds before auto-lock.
+
+        Returns:
+            Remaining seconds, or None if vault locked, auto-lock disabled,
+            or time already exceeded.
+        """
+        if self._crypto is None:
+            return None
+        if self._lock_timeout <= 0:
+            return None
+
+        remaining = self._lock_timeout - (time.time() - self._last_activity)
+        if remaining <= 0:
+            return None
+        return int(remaining)
+
     # --- Email Credentials ---
 
     def add_email(self, credential: EmailCredential) -> None:
