@@ -2489,3 +2489,1128 @@ class TestNavigationGuards:
 
                     # Guard should have blocked, regardless of stack depth
                     app.pop_screen.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Global Search Toggle Tests
+# ---------------------------------------------------------------------------
+
+
+class TestSearchToggle:
+    """Tests for PassFXApp.action_toggle_search() global search activation.
+
+    Validates the search overlay activation guards, index building trigger,
+    and modal push with correct callback wiring. Search overlay is a critical
+    UX feature that must respect vault lock state.
+    """
+
+    @pytest.mark.unit
+    def test_returns_early_when_vault_locked(self) -> None:
+        """Verify action_toggle_search() returns immediately when _unlocked is False.
+
+        Security invariant: Search overlay must never open on locked vault.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = False  # Vault is locked
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            app.action_toggle_search()
+
+            # push_screen should NOT be called
+            app.push_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_returns_early_on_login_screen(self) -> None:
+        """Verify action_toggle_search() does not open on LoginScreen.
+
+        Guard invariant: Search is meaningless on login screen.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "LoginScreen"
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                app = PassFXApp()
+                app._unlocked = True  # Vault is unlocked
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                app.action_toggle_search()
+
+                app.push_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_returns_early_on_vault_interceptor_screen(self) -> None:
+        """Verify action_toggle_search() does not open when already on search overlay.
+
+        Guard invariant: Prevents recursive search overlay activation.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "VaultInterceptorScreen"
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                app = PassFXApp()
+                app._unlocked = True
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                app.action_toggle_search()
+
+                app.push_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_opens_search_on_main_menu_screen(self) -> None:
+        """Verify action_toggle_search() opens search overlay on MainMenuScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "MainMenuScreen"
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                app = PassFXApp()
+                app._unlocked = True
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                app.action_toggle_search()
+
+                app.push_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_opens_search_on_passwords_screen(self) -> None:
+        """Verify action_toggle_search() opens search overlay on PasswordsScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                app = PassFXApp()
+                app._unlocked = True
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                app.action_toggle_search()
+
+                app.push_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_builds_search_index_before_push(self) -> None:
+        """Verify _build_search_index() is called before push_screen().
+
+        Index must be built before the search modal is pushed.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            call_order: list[str] = []
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                app = PassFXApp()
+                app._unlocked = True
+
+                original_build = app._build_search_index
+
+                def track_build() -> None:
+                    call_order.append("build_index")
+                    original_build()
+
+                def track_push(*args: object, **kwargs: object) -> None:
+                    call_order.append("push_screen")
+
+                app._build_search_index = track_build  # type: ignore[method-assign]
+                app.push_screen = track_push  # type: ignore[method-assign, assignment]
+
+                app.action_toggle_search()
+
+            assert call_order == ["build_index", "push_screen"]
+
+    @pytest.mark.unit
+    def test_push_screen_with_vault_interceptor_screen(self) -> None:
+        """Verify push_screen() is called with VaultInterceptorScreen instance."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.widgets.search_overlay import VaultInterceptorScreen
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                app = PassFXApp()
+                app._unlocked = True
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                app.action_toggle_search()
+
+                # Verify push_screen was called with VaultInterceptorScreen
+                call_args = app.push_screen.call_args
+                assert isinstance(call_args[0][0], VaultInterceptorScreen)
+
+    @pytest.mark.unit
+    def test_push_screen_with_callback(self) -> None:
+        """Verify push_screen() is called with callback parameter."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                app = PassFXApp()
+                app._unlocked = True
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                app.action_toggle_search()
+
+                # Verify callback parameter was passed
+                call_kwargs = app.push_screen.call_args[1]
+                assert "callback" in call_kwargs
+                assert call_kwargs["callback"] == app._handle_search_result
+
+    @pytest.mark.unit
+    def test_search_index_passed_to_modal(self) -> None:
+        """Verify search index is passed to VaultInterceptorScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.widgets.search_overlay import VaultInterceptorScreen
+
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                app = PassFXApp()
+                app._unlocked = True
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                app.action_toggle_search()
+
+                # Get the VaultInterceptorScreen that was pushed
+                pushed_screen = app.push_screen.call_args[0][0]
+                assert isinstance(pushed_screen, VaultInterceptorScreen)
+                # Index should have been set on app
+                assert app._search_index is not None
+
+    @pytest.mark.unit
+    def test_guard_check_uses_class_name(self) -> None:
+        """Verify guard checks use __class__.__name__ comparison."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            mock_screen = MagicMock()
+            # Test with lowercase (should NOT be guarded)
+            mock_screen.__class__.__name__ = "loginscreen"
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                mock_vault.is_locked = False
+                mock_vault.get_emails.return_value = []
+                mock_vault.get_phones.return_value = []
+                mock_vault.get_cards.return_value = []
+                mock_vault.get_envs.return_value = []
+                mock_vault.get_recovery_entries.return_value = []
+                mock_vault.get_notes.return_value = []
+
+                app = PassFXApp()
+                app._unlocked = True
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                app.action_toggle_search()
+
+                # Should NOT be guarded (case-sensitive check)
+                app.push_screen.assert_called_once()
+
+    @pytest.mark.unit
+    def test_locked_vault_checked_first(self) -> None:
+        """Verify _unlocked check happens before screen name check.
+
+        Security invariant: Lock check is the primary security gate.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            # Even on a valid screen, locked vault should block
+            mock_screen = MagicMock()
+            mock_screen.__class__.__name__ = "PasswordsScreen"
+
+            with patch.object(
+                PassFXApp,
+                "screen",
+                new_callable=lambda: property(lambda self: mock_screen),
+            ):
+                app = PassFXApp()
+                app._unlocked = False  # Locked
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                app.action_toggle_search()
+
+                # Should be blocked by _unlocked check
+                app.push_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_ctrl_k_binding_defined(self) -> None:
+        """Verify Ctrl+K is bound to toggle_search action."""
+        from textual.binding import Binding
+
+        from passfx.app import PassFXApp
+
+        binding_found = False
+        for b in PassFXApp.BINDINGS:
+            if isinstance(b, Binding):
+                if b.key == "ctrl+k" and b.action == "toggle_search":
+                    binding_found = True
+                    break
+
+        assert binding_found, "Ctrl+K binding for toggle_search not found"
+
+
+# ---------------------------------------------------------------------------
+# Search Index Build Tests
+# ---------------------------------------------------------------------------
+
+
+class TestSearchIndexBuild:
+    """Tests for PassFXApp._build_search_index() index construction.
+
+    Validates that the search index is correctly built from vault data
+    and respects the vault lock state.
+    """
+
+    @pytest.mark.unit
+    def test_sets_index_none_when_vault_locked(self) -> None:
+        """Verify _search_index is set to None when _unlocked is False."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = False
+
+            app._build_search_index()
+
+            assert app._search_index is None
+
+    @pytest.mark.unit
+    def test_sets_index_none_when_vault_is_locked_property(self) -> None:
+        """Verify _search_index is None when vault.is_locked is True."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = True
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = True  # App thinks it's unlocked
+            # But vault.is_locked is True
+
+            app._build_search_index()
+
+            assert app._search_index is None
+
+    @pytest.mark.unit
+    def test_builds_index_when_unlocked(self) -> None:
+        """Verify _search_index is created when vault is unlocked."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchIndex
+
+            app = PassFXApp()
+            app._unlocked = True
+
+            app._build_search_index()
+
+            assert app._search_index is not None
+            assert isinstance(app._search_index, SearchIndex)
+
+    @pytest.mark.unit
+    def test_calls_all_vault_getters(self) -> None:
+        """Verify all vault getter methods are called."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = True
+
+            app._build_search_index()
+
+            # Verify all getters were called
+            mock_vault.get_emails.assert_called_once()
+            mock_vault.get_phones.assert_called_once()
+            mock_vault.get_cards.assert_called_once()
+            mock_vault.get_envs.assert_called_once()
+            mock_vault.get_recovery_entries.assert_called_once()
+            mock_vault.get_notes.assert_called_once()
+
+    @pytest.mark.unit
+    def test_builds_index_with_vault_data(self) -> None:
+        """Verify SearchIndex.build_index() is called with vault data."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_emails = [MagicMock()]
+            mock_phones = [MagicMock()]
+            mock_cards = [MagicMock()]
+            mock_envs = [MagicMock()]
+            mock_recovery = [MagicMock()]
+            mock_notes = [MagicMock()]
+
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = mock_emails
+            mock_vault.get_phones.return_value = mock_phones
+            mock_vault.get_cards.return_value = mock_cards
+            mock_vault.get_envs.return_value = mock_envs
+            mock_vault.get_recovery_entries.return_value = mock_recovery
+            mock_vault.get_notes.return_value = mock_notes
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            with patch("passfx.app.SearchIndex") as mock_index_class:
+                mock_index = MagicMock()
+                mock_index_class.return_value = mock_index
+
+                app = PassFXApp()
+                app._unlocked = True
+
+                app._build_search_index()
+
+                mock_index.build_index.assert_called_once_with(
+                    emails=mock_emails,
+                    phones=mock_phones,
+                    cards=mock_cards,
+                    envs=mock_envs,
+                    recovery=mock_recovery,
+                    notes=mock_notes,
+                )
+
+    @pytest.mark.unit
+    def test_empty_vault_produces_valid_index(self) -> None:
+        """Verify empty vault still produces a valid SearchIndex."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchIndex
+
+            app = PassFXApp()
+            app._unlocked = True
+
+            app._build_search_index()
+
+            assert app._search_index is not None
+            assert isinstance(app._search_index, SearchIndex)
+
+    @pytest.mark.unit
+    def test_replaces_existing_index(self) -> None:
+        """Verify _build_search_index() replaces existing index."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = True
+
+            # Build first index
+            app._build_search_index()
+            first_index = app._search_index
+
+            # Build second index
+            app._build_search_index()
+            second_index = app._search_index
+
+            # Should be different objects
+            assert first_index is not second_index
+
+    @pytest.mark.unit
+    def test_dual_condition_both_must_pass(self) -> None:
+        """Verify both _unlocked and not vault.is_locked are required."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            # Case 1: _unlocked=False, is_locked=False
+            mock_vault.is_locked = False
+            app1 = PassFXApp()
+            app1._unlocked = False
+            app1._build_search_index()
+            assert app1._search_index is None
+
+            # Case 2: _unlocked=True, is_locked=True
+            mock_vault.is_locked = True
+            app2 = PassFXApp()
+            app2._unlocked = True
+            app2._build_search_index()
+            assert app2._search_index is None
+
+            # Case 3: _unlocked=True, is_locked=False (should build)
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            app3 = PassFXApp()
+            app3._unlocked = True
+            app3._build_search_index()
+            assert app3._search_index is not None
+
+
+# ---------------------------------------------------------------------------
+# Search Result Handling Tests
+# ---------------------------------------------------------------------------
+
+
+class TestSearchResultHandling:
+    """Tests for PassFXApp._handle_search_result() callback behavior.
+
+    Validates that the search result handler correctly dispatches to
+    navigation or ignores None results.
+    """
+
+    @pytest.mark.unit
+    def test_none_result_no_navigation(self) -> None:
+        """Verify None result does not trigger navigation."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._navigate_to_result = MagicMock()  # type: ignore[method-assign]
+
+            app._handle_search_result(None)
+
+            app._navigate_to_result.assert_not_called()
+
+    @pytest.mark.unit
+    def test_valid_result_triggers_navigation(self) -> None:
+        """Verify valid SearchResult triggers _navigate_to_result()."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app._navigate_to_result = MagicMock()  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "passwords"
+            mock_result.credential_id = "test-id"
+
+            app._handle_search_result(mock_result)
+
+            app._navigate_to_result.assert_called_once_with(mock_result)
+
+    @pytest.mark.unit
+    def test_result_passed_unchanged(self) -> None:
+        """Verify result is passed to _navigate_to_result unchanged."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+
+            received_results: list[SearchResult] = []
+
+            def capture_result(result: SearchResult) -> None:
+                received_results.append(result)
+
+            app._navigate_to_result = capture_result  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "cards"
+            mock_result.credential_id = "card-123"
+
+            app._handle_search_result(mock_result)
+
+            assert len(received_results) == 1
+            assert received_results[0] is mock_result
+
+
+# ---------------------------------------------------------------------------
+# Search Result Routing Tests
+# ---------------------------------------------------------------------------
+
+
+class TestSearchResultRouting:
+    """Tests for PassFXApp._navigate_to_result() screen routing.
+
+    Validates that search results are correctly routed to the appropriate
+    screens with proper credential ID propagation.
+    """
+
+    @pytest.mark.unit
+    def test_routes_to_passwords_screen(self) -> None:
+        """Verify passwords result routes to PasswordsScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "passwords"
+            mock_result.credential_id = "pwd-123"
+
+            app._navigate_to_result(mock_result)
+
+            app.push_screen.assert_called_once()
+            pushed_screen = app.push_screen.call_args[0][0]
+            assert pushed_screen.__class__.__name__ == "PasswordsScreen"
+            assert pushed_screen._pending_select_id == "pwd-123"
+
+    @pytest.mark.unit
+    def test_routes_to_phones_screen(self) -> None:
+        """Verify phones result routes to PhonesScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "phones"
+            mock_result.credential_id = "phone-456"
+
+            app._navigate_to_result(mock_result)
+
+            app.push_screen.assert_called_once()
+            pushed_screen = app.push_screen.call_args[0][0]
+            assert pushed_screen.__class__.__name__ == "PhonesScreen"
+            assert pushed_screen._pending_select_id == "phone-456"
+
+    @pytest.mark.unit
+    def test_routes_to_cards_screen(self) -> None:
+        """Verify cards result routes to CardsScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "cards"
+            mock_result.credential_id = "card-789"
+
+            app._navigate_to_result(mock_result)
+
+            app.push_screen.assert_called_once()
+            pushed_screen = app.push_screen.call_args[0][0]
+            assert pushed_screen.__class__.__name__ == "CardsScreen"
+            assert pushed_screen._pending_select_id == "card-789"
+
+    @pytest.mark.unit
+    def test_routes_to_envs_screen(self) -> None:
+        """Verify envs result routes to EnvsScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "envs"
+            mock_result.credential_id = "env-abc"
+
+            app._navigate_to_result(mock_result)
+
+            app.push_screen.assert_called_once()
+            pushed_screen = app.push_screen.call_args[0][0]
+            assert pushed_screen.__class__.__name__ == "EnvsScreen"
+            assert pushed_screen._pending_select_id == "env-abc"
+
+    @pytest.mark.unit
+    def test_routes_to_recovery_screen(self) -> None:
+        """Verify recovery result routes to RecoveryScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "recovery"
+            mock_result.credential_id = "rec-def"
+
+            app._navigate_to_result(mock_result)
+
+            app.push_screen.assert_called_once()
+            pushed_screen = app.push_screen.call_args[0][0]
+            assert pushed_screen.__class__.__name__ == "RecoveryScreen"
+            assert pushed_screen._pending_select_id == "rec-def"
+
+    @pytest.mark.unit
+    def test_routes_to_notes_screen(self) -> None:
+        """Verify notes result routes to NotesScreen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "notes"
+            mock_result.credential_id = "note-xyz"
+
+            app._navigate_to_result(mock_result)
+
+            app.push_screen.assert_called_once()
+            pushed_screen = app.push_screen.call_args[0][0]
+            assert pushed_screen.__class__.__name__ == "NotesScreen"
+            assert pushed_screen._pending_select_id == "note-xyz"
+
+    @pytest.mark.unit
+    def test_unknown_screen_name_no_action(self) -> None:
+        """Verify unknown screen_name does not push any screen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "unknown_screen"
+            mock_result.credential_id = "some-id"
+
+            app._navigate_to_result(mock_result)
+
+            app.push_screen.assert_not_called()
+
+    @pytest.mark.unit
+    def test_credential_id_propagation(self) -> None:
+        """Verify credential_id is correctly set on target screen."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            test_cases = [
+                ("passwords", "unique-pwd-id-123"),
+                ("phones", "unique-phone-id-456"),
+                ("cards", "unique-card-id-789"),
+                ("envs", "unique-env-id-abc"),
+                ("recovery", "unique-rec-id-def"),
+                ("notes", "unique-note-id-xyz"),
+            ]
+
+            for screen_name, cred_id in test_cases:
+                app = PassFXApp()
+                app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                mock_result = MagicMock(spec=SearchResult)
+                mock_result.screen_name = screen_name
+                mock_result.credential_id = cred_id
+
+                app._navigate_to_result(mock_result)
+
+                pushed_screen = app.push_screen.call_args[0][0]
+                assert (
+                    pushed_screen._pending_select_id == cred_id
+                ), f"Failed for {screen_name}"
+
+    @pytest.mark.unit
+    def test_push_screen_called_exactly_once(self) -> None:
+        """Verify push_screen is called exactly once per navigation."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            mock_result = MagicMock(spec=SearchResult)
+            mock_result.screen_name = "passwords"
+            mock_result.credential_id = "test-id"
+
+            app._navigate_to_result(mock_result)
+
+            assert app.push_screen.call_count == 1
+
+    @pytest.mark.unit
+    def test_screens_are_fresh_instances(self) -> None:
+        """Verify each navigation creates a fresh screen instance."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+
+            pushed_screens: list[object] = []
+
+            def capture_push(screen: object) -> None:
+                pushed_screens.append(screen)
+
+            app.push_screen = capture_push  # type: ignore[method-assign, assignment]
+
+            mock_result1 = MagicMock(spec=SearchResult)
+            mock_result1.screen_name = "passwords"
+            mock_result1.credential_id = "id-1"
+
+            mock_result2 = MagicMock(spec=SearchResult)
+            mock_result2.screen_name = "passwords"
+            mock_result2.credential_id = "id-2"
+
+            app._navigate_to_result(mock_result1)
+            app._navigate_to_result(mock_result2)
+
+            assert len(pushed_screens) == 2
+            assert pushed_screens[0] is not pushed_screens[1]
+
+    @pytest.mark.unit
+    def test_lazy_imports_work_correctly(self) -> None:
+        """Verify lazy imports in _navigate_to_result work correctly.
+
+        Implementation uses lazy imports to avoid circular dependencies.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+            from passfx.search.engine import SearchResult
+
+            app = PassFXApp()
+            app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+            # Test that all screen types can be imported and instantiated
+            screen_types = ["passwords", "phones", "cards", "envs", "recovery", "notes"]
+
+            for screen_type in screen_types:
+                mock_result = MagicMock(spec=SearchResult)
+                mock_result.screen_name = screen_type
+                mock_result.credential_id = f"{screen_type}-id"
+
+                # Should not raise import errors
+                app._navigate_to_result(mock_result)
+
+            # All six should have been pushed
+            assert app.push_screen.call_count == 6
+
+
+# ---------------------------------------------------------------------------
+# Cross-Cutting Concerns Tests
+# ---------------------------------------------------------------------------
+
+
+class TestSearchAndAutoLockInteraction:
+    """Tests for interaction between auto-lock and search state.
+
+    Validates that auto-lock correctly resets search-related state.
+    """
+
+    @pytest.mark.unit
+    def test_auto_lock_while_search_active(self) -> None:
+        """Verify auto-lock clears search state when triggered.
+
+        Search index should be invalidated when vault locks.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault.is_locked = False
+            mock_vault.get_emails.return_value = []
+            mock_vault.get_phones.return_value = []
+            mock_vault.get_cards.return_value = []
+            mock_vault.get_envs.return_value = []
+            mock_vault.get_recovery_entries.return_value = []
+            mock_vault.get_notes.return_value = []
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    # Build search index
+                    app._build_search_index()
+                    assert app._search_index is not None
+
+                    # Trigger auto-lock
+                    app._check_auto_lock()
+
+                    # Verify vault is locked
+                    assert app._unlocked is False
+
+                    # Rebuild index should now set to None
+                    app._build_search_index()
+                    assert app._search_index is None
+
+    @pytest.mark.unit
+    def test_search_toggle_after_auto_lock(self) -> None:
+        """Verify search toggle is blocked after auto-lock."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault.check_timeout.return_value = True
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    # Trigger auto-lock
+                    app._check_auto_lock()
+
+                    # Reset push_screen mock
+                    app.push_screen.reset_mock()
+
+                    # Attempt to toggle search
+                    app.action_toggle_search()
+
+                    # Should be blocked because _unlocked is False
+                    # Only the LoginScreen push from auto-lock should have occurred
+                    # push_screen was reset, so new call should NOT happen
+                    app.push_screen.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Initialization Tests for Search Index
+# ---------------------------------------------------------------------------
+
+
+class TestSearchIndexInitialization:
+    """Tests for search index initialization state."""
+
+    @pytest.mark.unit
+    def test_search_index_initially_none(self) -> None:
+        """Verify _search_index is None on app initialization."""
+        with patch("passfx.app.Vault"):
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+
+            assert app._search_index is None
+
+    @pytest.mark.unit
+    def test_search_index_attribute_exists(self) -> None:
+        """Verify _search_index attribute is defined."""
+        with patch("passfx.app.Vault"):
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+
+            assert hasattr(app, "_search_index")
