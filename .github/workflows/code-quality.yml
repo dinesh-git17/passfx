@@ -456,3 +456,251 @@ jobs:
       - name: Set exit status
         if: steps.status.outputs.mergeable != 'true'
         run: exit 1
+
+      # ========================================================================
+      # Slack CI Notification
+      # Sends a summary of CI results to #passfx-ci Slack channel.
+      #
+      # Design Principles:
+      # - ALWAYS runs (if: always()) regardless of prior step failures
+      # - NON-BLOCKING: Slack failures never fail CI (exit 0 on all error paths)
+      # - SECURE: Webhook URL never logged; treated as bearer token
+      # - MINIMAL: Pure bash + curl, no external dependencies
+      #
+      # Mergeability Logic:
+      # - Required jobs: code-quality, core-security-tests, ui-tests, utils-cli-tests
+      # - performance-status is informational only (skipped in fast CI)
+      # - Mergeable = all required jobs returned "success"
+      # - Any required job failure/cancellation = not mergeable
+      # ========================================================================
+      - name: Send Slack Notification
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_ID: ${{ github.run_id }}
+          # Job results from needs context
+          JOB_CODE_QUALITY: ${{ needs.code-quality.result }}
+          JOB_CORE_SECURITY: ${{ needs.core-security-tests.result }}
+          JOB_UI_TESTS: ${{ needs.ui-tests.result }}
+          JOB_UTILS_CLI: ${{ needs.utils-cli-tests.result }}
+          JOB_PERF_STATUS: ${{ needs.performance-status.result }}
+          # Pre-computed mergeability from earlier step
+          MERGEABLE: ${{ steps.status.outputs.mergeable }}
+        run: |
+          set +e  # Do not exit on error - this step must never fail CI
+
+          # ----------------------------------------------------------------
+          # Guard: Exit gracefully if webhook is not configured
+          # ----------------------------------------------------------------
+          if [[ -z "$SLACK_WEBHOOK_URL" ]]; then
+            echo "::warning title=Slack Notification::SLACK_WEBHOOK_URL not configured. Skipping notification."
+            exit 0
+          fi
+
+          # ----------------------------------------------------------------
+          # Helper: Map job result to emoji
+          # ----------------------------------------------------------------
+          job_emoji() {
+            case "$1" in
+              success)   echo ":white_check_mark:" ;;
+              failure)   echo ":x:" ;;
+              cancelled) echo ":warning:" ;;
+              skipped)   echo ":warning:" ;;
+              *)         echo ":grey_question:" ;;
+            esac
+          }
+
+          # ----------------------------------------------------------------
+          # Helper: Map job result to display text
+          # ----------------------------------------------------------------
+          job_text() {
+            case "$1" in
+              success)   echo "Passed" ;;
+              failure)   echo "Failed" ;;
+              cancelled) echo "Cancelled" ;;
+              skipped)   echo "Skipped" ;;
+              *)         echo "Unknown" ;;
+            esac
+          }
+
+          # ----------------------------------------------------------------
+          # Compute overall CI status
+          # ----------------------------------------------------------------
+          if [[ "$MERGEABLE" == "true" ]]; then
+            HEADER_EMOJI=":white_check_mark:"
+            HEADER_TEXT="CI Passed"
+            MERGE_STATUS=":white_check_mark: Branch is mergeable"
+          else
+            HEADER_EMOJI=":x:"
+            HEADER_TEXT="CI Failed"
+            MERGE_STATUS=":x: Branch is NOT mergeable"
+          fi
+
+          # ----------------------------------------------------------------
+          # Build job results block
+          # Required jobs are marked, performance-status is informational
+          # ----------------------------------------------------------------
+          JOBS_TEXT=""
+          JOBS_TEXT+="$(job_emoji $JOB_CODE_QUALITY) code-quality: $(job_text $JOB_CODE_QUALITY)\n"
+          JOBS_TEXT+="$(job_emoji $JOB_CORE_SECURITY) core-security-tests: $(job_text $JOB_CORE_SECURITY)\n"
+          JOBS_TEXT+="$(job_emoji $JOB_UI_TESTS) ui-tests: $(job_text $JOB_UI_TESTS)\n"
+          JOBS_TEXT+="$(job_emoji $JOB_UTILS_CLI) utils-cli-tests: $(job_text $JOB_UTILS_CLI)\n"
+          JOBS_TEXT+="$(job_emoji $JOB_PERF_STATUS) performance-status: $(job_text $JOB_PERF_STATUS) _(informational)_"
+
+          # ----------------------------------------------------------------
+          # Short commit SHA (7 characters)
+          # ----------------------------------------------------------------
+          SHORT_SHA="${COMMIT_SHA:0:7}"
+
+          # ----------------------------------------------------------------
+          # Construct Slack Block Kit payload
+          # Using heredoc with proper JSON escaping
+          # ----------------------------------------------------------------
+          read -r -d '' PAYLOAD << 'PAYLOAD_EOF' || true
+          {
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "HEADER_PLACEHOLDER",
+                  "emoji": true
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Workflow:*\nWORKFLOW_PLACEHOLDER"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Branch:*\nBRANCH_PLACEHOLDER"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Commit:*\n`COMMIT_PLACEHOLDER`"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Actor:*\nACTOR_PLACEHOLDER"
+                  }
+                ]
+              },
+              {
+                "type": "divider"
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Job Results:*\nJOBS_PLACEHOLDER"
+                }
+              },
+              {
+                "type": "divider"
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "MERGE_PLACEHOLDER"
+                }
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "View Run",
+                      "emoji": true
+                    },
+                    "url": "RUN_URL_PLACEHOLDER"
+                  }
+                ]
+              }
+            ]
+          }
+          PAYLOAD_EOF
+
+          # ----------------------------------------------------------------
+          # Replace placeholders with actual values
+          # Using sed for reliable substitution
+          # ----------------------------------------------------------------
+          PAYLOAD="${PAYLOAD//HEADER_PLACEHOLDER/${HEADER_EMOJI} ${HEADER_TEXT}}"
+          PAYLOAD="${PAYLOAD//WORKFLOW_PLACEHOLDER/${WORKFLOW_NAME}}"
+          PAYLOAD="${PAYLOAD//BRANCH_PLACEHOLDER/${BRANCH}}"
+          PAYLOAD="${PAYLOAD//COMMIT_PLACEHOLDER/${SHORT_SHA}}"
+          PAYLOAD="${PAYLOAD//ACTOR_PLACEHOLDER/${ACTOR}}"
+          PAYLOAD="${PAYLOAD//RUN_URL_PLACEHOLDER/${RUN_URL}}"
+          PAYLOAD="${PAYLOAD//MERGE_PLACEHOLDER/${MERGE_STATUS}}"
+
+          # Handle newlines in JOBS_TEXT for JSON
+          JOBS_ESCAPED=$(echo -e "$JOBS_TEXT" | sed ':a;N;$!ba;s/\n/\\n/g')
+          PAYLOAD="${PAYLOAD//JOBS_PLACEHOLDER/${JOBS_ESCAPED}}"
+
+          # ----------------------------------------------------------------
+          # Validate JSON payload (best effort)
+          # ----------------------------------------------------------------
+          if command -v jq &> /dev/null; then
+            if ! echo "$PAYLOAD" | jq . > /dev/null 2>&1; then
+              echo "::warning title=Slack Notification::Malformed JSON payload. Skipping notification."
+              exit 0
+            fi
+          fi
+
+          # ----------------------------------------------------------------
+          # Send to Slack with retry logic for rate limiting (HTTP 429)
+          # - 10 second timeout
+          # - Up to 3 retries on 429
+          # - Silent mode (no progress output)
+          # ----------------------------------------------------------------
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          RETRY_DELAY=5
+
+          while [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; do
+            HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+              --max-time 10 \
+              -X POST \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              "$SLACK_WEBHOOK_URL" 2>/dev/null || echo "000")
+
+            case "$HTTP_RESPONSE" in
+              200)
+                echo "Slack notification sent successfully."
+                exit 0
+                ;;
+              429)
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [[ $RETRY_COUNT -lt $MAX_RETRIES ]]; then
+                  echo "::warning title=Slack Notification::Rate limited (429). Retry $RETRY_COUNT/$MAX_RETRIES in ${RETRY_DELAY}s..."
+                  sleep $RETRY_DELAY
+                  RETRY_DELAY=$((RETRY_DELAY * 2))  # Exponential backoff
+                else
+                  echo "::warning title=Slack Notification::Rate limited after $MAX_RETRIES retries. Giving up."
+                fi
+                ;;
+              000)
+                echo "::warning title=Slack Notification::Request failed (timeout or network error). Skipping."
+                exit 0
+                ;;
+              *)
+                echo "::warning title=Slack Notification::Unexpected HTTP $HTTP_RESPONSE. Skipping."
+                exit 0
+                ;;
+            esac
+          done
+
+          # If we exhausted retries, exit gracefully
+          echo "::warning title=Slack Notification::Failed to send after retries. CI continues."
+          exit 0
