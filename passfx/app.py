@@ -19,7 +19,7 @@ from passfx.core.vault import Vault, VaultError
 from passfx.screens.login import LoginScreen
 from passfx.search.engine import SearchIndex, SearchResult
 from passfx.utils.clipboard import clear_clipboard, emergency_cleanup
-from passfx.widgets.search_overlay import SearchOverlay
+from passfx.widgets.search_overlay import VaultInterceptorScreen
 
 if TYPE_CHECKING:
     pass
@@ -199,13 +199,13 @@ class PassFXApp(App):
             return
 
         screen_name = self.screen.__class__.__name__
-        if screen_name in ("LoginScreen", "SearchOverlay"):
+        if screen_name in ("LoginScreen", "VaultInterceptorScreen"):
             return
 
         # Build search index and push modal
         self._build_search_index()
         self.push_screen(
-            SearchOverlay(search_index=self._search_index),
+            VaultInterceptorScreen(search_index=self._search_index),
             callback=self._handle_search_result,
         )
 

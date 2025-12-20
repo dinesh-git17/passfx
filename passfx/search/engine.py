@@ -1,10 +1,8 @@
-"""Search engine for PassFX vault - hybrid search with scoring.
+"""Search engine for PassFX vault - tiered precision search.
 
-Implements a performant search algorithm optimized for TUI responsiveness:
-1. Normalized prefix match (highest priority)
-2. Substring match
-3. Token-based fuzzy match
-4. Bounded Levenshtein distance for typo tolerance
+Implements a predictable, intentional search algorithm:
+- Tier 1: Exact, prefix, and strong substring matches on primary fields
+- Tier 2: Fuzzy matches and secondary field matches (fallback only)
 
 Security: Never searches or exposes password, cvv, or sensitive content fields.
 """
@@ -16,6 +14,7 @@ import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
+from enum import IntEnum
 from typing import Any
 
 from passfx.core.models import (
@@ -33,6 +32,33 @@ from passfx.search.config import (
     CredentialType,
     SearchConfig,
 )
+
+
+class FieldWeight(IntEnum):
+    """Field importance for search scoring."""
+
+    PRIMARY = 100  # label, title (entry name)
+    SECONDARY = 50  # email, phone, cardholder, filename
+    TERTIARY = 20  # notes, tags
+
+
+class MatchTier(IntEnum):
+    """Match quality tiers - Tier 1 always preferred over Tier 2."""
+
+    EXACT = 1000  # Exact match on primary field
+    PREFIX = 900  # Query is prefix of field value
+    STRONG_SUBSTRING = 800  # Query appears in field (word boundary)
+    # --- Tier 1 cutoff: scores >= 800 are "hard" matches ---
+    WEAK_SUBSTRING = 400  # Query appears anywhere in field
+    TOKEN_MATCH = 300  # All query tokens found in entry tokens
+    FUZZY = 100  # Edit distance match (typo tolerance)
+
+
+# Minimum score threshold - results below this are not shown
+MIN_RELEVANCE_THRESHOLD = 50
+
+# Tier 1 cutoff - if any result scores at or above this, only show Tier 1
+TIER_1_CUTOFF = 700
 
 
 @dataclass
@@ -68,8 +94,8 @@ class SearchResult:
 class SearchIndex:
     """Centralized search index for vault credentials.
 
-    Maintains an in-memory index of searchable credential data.
-    Supports incremental updates when credentials change.
+    Implements tiered search: Tier 1 (hard matches) always preferred.
+    Tier 2 (fuzzy/secondary) only shown when Tier 1 returns nothing.
     """
 
     _entries: list[_IndexEntry] = dataclass_field(default_factory=list)
@@ -106,7 +132,10 @@ class SearchIndex:
         self._index_credentials(notes, "note", _note_field_getter)
 
         # Update cache key for invalidation tracking
-        self._cache_key = f"{len(emails)}_{len(phones)}_{len(cards)}_{len(envs)}_{len(recovery)}_{len(notes)}"
+        self._cache_key = (
+            f"{len(emails)}_{len(phones)}_{len(cards)}_"
+            f"{len(envs)}_{len(recovery)}_{len(notes)}"
+        )
 
     def _index_credentials(
         self,
@@ -138,11 +167,20 @@ class SearchIndex:
                     normalized = _normalize_text(value)
                     tokens = _tokenize(normalized)
 
+                    # Determine field weight
+                    if field_name == config.primary_field:
+                        weight = FieldWeight.PRIMARY
+                    elif field_name == config.secondary_field:
+                        weight = FieldWeight.SECONDARY
+                    else:
+                        weight = FieldWeight.TERTIARY
+
                     entry = _IndexEntry(
                         credential=cred,
                         cred_type=cred_type,
                         credential_id=cred_id,
                         field_name=field_name,
+                        field_weight=weight,
                         raw_value=value,
                         normalized_value=normalized,
                         tokens=tokens,
@@ -155,13 +193,12 @@ class SearchIndex:
     def search(self, query: str, max_results: int = 20) -> list[SearchResult]:
         """Search the index for matching credentials.
 
-        Uses hybrid scoring:
-        1. Exact prefix match on primary field = 100 points
-        2. Exact prefix match on other fields = 80 points
-        3. Substring match on primary field = 60 points
-        4. Substring match on other fields = 40 points
-        5. Token match = 30 points
-        6. Fuzzy match (Levenshtein <= 2) = 20 points
+        Tiered search algorithm:
+        1. First, find all Tier 1 matches (exact, prefix, strong substring on primary)
+        2. If Tier 1 has results, return ONLY Tier 1
+        3. If Tier 1 is empty, fall back to Tier 2 (fuzzy, secondary fields)
+        4. Apply minimum relevance threshold
+        5. Sort by score descending
 
         Args:
             query: Search query string.
@@ -176,12 +213,15 @@ class SearchIndex:
         query_normalized = _normalize_text(query)
         query_tokens = _tokenize(query_normalized)
 
+        if not query_normalized:
+            return []
+
         # Track best score per credential ID to avoid duplicates
         best_scores: dict[str, tuple[float, SearchResult]] = {}
 
         for entry in self._entries:
             score = self._score_entry(entry, query_normalized, query_tokens)
-            if score > 0:
+            if score >= MIN_RELEVANCE_THRESHOLD:
                 existing = best_scores.get(entry.credential_id)
                 if existing is None or score > existing[0]:
                     result = SearchResult(
@@ -198,6 +238,17 @@ class SearchIndex:
                     )
                     best_scores[entry.credential_id] = (score, result)
 
+        # Check if we have any Tier 1 results
+        has_tier1 = any(score >= TIER_1_CUTOFF for score, _ in best_scores.values())
+
+        # Filter to Tier 1 only if we have hard matches
+        if has_tier1:
+            best_scores = {
+                cid: (score, result)
+                for cid, (score, result) in best_scores.items()
+                if score >= TIER_1_CUTOFF
+            }
+
         # Sort by score descending, then by primary text
         results = [r for _, r in best_scores.values()]
         results.sort(key=lambda r: (-r.score, r.primary_text.lower()))
@@ -212,6 +263,8 @@ class SearchIndex:
     ) -> float:
         """Calculate match score for an index entry.
 
+        Scoring considers both match type and field importance.
+
         Args:
             entry: The index entry to score.
             query_normalized: Normalized query string.
@@ -220,51 +273,47 @@ class SearchIndex:
         Returns:
             Match score (0 if no match).
         """
-        score = 0.0
-        is_primary = entry.field_name == entry.config.primary_field
+        field_weight = entry.field_weight
+        is_primary = field_weight == FieldWeight.PRIMARY
 
-        # 1. Exact prefix match (highest priority)
+        # 1. EXACT MATCH (Tier 1) - query equals field value
+        if query_normalized == entry.normalized_value:
+            return MatchTier.EXACT + field_weight
+
+        # 2. PREFIX MATCH (Tier 1) - query is prefix of field value
         if entry.normalized_value.startswith(query_normalized):
-            score = 100.0 if is_primary else 80.0
-            # Boost shorter matches (more precise)
+            # Boost for more complete matches
             length_ratio = len(query_normalized) / max(len(entry.normalized_value), 1)
-            score += length_ratio * 10
-            return score
+            bonus = length_ratio * 50
+            return MatchTier.PREFIX + field_weight + bonus
 
-        # 2. Substring match
+        # 3. STRONG SUBSTRING (Tier 1) - query at word boundary in primary field
+        if is_primary and _is_word_boundary_match(
+            query_normalized, entry.normalized_value
+        ):
+            return MatchTier.STRONG_SUBSTRING + field_weight
+
+        # --- Below this line is Tier 2 (fallback only) ---
+
+        # 4. WEAK SUBSTRING (Tier 2) - query appears anywhere
         if query_normalized in entry.normalized_value:
-            score = 60.0 if is_primary else 40.0
-            # Boost earlier matches
             pos = entry.normalized_value.find(query_normalized)
-            position_bonus = max(0, 10 - pos)
-            score += position_bonus
-            return score
+            position_bonus = max(0, 20 - pos)  # Earlier = better
+            return MatchTier.WEAK_SUBSTRING + (field_weight // 2) + position_bonus
 
-        # 3. Token match - all query tokens must match
-        if query_tokens:
-            matched_tokens = 0
-            for qt in query_tokens:
-                for et in entry.tokens:
-                    if et.startswith(qt) or qt in et:
-                        matched_tokens += 1
-                        break
+        # 5. TOKEN MATCH (Tier 2) - all query tokens match entry tokens
+        if query_tokens and _all_tokens_match(query_tokens, entry.tokens):
+            return MatchTier.TOKEN_MATCH + (field_weight // 2)
 
-            if matched_tokens == len(query_tokens):
-                score = 30.0 if is_primary else 25.0
-                return score
-
-        # 4. Fuzzy match (bounded Levenshtein for typo tolerance)
-        # Only for queries >= 3 chars to avoid noise
-        if len(query_normalized) >= 3:
-            # Check against each token
+        # 6. FUZZY MATCH (Tier 2) - edit distance for typo tolerance
+        # Only for queries >= 4 chars, only on primary field, distance <= 1
+        if is_primary and len(query_normalized) >= 4:
             for token in entry.tokens:
-                if len(token) >= 3:
-                    distance = _levenshtein_bounded(query_normalized, token, 2)
-                    if distance is not None and distance <= 2:
-                        score = 20.0 - (
-                            distance * 5
-                        )  # 20 for d=0, 15 for d=1, 10 for d=2
-                        return max(score, 0)
+                if len(token) >= 4:
+                    distance = _levenshtein_bounded(query_normalized, token, 1)
+                    if distance is not None and distance <= 1:
+                        # Only distance 1 allowed (stricter than before)
+                        return MatchTier.FUZZY + field_weight - (distance * 30)
 
         return 0.0
 
@@ -280,6 +329,7 @@ class _IndexEntry:
     cred_type: CredentialType
     credential_id: str
     field_name: str
+    field_weight: FieldWeight
     raw_value: str
     normalized_value: str
     tokens: list[str]
@@ -331,6 +381,56 @@ def _tokenize(text: str) -> list[str]:
     # Split on whitespace and common delimiters
     tokens = re.split(r"[\s\-_@.]+", text)
     return [t for t in tokens if t]
+
+
+def _is_word_boundary_match(query: str, text: str) -> bool:
+    """Check if query matches at a word boundary in text.
+
+    A word boundary match means the query starts at the beginning
+    of a word (after a delimiter or at start of string).
+
+    Args:
+        query: Normalized query string.
+        text: Normalized text to search in.
+
+    Returns:
+        True if query matches at a word boundary.
+    """
+    if query not in text:
+        return False
+
+    pos = text.find(query)
+
+    # Match at start of string
+    if pos == 0:
+        return True
+
+    # Match after a word boundary (space, underscore, dash, etc.)
+    char_before = text[pos - 1]
+    return char_before in " -_@./"
+
+
+def _all_tokens_match(query_tokens: list[str], entry_tokens: list[str]) -> bool:
+    """Check if all query tokens match entry tokens.
+
+    Each query token must be a prefix of at least one entry token.
+
+    Args:
+        query_tokens: Tokenized query.
+        entry_tokens: Tokenized entry value.
+
+    Returns:
+        True if all query tokens match.
+    """
+    for qt in query_tokens:
+        found = False
+        for et in entry_tokens:
+            if et.startswith(qt):
+                found = True
+                break
+        if not found:
+            return False
+    return True
 
 
 def _levenshtein_bounded(s1: str, s2: str, max_dist: int) -> int | None:
