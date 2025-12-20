@@ -347,7 +347,12 @@ class VaultInterceptorScreen(ModalScreen[SearchResult | None]):
 
         self._update_status()
         self._update_mode_indicator()
-        self._esc_pending = False
+
+        # Only reset _esc_pending when entering COMMAND mode, not when leaving.
+        # This preserves the double-ESC pattern: first ESC from COMMAND returns
+        # to SEARCH with _esc_pending=True, second ESC in SEARCH closes modal.
+        if mode == InterceptorMode.COMMAND:
+            self._esc_pending = False
 
         if mode == InterceptorMode.SEARCH:
             self._focus_input()
@@ -362,6 +367,9 @@ class VaultInterceptorScreen(ModalScreen[SearchResult | None]):
 
         query = event.value.strip()
         self._perform_search(query)
+
+        # Typing cancels double-ESC pattern - user is actively engaging
+        self._esc_pending = False
 
         # Reset to search mode when typing
         if self.mode == InterceptorMode.COMMAND:
@@ -433,7 +441,15 @@ class VaultInterceptorScreen(ModalScreen[SearchResult | None]):
             event.stop()
 
     def action_handle_escape(self) -> None:
-        """Handle escape key based on mode and state."""
+        """Handle escape key based on mode and state.
+
+        ESC behavior:
+        - COMMAND mode (first ESC): Return to SEARCH, set _esc_pending=True
+        - COMMAND mode (_esc_pending): Close modal (double-ESC in COMMAND)
+        - SEARCH mode (_esc_pending): Close modal (double-ESC from COMMAND)
+        - SEARCH mode (has text): Clear input
+        - SEARCH mode (empty): Close modal
+        """
         if self.mode == InterceptorMode.COMMAND:
             if self._esc_pending:
                 # Double escape: close
@@ -444,6 +460,11 @@ class VaultInterceptorScreen(ModalScreen[SearchResult | None]):
                 self.mode = InterceptorMode.SEARCH
         else:
             # Search mode
+            if self._esc_pending:
+                # Double-ESC from COMMAND mode: close immediately
+                self.dismiss(None)
+                return
+
             try:
                 input_widget = self._get_input()
                 if input_widget.value:

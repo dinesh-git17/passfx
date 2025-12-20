@@ -133,6 +133,7 @@ markers = [
     "security: Security tests - threat model and invariant validation",
     "slow: Slow tests (>1s) - excluded from fast runs",
     "edge: Edge case tests - failure paths and hardening scenarios",
+    "regression: Regression tests - bug fix contracts to prevent recurrence",
 ]
 filterwarnings = [
     "error",
