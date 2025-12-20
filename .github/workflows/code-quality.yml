@@ -322,7 +322,7 @@ jobs:
 
   # ==========================================================================
   # Final Summary Job
-  # Aggregates all test results for easy review
+  # Aggregates all test results and posts PR comment with mergeability verdict
   # ==========================================================================
   ci-summary:
     name: CI Summary
@@ -331,33 +331,123 @@ jobs:
     if: always()
 
     steps:
+      - name: Determine job statuses
+        id: status
+        run: |
+          # Map job results to display status
+          get_status() {
+            case "$1" in
+              success) echo "✅ Passed" ;;
+              failure) echo "❌ Failed" ;;
+              cancelled) echo "⚪ Cancelled" ;;
+              skipped) echo "⏭️ Skipped" ;;
+              *) echo "❓ Unknown" ;;
+            esac
+          }
+
+          # Collect all job results
+          CODE_QUALITY="${{ needs.code-quality.result }}"
+          CORE_SECURITY="${{ needs.core-security-tests.result }}"
+          UI_TESTS="${{ needs.ui-tests.result }}"
+          UTILS_CLI="${{ needs.utils-cli-tests.result }}"
+          PERF_STATUS="${{ needs.performance-status.result }}"
+
+          # Set status outputs
+          echo "code_quality=$(get_status $CODE_QUALITY)" >> $GITHUB_OUTPUT
+          echo "core_security=$(get_status $CORE_SECURITY)" >> $GITHUB_OUTPUT
+          echo "ui_tests=$(get_status $UI_TESTS)" >> $GITHUB_OUTPUT
+          echo "utils_cli=$(get_status $UTILS_CLI)" >> $GITHUB_OUTPUT
+          echo "perf_status=$(get_status $PERF_STATUS)" >> $GITHUB_OUTPUT
+
+          # Determine mergeability (all required jobs must pass)
+          if [[ "$CODE_QUALITY" == "success" && \
+                "$CORE_SECURITY" == "success" && \
+                "$UI_TESTS" == "success" && \
+                "$UTILS_CLI" == "success" ]]; then
+            echo "mergeable=true" >> $GITHUB_OUTPUT
+            echo "verdict=✅ **Mergeable** — All required checks passed." >> $GITHUB_OUTPUT
+          else
+            echo "mergeable=false" >> $GITHUB_OUTPUT
+
+            # Build failure reason
+            FAILURES=""
+            [[ "$CODE_QUALITY" != "success" ]] && FAILURES="$FAILURES code quality,"
+            [[ "$CORE_SECURITY" != "success" ]] && FAILURES="$FAILURES core/security tests,"
+            [[ "$UI_TESTS" != "success" ]] && FAILURES="$FAILURES UI tests,"
+            [[ "$UTILS_CLI" != "success" ]] && FAILURES="$FAILURES utility tests,"
+            FAILURES="${FAILURES%,}"  # Remove trailing comma
+
+            echo "verdict=❌ **Not Mergeable** — Failed:$FAILURES" >> $GITHUB_OUTPUT
+          fi
+
       - name: Generate CI summary
         run: |
           echo "# PassFX CI Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Job Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Code Quality | ${{ needs.code-quality.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Core & Security | ${{ needs.core-security-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| UI & Screens | ${{ needs.ui-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Utilities & CLI | ${{ needs.utils-cli-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Performance | ⏭️ Skipped (intentional) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status | Purpose |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ steps.status.outputs.code_quality }} | Formatting, linting, attribution verification |" >> $GITHUB_STEP_SUMMARY
+          echo "| Core & Security | ${{ steps.status.outputs.core_security }} | Encryption, vault storage, security invariants |" >> $GITHUB_STEP_SUMMARY
+          echo "| UI & Screens | ${{ steps.status.outputs.ui_tests }} | Terminal UI, screen behavior, app lifecycle |" >> $GITHUB_STEP_SUMMARY
+          echo "| Utilities & CLI | ${{ steps.status.outputs.utils_cli }} | Helper functions, CLI, edge case handling |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance | ${{ steps.status.outputs.perf_status }} | Benchmarks (skipped in CI, runs weekly) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Phase 0 Infrastructure** - Coverage threshold at 0% for initial setup." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Target thresholds:" >> $GITHUB_STEP_SUMMARY
-          echo "- Overall: 90%" >> $GITHUB_STEP_SUMMARY
-          echo "- \`core/crypto.py\`: 100%" >> $GITHUB_STEP_SUMMARY
-          echo "- \`core/vault.py\`: 100%" >> $GITHUB_STEP_SUMMARY
+          echo "**Merge Status:** ${{ steps.status.outputs.verdict }}" >> $GITHUB_STEP_SUMMARY
 
-      - name: Check job results
-        if: |
-          needs.code-quality.result != 'success' ||
-          needs.core-security-tests.result != 'success' ||
-          needs.ui-tests.result != 'success' ||
-          needs.utils-cli-tests.result != 'success'
+      - name: Post PR comment
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Build comment body
+          COMMENT_BODY=$(cat <<'COMMENT_EOF'
+          <!-- PASSFX_CI_SUMMARY -->
+          ## CI Summary
+
+          | Job | Status | Purpose |
+          |-----|--------|---------|
+          | **Code Quality** | ${{ steps.status.outputs.code_quality }} | Formatting, linting, attribution verification |
+          | **Core & Security** | ${{ steps.status.outputs.core_security }} | Encryption, vault storage, security invariants |
+          | **UI & Screens** | ${{ steps.status.outputs.ui_tests }} | Terminal UI, screen behavior, app lifecycle |
+          | **Utilities & CLI** | ${{ steps.status.outputs.utils_cli }} | Helper functions, CLI, edge case handling |
+          | **Performance** | ${{ steps.status.outputs.perf_status }} | Benchmarks (skipped in CI, runs weekly) |
+
+          ---
+
+          **Merge Status:** ${{ steps.status.outputs.verdict }}
+
+          <sub>
+          Python versions tested: 3.10, 3.11 · Coverage: Phase 0 (0% threshold) · [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          </sub>
+          COMMENT_EOF
+          )
+
+          # Find existing comment by marker
+          EXISTING_COMMENT_ID=$(gh api \
+            "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq '.[] | select(.body | contains("<!-- PASSFX_CI_SUMMARY -->")) | .id' \
+            | head -1)
+
+          if [[ -n "$EXISTING_COMMENT_ID" ]]; then
+            # Update existing comment
+            gh api \
+              "repos/${{ github.repository }}/issues/comments/${EXISTING_COMMENT_ID}" \
+              -X PATCH \
+              -f body="$COMMENT_BODY"
+            echo "Updated existing CI summary comment (ID: $EXISTING_COMMENT_ID)"
+          else
+            # Create new comment
+            gh api \
+              "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+              -f body="$COMMENT_BODY"
+            echo "Created new CI summary comment"
+          fi
+
+      - name: Set exit status
+        if: steps.status.outputs.mergeable != 'true'
         run: exit 1
