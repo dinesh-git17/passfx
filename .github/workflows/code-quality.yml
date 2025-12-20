@@ -26,6 +26,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Permissions for GITHUB_TOKEN
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   # ==========================================================================
   # Job 1: Code Quality Checks (Formatting, Linting, Attribution)
