@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 from textual.app import App
 from textual.binding import Binding
+from textual.events import Key, MouseDown
 
 from passfx.core.config import get_config
 from passfx.core.crypto import CryptoError
@@ -125,6 +126,16 @@ class PassFXApp(App):
         self.push_screen("login")
         # Start auto-lock timer - checks every 10 seconds
         self.set_interval(10, self._check_auto_lock)
+
+    def on_key(self, _event: Key) -> None:
+        """Reset activity timer on any key press."""
+        if self._unlocked:
+            self.vault.reset_activity()
+
+    def on_mouse_down(self, _event: MouseDown) -> None:
+        """Reset activity timer on any mouse click."""
+        if self._unlocked:
+            self.vault.reset_activity()
 
     def _check_auto_lock(self) -> None:
         """Check if vault should auto-lock due to inactivity.

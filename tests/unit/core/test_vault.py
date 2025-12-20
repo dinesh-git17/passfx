@@ -1193,6 +1193,27 @@ class TestTimeout:
         unlocked_vault.set_lock_timeout(600)
         assert unlocked_vault._lock_timeout == 600
 
+    def test_reset_activity_updates_timestamp(self, unlocked_vault: Vault) -> None:
+        """reset_activity updates the last activity timestamp."""
+        unlocked_vault._last_activity = time.time() - 1000
+        old_activity = unlocked_vault._last_activity
+
+        unlocked_vault.reset_activity()
+
+        assert unlocked_vault._last_activity > old_activity
+        assert unlocked_vault._last_activity >= time.time() - 1
+
+    def test_reset_activity_prevents_timeout(self, unlocked_vault: Vault) -> None:
+        """reset_activity prevents check_timeout from returning True."""
+        unlocked_vault._lock_timeout = 300
+        unlocked_vault._last_activity = time.time() - 400
+
+        assert unlocked_vault.check_timeout() is True
+
+        unlocked_vault.reset_activity()
+
+        assert unlocked_vault.check_timeout() is False
+
 
 class TestFileLocking:
     """Tests for vault file locking behavior."""
