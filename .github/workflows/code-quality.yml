@@ -1,6 +1,15 @@
 # Code Quality Gate
-# Enforces formatting, linting, compilation safety, and attribution guards.
-# Mirrors local pre-commit hooks to ensure CI/local parity.
+# Enforces formatting, linting, compilation safety, attribution guards, and tests.
+# Split into semantic jobs for clarity and parallel execution.
+#
+# Job Structure:
+#   - code-quality: Formatting, linting, attribution (runs once on 3.11)
+#   - core-security-tests: Critical security and core module validation
+#   - ui-tests: Textual UI, screens, and app lifecycle tests
+#   - utils-cli-tests: Utility functions, CLI, and edge case tests
+#
+# Performance tests (marked @pytest.mark.slow) are excluded from CI.
+# They run via scheduled workflow or manual trigger.
 
 name: Code Quality
 
@@ -18,61 +27,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality-gate:
-    name: Quality Gate (Python ${{ matrix.python-version }})
+  # ==========================================================================
+  # Job 1: Code Quality Checks (Formatting, Linting, Attribution)
+  # ==========================================================================
+  code-quality:
+    name: Code Quality
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.10', '3.11']
-
     steps:
-      # Step 1: Checkout repository
       - name: Checkout code
         uses: actions/checkout@v6
 
-      # Step 2: Set up Python with dependency caching
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.11
         uses: actions/setup-python@v6
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
           cache: 'pip'
 
-      # Step 3: Install dependencies and tooling
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
           pip install black pylint isort pre-commit
 
-      # Step 4: Black formatting check
-      # Fails if any file requires reformatting
       - name: Check formatting (black)
-        run: |
-          black --check --diff passfx/
+        run: black --check --diff passfx/
 
-      # Step 5: isort import sorting check
-      # Ensures imports are sorted consistently with black profile
       - name: Check import sorting (isort)
-        run: |
-          isort --check-only --diff --profile black passfx/
+        run: isort --check-only --diff --profile black passfx/
 
-      # Step 6: Pylint linting
-      # Requires score of 10.0/10 to pass
       - name: Lint (pylint)
-        run: |
-          pylint passfx/ --rcfile=.pylintrc --fail-under=10.0
+        run: pylint passfx/ --rcfile=.pylintrc --fail-under=10.0
 
-      # Step 7: Python compilation safety
-      # Ensures all Python files have valid syntax
       - name: Compilation check
-        run: |
-          find passfx/ -name "*.py" -type f | xargs python -m py_compile
+        run: find passfx/ -name "*.py" -type f | xargs python -m py_compile
 
-      # Step 8: Attribution guard
-      # CRITICAL: Blocks any AI/LLM attribution references
-      # Scans .py, .md, .txt, .yaml, .yml, .toml files
       - name: Attribution guard
         run: |
           python scripts/attribution_guard.py $(find . \
@@ -90,35 +79,285 @@ jobs:
             ! -name "CLAUDE.md" \
             2>/dev/null || true)
 
-      # Step 9: Pre-commit parity check
-      # Ensures CI matches local pre-commit hooks
       - name: Pre-commit parity check
-        run: |
-          pre-commit run --all-files
+        run: pre-commit run --all-files
 
-      # Step 10: Run test suite with coverage
-      # All tests must pass. Coverage threshold at 0 to allow gradual increase.
-      # Final target: 90% overall, 100% for core/crypto.py and core/vault.py
-      - name: Run tests with coverage
+  # ==========================================================================
+  # Job 2: Core & Security Tests
+  # Critical security and data integrity validation
+  # Includes: crypto, vault, models, integration, security, regression tests
+  # ==========================================================================
+  core-security-tests:
+    name: Core & Security (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: code-quality
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
         run: |
-          pytest tests/ \
-            --cov=passfx \
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run core & security tests
+        run: |
+          pytest tests/unit/core tests/integration tests/security tests/regression \
+            --cov=passfx.core \
             --cov-report=term-missing \
-            --cov-report=xml \
+            --cov-report=xml:coverage-core.xml \
             --cov-fail-under=0 \
             -v \
-            --tb=short
+            --tb=short \
+            -ra
 
-      # Step 11: Upload coverage report
-      # Coverage badge: https://codecov.io/gh/dinesh-git17/passfx
-      - name: Upload coverage to Codecov
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## Core & Security Tests (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Categories Executed:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/unit/core/\` - Crypto, Vault, Models (~950 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/integration/\` - Encryption round-trips (~50 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/security/\` - Threat model validation (~190 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/regression/\` - Security invariant locks (~100 tests)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload coverage
         uses: codecov/codecov-action@v5
         if: matrix.python-version == '3.11'
         with:
-          files: ./coverage.xml
-          flags: unit
-          name: passfx-coverage
+          files: ./coverage-core.xml
+          flags: core-security
+          name: core-security-coverage
           fail_ci_if_error: false
           verbose: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ==========================================================================
+  # Job 3: UI & Screens Tests
+  # Textual TUI, screen behavior, and app lifecycle validation
+  # Includes: UI, screens, app lifecycle tests
+  # ==========================================================================
+  ui-tests:
+    name: UI & Screens (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: code-quality
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run UI & screens tests
+        run: |
+          pytest tests/ui tests/app tests/screens \
+            --cov=passfx.screens \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage-ui.xml \
+            --cov-fail-under=0 \
+            -v \
+            --tb=short \
+            -ra
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## UI & Screens Tests (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Categories Executed:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/ui/\` - Login security, search state machine (~130 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/app/\` - App lifecycle management (~30 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/screens/\` - Credential screen behavior (~50 tests)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        if: matrix.python-version == '3.11'
+        with:
+          files: ./coverage-ui.xml
+          flags: ui-screens
+          name: ui-screens-coverage
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ==========================================================================
+  # Job 4: Utilities & CLI Tests
+  # Helper functions, CLI entry points, and edge case validation
+  # Includes: utils, CLI, edge case tests
+  # ==========================================================================
+  utils-cli-tests:
+    name: Utilities & CLI (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: code-quality
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run utility & CLI tests
+        run: |
+          pytest tests/utils tests/cli tests/edge \
+            --cov=passfx.utils \
+            --cov-report=term-missing \
+            --cov-report=xml:coverage-utils.xml \
+            --cov-fail-under=0 \
+            -v \
+            --tb=short \
+            -ra
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## Utilities & CLI Tests (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Categories Executed:**" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/utils/\` - Password generator, strength, clipboard, I/O (~310 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/cli/\` - CLI entry point validation (~20 tests)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`tests/edge/\` - Failure modes and edge cases (~100 tests)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        if: matrix.python-version == '3.11'
+        with:
+          files: ./coverage-utils.xml
+          flags: utils-cli
+          name: utils-cli-coverage
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ==========================================================================
+  # Job 5: Performance Test Status
+  # Documents that slow tests are intentionally excluded from CI
+  # ==========================================================================
+  performance-status:
+    name: Performance Tests (Skipped)
+    runs-on: ubuntu-latest
+    needs: code-quality
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Report skipped performance tests
+        run: |
+          echo "## Performance Tests Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⏭️ **Intentionally Skipped in CI**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Performance tests marked with \`@pytest.mark.slow\` are excluded from the" >> $GITHUB_STEP_SUMMARY
+          echo "fast CI pipeline to maintain quick feedback for contributors." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**What's Skipped:**" >> $GITHUB_STEP_SUMMARY
+          pytest tests/performance --collect-only -q 2>/dev/null | head -20 >> $GITHUB_STEP_SUMMARY || true
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**How to Run Locally:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "pytest tests/performance --run-slow -v" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scheduled Runs:**" >> $GITHUB_STEP_SUMMARY
+          echo "Performance tests run weekly via the [Performance Tests workflow](../../actions/workflows/performance-tests.yml)." >> $GITHUB_STEP_SUMMARY
+
+      - name: Create annotation
+        run: |
+          echo "::notice title=Performance Tests::Skipped in CI (5 slow tests). Run locally with: pytest tests/performance --run-slow"
+
+  # ==========================================================================
+  # Final Summary Job
+  # Aggregates all test results for easy review
+  # ==========================================================================
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, core-security-tests, ui-tests, utils-cli-tests, performance-status]
+    if: always()
+
+    steps:
+      - name: Generate CI summary
+        run: |
+          echo "# PassFX CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.code-quality.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Core & Security | ${{ needs.core-security-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| UI & Screens | ${{ needs.ui-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Utilities & CLI | ${{ needs.utils-cli-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance | ⏭️ Skipped (intentional) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Phase 0 Infrastructure** - Coverage threshold at 0% for initial setup." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Target thresholds:" >> $GITHUB_STEP_SUMMARY
+          echo "- Overall: 90%" >> $GITHUB_STEP_SUMMARY
+          echo "- \`core/crypto.py\`: 100%" >> $GITHUB_STEP_SUMMARY
+          echo "- \`core/vault.py\`: 100%" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check job results
+        if: |
+          needs.code-quality.result != 'success' ||
+          needs.core-security-tests.result != 'success' ||
+          needs.ui-tests.result != 'success' ||
+          needs.utils-cli-tests.result != 'success'
+        run: exit 1
