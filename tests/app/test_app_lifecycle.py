@@ -1753,6 +1753,92 @@ class TestAutoLock:
                     # When push_screen is called, _unlocked should already be False
                     assert unlocked_states == [False]
 
+    @pytest.mark.unit
+    def test_on_key_resets_activity_when_unlocked(self) -> None:
+        """Verify on_key resets activity timer when vault is unlocked."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = True
+
+            mock_event = MagicMock()
+            app.on_key(mock_event)
+
+            mock_vault.reset_activity.assert_called_once()
+
+    @pytest.mark.unit
+    def test_on_key_does_not_reset_activity_when_locked(self) -> None:
+        """Verify on_key does not reset activity when vault is locked."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = False
+
+            mock_event = MagicMock()
+            app.on_key(mock_event)
+
+            mock_vault.reset_activity.assert_not_called()
+
+    @pytest.mark.unit
+    def test_on_mouse_down_resets_activity_when_unlocked(self) -> None:
+        """Verify on_mouse_down resets activity timer when vault is unlocked."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = True
+
+            mock_event = MagicMock()
+            app.on_mouse_down(mock_event)
+
+            mock_vault.reset_activity.assert_called_once()
+
+    @pytest.mark.unit
+    def test_on_mouse_down_does_not_reset_activity_when_locked(self) -> None:
+        """Verify on_mouse_down does not reset activity when vault is locked."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = False
+
+            mock_event = MagicMock()
+            app.on_mouse_down(mock_event)
+
+            mock_vault.reset_activity.assert_not_called()
+
+    @pytest.mark.unit
+    def test_multiple_key_events_reset_activity_each_time(self) -> None:
+        """Verify each key event resets activity timer."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            from passfx.app import PassFXApp
+
+            app = PassFXApp()
+            app._unlocked = True
+
+            mock_event = MagicMock()
+            for _ in range(5):
+                app.on_key(mock_event)
+
+            assert mock_vault.reset_activity.call_count == 5
+
 
 # ---------------------------------------------------------------------------
 # Navigation Guard Tests
