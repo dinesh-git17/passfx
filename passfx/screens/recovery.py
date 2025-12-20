@@ -569,6 +569,9 @@ class RecoveryScreen(Screen):
                     yield Static(f"[bold {c['primary']}] V [/]", classes="keycap")
                     yield Static(f"[{c['muted']}]View[/]", classes="keycap-label")
                 with Horizontal(classes="keycap-group"):
+                    yield Static(f"[bold {c['primary']}] ^K [/]", classes="keycap")
+                    yield Static(f"[{c['muted']}]Search[/]", classes="keycap-label")
+                with Horizontal(classes="keycap-group"):
                     yield Static(f"[bold {c['primary']}] ESC [/]", classes="keycap")
                     yield Static(f"[{c['muted']}]Back[/]", classes="keycap-label")
 

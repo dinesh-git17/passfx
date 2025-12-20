@@ -4795,12 +4795,30 @@ SettingsScreen {
     content-align: center middle;
 }
 
-#settings-footer-keys {
-    width: 1fr;
+/* Keycap styling within settings footer */
+#settings-footer .keycap-group {
+    width: auto;
     height: 3;
-    background: $operator-black;
-    align: left middle;
-    padding-left: 2;
+    margin-right: 2;
+    align: center middle;
+}
+
+#settings-footer .keycap {
+    width: auto;
+    height: auto;
+    min-width: 5;
+    background: $operator-surface;
+    color: $operator-primary;
+    text-style: bold;
+    padding: 0 1;
+}
+
+#settings-footer .keycap-label {
+    width: auto;
+    height: auto;
+    background: transparent;
+    margin-left: 1;
+    color: $operator-muted;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
