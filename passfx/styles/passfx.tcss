@@ -948,26 +948,67 @@ ScrollBar > .scrollbar--bar:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TOAST NOTIFICATIONS
+   TOAST NOTIFICATIONS - System Panel Style
+   Matches PassFX mechanical aesthetic: pure black, heavy borders, sharp edges
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Toast Container - positions toast stack */
+ToastRack {
+    margin-bottom: 2;
+    margin-right: 1;
+}
+
+/* Base Toast - Mini System Panel */
 Toast {
-    background: #1e293b;
-    color: #f8fafc;
-    border: solid #3b82f6;
+    width: 48;
+    max-width: 60%;
+    background: $operator-black;
+    color: $operator-text;
+    border: heavy $neon-cyan;
     padding: 1 2;
+    margin-top: 1;
 }
 
+/* Title styling - variant color, bold */
+Toast .toast--title {
+    text-style: bold;
+    color: $neon-cyan;
+}
+
+/* INFO / Default - Cyan (primary system feedback) */
 Toast.-information {
-    border: solid #3b82f6;
+    border: heavy $neon-cyan;
 }
 
+Toast.-information .toast--title {
+    color: $neon-cyan;
+}
+
+/* SUCCESS - Green (positive confirmation) */
+Toast.-success {
+    border: heavy $pfx-success;
+}
+
+Toast.-success .toast--title {
+    color: $pfx-success;
+}
+
+/* WARNING - Amber (caution) */
 Toast.-warning {
-    border: solid #f59e0b;
+    border: heavy $pfx-warning;
 }
 
+Toast.-warning .toast--title {
+    color: $pfx-warning;
+}
+
+/* ERROR - Red (failure) */
 Toast.-error {
-    border: solid #ef4444;
+    border: heavy $pfx-error;
+}
+
+Toast.-error .toast--title {
+    color: $pfx-error;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
