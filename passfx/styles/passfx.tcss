@@ -70,7 +70,7 @@ MainMenuScreen {
 }
 
 #header-branding {
-    width: auto;
+    width: 30;
     height: 4;
     background: $operator-black;
     color: $operator-primary;
@@ -79,7 +79,7 @@ MainMenuScreen {
 }
 
 #header-right {
-    width: 1fr;
+    width: 30;
     height: 4;
     background: $operator-black;
     align: right middle;
@@ -102,6 +102,27 @@ MainMenuScreen {
     text-style: bold;
     content-align: right middle;
     background: $operator-black;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AUTO-LOCK COUNTDOWN WARNING
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#header-countdown {
+    width: 1fr;
+    height: 4;
+    content-align: center middle;
+    background: $operator-black;
+    text-style: bold;
+    text-opacity: 0%;
+}
+
+#header-countdown.countdown-active {
+    text-opacity: 100%;
+}
+
+#header-countdown.countdown-active.countdown-pulse {
+    text-opacity: 60%;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

@@ -173,6 +173,7 @@ class MainMenuScreen(Screen):
         # Command Bar - Operator theme header with ASCII logo
         with Horizontal(id="app-header"):
             yield Static(HEADER_LOGO, id="header-branding")
+            yield Static("", id="header-countdown")
             with Horizontal(id="header-right"):
                 yield Static("", id="header-clock")
                 yield Static("[dim]│[/] [#22c55e]DECRYPTED[/]", id="header-lock")
@@ -275,6 +276,9 @@ class MainMenuScreen(Screen):
         self.set_interval(1, self._update_clock)
         # Start subtle pulse on DECRYPTED status indicator
         self.set_interval(3.0, self._pulse_status)
+        # Initialize countdown with placeholder to reserve space (hidden via opacity)
+        countdown = self.query_one("#header-countdown", Static)
+        countdown.update("AUTO-LOCK IN 00:00")
 
     def _log_startup_sequence(self) -> None:
         """Log welcome message and tips to the terminal."""
@@ -319,6 +323,9 @@ class MainMenuScreen(Screen):
         clock_widget.add_class("tick-glow")
         self.set_timer(0.15, lambda: clock_widget.remove_class("tick-glow"))
 
+        # Update auto-lock countdown warning
+        self._update_countdown()
+
     def _pulse_status(self) -> None:
         """Subtle pulse on DECRYPTED status indicator.
 
@@ -337,6 +344,50 @@ class MainMenuScreen(Screen):
         """Reset DECRYPTED status to normal intensity."""
         lock_widget = self.query_one("#header-lock", Static)
         lock_widget.update("[dim]│[/] [#22c55e]DECRYPTED[/]")
+
+    def _update_countdown(self) -> None:
+        """Update auto-lock countdown warning.
+
+        Shows warning only in final 30 seconds before auto-lock.
+        Color escalation: cyan (30-16s) -> amber (15-6s) -> red (<=5s).
+        Uses opacity to show/hide while reserving layout space.
+        """
+        app: PassFXApp = self.app  # type: ignore[assignment]
+        countdown_widget = self.query_one("#header-countdown", Static)
+
+        # Hide if vault locked
+        if not app._unlocked:  # pylint: disable=protected-access
+            countdown_widget.remove_class("countdown-active", "countdown-pulse")
+            return
+
+        remaining = app.vault.get_remaining_lock_time()
+
+        # Hide if auto-lock disabled or not in warning window
+        if remaining is None or remaining > 30:
+            countdown_widget.remove_class("countdown-active", "countdown-pulse")
+            return
+
+        # Format MM:SS
+        minutes = remaining // 60
+        seconds = remaining % 60
+        time_str = f"{minutes:02d}:{seconds:02d}"
+
+        # Color escalation
+        if remaining <= 5:
+            color = "#ef4444"  # Red - critical
+        elif remaining <= 15:
+            color = "#f59e0b"  # Amber - warning
+        else:
+            color = "#00FFFF"  # Cyan - notice
+
+        countdown_widget.update(f"[bold {color}]AUTO-LOCK IN {time_str}[/]")
+        countdown_widget.add_class("countdown-active")
+
+        # Toggle pulse effect
+        if countdown_widget.has_class("countdown-pulse"):
+            countdown_widget.remove_class("countdown-pulse")
+        else:
+            countdown_widget.add_class("countdown-pulse")
 
     def on_screen_resume(self) -> None:
         """Called when screen becomes active again after being covered."""
