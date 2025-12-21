@@ -421,6 +421,352 @@ class TestAppLifecycle:
 
 
 # ---------------------------------------------------------------------------
+# Logout Action Tests
+# ---------------------------------------------------------------------------
+
+
+class TestActionLogout:
+    """Tests for PassFXApp.action_logout() method.
+
+    Validates the logout feature which locks the vault, clears sensitive state,
+    and returns to the LoginScreen without exiting the application.
+    """
+
+    @pytest.mark.unit
+    def test_locks_vault_when_unlocked(self) -> None:
+        """Verify vault.lock() is called when app is unlocked."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app.action_logout()
+
+                    mock_vault.lock.assert_called_once()
+
+    @pytest.mark.unit
+    def test_skips_lock_when_already_locked(self) -> None:
+        """Verify vault.lock() is not called when already locked."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = False
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app.action_logout()
+
+                    mock_vault.lock.assert_not_called()
+
+    @pytest.mark.unit
+    def test_sets_unlocked_false(self) -> None:
+        """Verify _unlocked is set to False after logout."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app.action_logout()
+
+                    assert app._unlocked is False
+
+    @pytest.mark.unit
+    def test_clears_search_index(self) -> None:
+        """Verify _search_index is set to None after logout."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+                from passfx.search.engine import SearchIndex
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app._search_index = SearchIndex()  # Set a search index
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app.action_logout()
+
+                    assert app._search_index is None
+
+    @pytest.mark.unit
+    def test_clears_clipboard(self) -> None:
+        """Verify clear_clipboard() is called on logout.
+
+        Security invariant: Sensitive data must be cleared from clipboard.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard") as mock_clear_clipboard:
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app.action_logout()
+
+                    mock_clear_clipboard.assert_called_once()
+
+    @pytest.mark.unit
+    def test_pops_all_screens_except_base(self) -> None:
+        """Verify all screens except base are popped."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                # Simulate 3 screens on stack
+                screen_stack_data = [MagicMock(), MagicMock(), MagicMock()]
+
+                def pop_side_effect() -> None:
+                    if len(screen_stack_data) > 1:
+                        screen_stack_data.pop()
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock(  # type: ignore[method-assign]
+                        side_effect=pop_side_effect
+                    )
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app.action_logout()
+
+                    # Should pop twice (3 -> 2 -> 1)
+                    assert app.pop_screen.call_count == 2
+
+    @pytest.mark.unit
+    def test_pushes_login_screen(self) -> None:
+        """Verify LoginScreen is pushed after logout."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+                from passfx.screens.login import LoginScreen
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app.action_logout()
+
+                    app.push_screen.assert_called_once()
+                    pushed_screen = app.push_screen.call_args[0][0]
+                    assert isinstance(pushed_screen, LoginScreen)
+
+    @pytest.mark.unit
+    def test_notifies_user(self) -> None:
+        """Verify user is notified with logout message."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    app.action_logout()
+
+                    app.notify.assert_called_once()
+                    call_kwargs = app.notify.call_args[1]
+                    assert call_kwargs["title"] == "Logged Out"
+                    assert call_kwargs["severity"] == "information"
+
+    @pytest.mark.unit
+    def test_idempotent_multiple_calls(self) -> None:
+        """Verify logout is safe to call multiple times."""
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    # Call logout twice
+                    app.action_logout()
+                    app.action_logout()
+
+                    # Should only lock once (first call)
+                    mock_vault.lock.assert_called_once()
+                    # But notify should be called twice
+                    assert app.notify.call_count == 2
+
+    @pytest.mark.unit
+    def test_handles_none_vault(self) -> None:
+        """Verify logout handles None vault gracefully."""
+        with patch("passfx.app.Vault"):
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app.vault = None  # type: ignore[assignment]
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+
+                    # Should not raise
+                    app.action_logout()
+
+                    assert app._unlocked is False
+
+    @pytest.mark.unit
+    def test_does_not_call_exit(self) -> None:
+        """Verify logout does NOT call exit (unlike quit).
+
+        Key difference from action_quit: app stays running.
+        """
+        with patch("passfx.app.Vault") as mock_vault_class:
+            mock_vault = MagicMock()
+            mock_vault_class.return_value = mock_vault
+
+            with patch("passfx.app.clear_clipboard"):
+                from passfx.app import PassFXApp
+
+                screen_stack_data = [MagicMock()]
+
+                with patch.object(
+                    PassFXApp,
+                    "screen_stack",
+                    new_callable=lambda: property(lambda self: screen_stack_data),
+                ):
+                    app = PassFXApp()
+                    app._unlocked = True
+                    app.notify = MagicMock()  # type: ignore[method-assign]
+                    app.pop_screen = MagicMock()  # type: ignore[method-assign]
+                    app.push_screen = MagicMock()  # type: ignore[method-assign]
+                    app.exit = MagicMock()  # type: ignore[method-assign]
+
+                    app.action_logout()
+
+                    # exit() should NOT be called
+                    app.exit.assert_not_called()
+
+    @pytest.mark.unit
+    def test_logout_method_exists(self) -> None:
+        """Verify action_logout method is defined on PassFXApp."""
+        from passfx.app import PassFXApp
+
+        assert hasattr(PassFXApp, "action_logout")
+        assert callable(getattr(PassFXApp, "action_logout"))
+
+
+# ---------------------------------------------------------------------------
 # Cleanup Guarantee Tests
 # ---------------------------------------------------------------------------
 
