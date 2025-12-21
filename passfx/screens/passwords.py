@@ -145,50 +145,60 @@ def _get_avatar_bg_color(label: str) -> str:
 
 
 class AddPasswordModal(ModalScreen[EmailCredential | None]):
-    """Modal for adding a new password - Operator Grade Secure Write Console."""
+    """Modal for adding a new password - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout."""
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="password-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: OPEN", classes="modal-status")
 
-            # Form Body
-            with Vertical(id="pwd-form"):
-                # Row 1: Label (System)
-                yield Label("> TARGET_SYSTEM", classes="input-label")
-                yield Input(placeholder="e.g. GITHUB_MAIN", id="label-input")
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> TARGET_SYSTEM", classes="input-label")
+                    yield Input(placeholder="e.g. GITHUB_MAIN", id="label-input")
 
-                # Row 2: Email (Identity)
-                yield Label("> USER_IDENTITY", classes="input-label")
-                yield Input(placeholder="username@host", id="email-input")
+                # Row 2 (Credentials): Username + Password side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
+                        yield Label("> USER_IDENTITY", classes="input-label")
+                        yield Input(placeholder="username@host", id="email-input")
+                    with Vertical(classes="form-col"):
+                        yield Label("> ACCESS_KEY", classes="input-label")
+                        yield Input(
+                            placeholder="••••••••••••",
+                            password=True,
+                            id="password-input",
+                        )
 
-                # Row 3: Password (Secret) - sensitive field
-                yield Label("> ACCESS_KEY", classes="input-label")
-                yield Input(
-                    placeholder="••••••••••••", password=True, id="password-input"
-                )
+                # Row 3 (Access): URL spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> SERVICE_URL", classes="input-label")
+                    yield Input(placeholder="https://example.com", id="url-input")
 
-                # Row 4: Notes
-                yield Label("> METADATA", classes="input-label")
-                yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
+                # Row 4 (Notes): Full width at bottom
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> METADATA", classes="input-label")
+                    yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
 
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
                 yield Button(
                     r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
 
     def on_mount(self) -> None:
-        """Focus first input."""
+        """Focus first input (Title field)."""
         self.query_one("#label-input", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -223,7 +233,7 @@ class AddPasswordModal(ModalScreen[EmailCredential | None]):
 
 
 class EditPasswordModal(ModalScreen[dict | None]):
-    """Modal for editing a password - Operator Grade Secure Write Console."""
+    """Modal for editing a password - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -234,8 +244,8 @@ class EditPasswordModal(ModalScreen[dict | None]):
         self.credential = credential
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout."""
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="password-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
@@ -245,38 +255,64 @@ class EditPasswordModal(ModalScreen[dict | None]):
                     )
                     yield Static("STATUS: EDIT", classes="modal-status")
 
-            with Vertical(id="pwd-form"):
-                yield Label("> TARGET_SYSTEM", classes="input-label")
-                yield Input(
-                    value=self.credential.label,
-                    placeholder="e.g. GITHUB_MAIN",
-                    id="label-input",
-                )
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> TARGET_SYSTEM", classes="input-label")
+                    yield Input(
+                        value=self.credential.label,
+                        placeholder="e.g. GITHUB_MAIN",
+                        id="label-input",
+                    )
 
-                yield Label("> USER_IDENTITY", classes="input-label")
-                yield Input(
-                    value=self.credential.email,
-                    placeholder="username@host",
-                    id="email-input",
-                )
+                # Row 2 (Credentials): Username + Password side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
+                        yield Label("> USER_IDENTITY", classes="input-label")
+                        yield Input(
+                            value=self.credential.email,
+                            placeholder="username@host",
+                            id="email-input",
+                        )
+                    with Vertical(classes="form-col"):
+                        yield Label(
+                            "> ACCESS_KEY [BLANK = KEEP]", classes="input-label"
+                        )
+                        yield Input(
+                            placeholder="••••••••••••",
+                            password=True,
+                            id="password-input",
+                        )
 
-                yield Label("> ACCESS_KEY [BLANK = KEEP]", classes="input-label")
-                yield Input(
-                    placeholder="••••••••••••", password=True, id="password-input"
-                )
+                # Row 3 (Access): URL spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> SERVICE_URL", classes="input-label")
+                    yield Input(
+                        value=getattr(self.credential, "url", "") or "",
+                        placeholder="https://example.com",
+                        id="url-input",
+                    )
 
-                yield Label("> METADATA", classes="input-label")
-                yield Input(
-                    value=self.credential.notes or "",
-                    placeholder="OPTIONAL_NOTES",
-                    id="notes-input",
-                )
+                # Row 4 (Notes): Full width at bottom
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> METADATA", classes="input-label")
+                    yield Input(
+                        value=self.credential.notes or "",
+                        placeholder="OPTIONAL_NOTES",
+                        id="notes-input",
+                    )
 
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
                     r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
+
+    def on_mount(self) -> None:
+        """Focus first input (Title field)."""
+        self.query_one("#label-input", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -358,7 +394,7 @@ class ConfirmDeleteModal(ModalScreen[bool]):
 
 
 class ViewPasswordModal(ModalScreen[None]):
-    """Modal for viewing a password - Operator Grade Secure Read Console."""
+    """Modal for viewing a password - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -370,7 +406,7 @@ class ViewPasswordModal(ModalScreen[None]):
         self.credential = credential
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade view modal layout."""
+        """Create wide-format console panel view layout."""
         # Get password strength for visual indicator
         strength = check_strength(self.credential.password)
         strength_color = _get_strength_color(strength.score)
@@ -379,54 +415,62 @@ class ViewPasswordModal(ModalScreen[None]):
             f"[{strength_color}]{'█' * filled}[/][#1e293b]{'░' * (5 - filled)}[/]"
         )
 
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        with Vertical(id="pwd-modal", classes="password-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-            # Data Display Body
-            with Vertical(id="pwd-form"):
-                # Row 1: Label (System)
-                yield Label("> TARGET_SYSTEM", classes="input-label")
-                yield Static(
-                    f"  {self.credential.label}", classes="view-value", id="label-value"
-                )
-
-                # Row 2: Email (Identity)
-                yield Label("> USER_IDENTITY", classes="input-label")
-                yield Static(
-                    f"  {self.credential.email}", classes="view-value", id="email-value"
-                )
-
-                # Row 3: Password (Secret)
-                yield Label("> ACCESS_KEY", classes="input-label")
-                yield Static(
-                    f"  [#22c55e]{self.credential.password}[/]",
-                    classes="view-value secret",
-                    id="password-value",
-                )
-
-                # Row 4: Security Level
-                yield Label("> SECURITY_LEVEL", classes="input-label")
-                yield Static(
-                    f"  {security_bars} [{strength_color}]{strength.label.upper()}[/]",
-                    classes="view-value",
-                    id="strength-value",
-                )
-
-                # Row 5: Notes (if present)
-                if self.credential.notes:
-                    yield Label("> METADATA", classes="input-label")
+            # Data Display Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> TARGET_SYSTEM", classes="input-label")
                     yield Static(
-                        f"  {self.credential.notes}",
+                        f"  {self.credential.label}",
                         classes="view-value",
-                        id="notes-value",
+                        id="label-value",
                     )
 
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
+                # Row 2 (Credentials): Username + Password side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
+                        yield Label("> USER_IDENTITY", classes="input-label")
+                        yield Static(
+                            f"  {self.credential.email}",
+                            classes="view-value",
+                            id="email-value",
+                        )
+                    with Vertical(classes="form-col"):
+                        yield Label("> ACCESS_KEY", classes="input-label")
+                        yield Static(
+                            f"  [#22c55e]{self.credential.password}[/]",
+                            classes="view-value secret",
+                            id="password-value",
+                        )
+
+                # Row 3 (Security): Strength indicator spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> SECURITY_LEVEL", classes="input-label")
+                    yield Static(
+                        f"  {security_bars} [{strength_color}]{strength.label.upper()}[/]",
+                        classes="view-value",
+                        id="strength-value",
+                    )
+
+                # Row 4 (Notes): Full width at bottom (if present)
+                if self.credential.notes:
+                    with Vertical(classes="form-row form-row-full"):
+                        yield Label("> METADATA", classes="input-label")
+                        yield Static(
+                            f"  {self.credential.notes}",
+                            classes="view-value",
+                            id="notes-value",
+                        )
+
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
                 yield Button(r"\[ COPY KEY ]", variant="primary", id="save-button")
 
