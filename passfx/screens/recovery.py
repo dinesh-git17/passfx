@@ -69,7 +69,7 @@ def _get_relative_time(iso_timestamp: str | None) -> str:
 
 
 class ViewRecoveryModal(ModalScreen[None]):
-    """Modal for viewing recovery codes - Operator Grade Secure Read Console."""
+    """Modal for viewing recovery codes - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -81,49 +81,46 @@ class ViewRecoveryModal(ModalScreen[None]):
         self.recovery = recovery
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade view modal layout."""
-        # Get content preview (first 60 chars)
-        preview = (
-            self.recovery.content[:60] + "..."
-            if len(self.recovery.content) > 60
-            else self.recovery.content
-        )
-        preview = preview.replace("\n", " ")
-
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel view layout."""
+        with Vertical(id="pwd-modal", classes="recovery-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-            # Data Display Body
-            with Vertical(id="pwd-form"):
-                # Row 1: Service Name
-                yield Label("> PROTOCOL_NAME", classes="input-label")
-                yield Static(
-                    f"  {self.recovery.title}", classes="view-value", id="title-value"
-                )
+            # Data Display Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title + Stats side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
+                        yield Label("> PROTOCOL_NAME", classes="input-label")
+                        yield Static(
+                            f"  {self.recovery.title}",
+                            classes="view-value",
+                            id="title-value",
+                        )
+                    with Vertical(classes="form-col"):
+                        yield Label("> FAIL_SAFE_STATS", classes="input-label")
+                        yield Static(
+                            f"  [#ff6f6f]{self.recovery.line_count}[/] lines  "
+                            f"[#ff6f6f]{self.recovery.code_count}[/] codes",
+                            classes="view-value",
+                            id="stats-value",
+                        )
 
-                # Row 2: Stats
-                yield Label("> FAIL_SAFE_STATS", classes="input-label")
-                yield Static(
-                    f"  [#ff6f6f]{self.recovery.line_count}[/] lines  "
-                    f"[#ff6f6f]{self.recovery.code_count}[/] codes",
-                    classes="view-value",
-                    id="stats-value",
-                )
+                # Row 2 (Content): Full content in TextArea (read-only reveal)
+                with Vertical(classes="form-row form-row-full form-row-content"):
+                    yield Label("> RECOVERY_CODES [DECRYPTED]", classes="input-label")
+                    yield TextArea(
+                        self.recovery.content,
+                        id="content-area",
+                        classes="recovery-content-editor",
+                        read_only=True,
+                    )
 
-                # Row 3: Content Preview
-                yield Label("> CONTENT_PREVIEW", classes="input-label")
-                yield Static(
-                    f"  [#ff6f6f]{preview}[/]",
-                    classes="view-value secret",
-                    id="preview-value",
-                )
-
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
                 yield Button(r"\[ COPY ]", variant="primary", id="save-button")
 
@@ -151,39 +148,41 @@ class ViewRecoveryModal(ModalScreen[None]):
 
 
 class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
-    """Modal for adding new recovery codes - Operator Grade Secure Write Console."""
+    """Modal for adding new recovery codes - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout with TextArea."""
-        with Vertical(id="pwd-modal", classes="secure-terminal recovery-modal-wide"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="recovery-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: OPEN", classes="modal-status")
 
-            # Form - landscape layout
-            with Vertical(id="pwd-form"):
-                # Row 1: Title
-                yield Label("> PROTOCOL_NAME", classes="input-label")
-                yield Input(placeholder="e.g. GitHub 2FA Backup", id="title-input")
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> PROTOCOL_NAME", classes="input-label")
+                    yield Input(placeholder="e.g. GitHub 2FA Backup", id="title-input")
 
-                # Row 2: Content TextArea
-                yield Label("> RECOVERY_CODES", classes="input-label")
-                yield TextArea(
-                    "",
-                    id="content-area",
-                    classes="note-code-editor",
-                )
+                # Row 2 (Content): Full width content editor
+                with Vertical(classes="form-row form-row-full form-row-content"):
+                    yield Label("> RECOVERY_CODES", classes="input-label")
+                    yield TextArea(
+                        "",
+                        id="content-area",
+                        classes="recovery-content-editor",
+                    )
 
-            # Footer Actions
-            with Horizontal(id="modal-buttons"):
-                yield Button(r"\[ FILE ]", id="import-button")
-                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
+                yield Button(r"\[ IMPORT ]", id="import-button")
+                yield Button(r"\[ CANCEL ]", variant="default", id="cancel-button")
                 yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
 
     def on_mount(self) -> None:
@@ -256,7 +255,7 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
 
 
 class EditRecoveryModal(ModalScreen[dict | None]):
-    """Modal for editing existing recovery codes - Operator Grade Console."""
+    """Modal for editing existing recovery codes - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -267,8 +266,8 @@ class EditRecoveryModal(ModalScreen[dict | None]):
         self.recovery = recovery
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout."""
-        with Vertical(id="pwd-modal", classes="secure-terminal recovery-modal-wide"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="recovery-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
@@ -278,29 +277,35 @@ class EditRecoveryModal(ModalScreen[dict | None]):
                     )
                     yield Static("STATUS: EDIT", classes="modal-status")
 
-            # Form - landscape layout
-            with Vertical(id="pwd-form"):
-                # Row 1: Title
-                yield Label("> PROTOCOL_NAME", classes="input-label")
-                yield Input(
-                    value=self.recovery.title,
-                    placeholder="e.g. GitHub 2FA Backup",
-                    id="title-input",
-                )
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> PROTOCOL_NAME", classes="input-label")
+                    yield Input(
+                        value=self.recovery.title,
+                        placeholder="e.g. GitHub 2FA Backup",
+                        id="title-input",
+                    )
 
-                # Row 2: Content TextArea
-                yield Label("> RECOVERY_CODES", classes="input-label")
-                yield TextArea(
-                    self.recovery.content,
-                    id="content-area",
-                    classes="note-code-editor",
-                )
+                # Row 2 (Content): Full width content editor
+                with Vertical(classes="form-row form-row-full form-row-content"):
+                    yield Label("> RECOVERY_CODES", classes="input-label")
+                    yield TextArea(
+                        self.recovery.content,
+                        id="content-area",
+                        classes="recovery-content-editor",
+                    )
 
-            # Footer Actions
-            with Horizontal(id="modal-buttons"):
-                yield Button(r"\[ FILE ]", id="import-button")
-                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
+                yield Button(r"\[ IMPORT ]", id="import-button")
+                yield Button(r"\[ CANCEL ]", variant="default", id="cancel-button")
                 yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
+
+    def on_mount(self) -> None:
+        """Focus first input (Title field)."""
+        self.query_one("#title-input", Input).focus()
 
     def on_drop(self, event: Any) -> None:
         """Handle file drop events."""

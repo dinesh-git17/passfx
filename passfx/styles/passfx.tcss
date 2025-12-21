@@ -3156,6 +3156,608 @@ NotesScreen #notes-table > .datatable--odd-row {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   NOTE MODAL WIDE - WIDE CONSOLE PANEL LAYOUT (YELLOW ACCENT)
+   Mirrors password-modal-wide but with yellow accent for secure notes/shards
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Wide modal container - 90% width, max 120 for ultra-wide screens */
+#pwd-modal.note-modal-wide {
+    width: 90%;
+    max-width: 120;
+    min-width: 80;
+    height: auto;
+    max-height: 85%;
+    background: $operator-black;
+    border: heavy #eab308;
+    border-title-color: #eab308;
+}
+
+/* Grid-based form container */
+.note-modal-wide .pwd-form-grid {
+    padding: 1 3;
+    background: $operator-black;
+    width: 100%;
+}
+
+/* Form row - base styles */
+.note-modal-wide .form-row {
+    width: 100%;
+    height: auto;
+    margin-bottom: 1;
+}
+
+/* Full width row (Title, Content) */
+.note-modal-wide .form-row-full {
+    width: 100%;
+}
+
+/* Content row - taller for TextArea */
+.note-modal-wide .form-row-content {
+    height: auto;
+    min-height: 12;
+}
+
+/* Input labels - terminal style with prompt */
+.note-modal-wide .input-label {
+    color: #eab308;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+    height: 2;
+}
+
+/* Terminal-style inputs - left border accent */
+.note-modal-wide Input {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding-left: 2;
+    height: 3;
+    margin: 0;
+    color: $operator-text;
+}
+
+/* Focus state - yellow accent with highlighted left border */
+.note-modal-wide Input:focus {
+    border-left: heavy #eab308;
+    background: #0a0a12;
+}
+
+/* TextArea content editor - large for text editing */
+.note-modal-wide .note-content-editor {
+    background: $operator-surface;
+    border: none;
+    border-left: solid #eab308 50%;
+    padding: 1;
+    min-height: 10;
+    height: auto;
+    color: $operator-text;
+}
+
+.note-modal-wide .note-content-editor:focus {
+    border-left: heavy #eab308;
+    background: #0a0c0a;
+}
+
+/* View value display - terminal output style */
+.note-modal-wide .view-value {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 0 0 0 2;
+    height: 2;
+    margin: 0;
+    color: $operator-text;
+    content-align: left middle;
+}
+
+/* Modal footer - docked to bottom, right-aligned buttons */
+.note-modal-wide .modal-footer {
+    padding: 1 3 2 3;
+    align: right middle;
+    background: $operator-black;
+    width: 100%;
+    height: auto;
+    dock: bottom;
+}
+
+/* Cancel button styling */
+.note-modal-wide #cancel-button {
+    background: transparent;
+    color: #64748b;
+    border: solid #475569;
+    min-width: 14;
+}
+
+.note-modal-wide #cancel-button:hover {
+    background: #1e293b;
+    color: #94a3b8;
+    border: solid #1e293b;
+}
+
+.note-modal-wide #cancel-button:focus {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: solid #1e293b;
+}
+
+/* Save button styling - yellow accent */
+.note-modal-wide #save-button {
+    background: transparent;
+    color: #eab308;
+    border: solid #eab308;
+    margin-left: 2;
+    min-width: 24;
+}
+
+.note-modal-wide #save-button:hover {
+    background: #eab308;
+    color: $operator-black;
+}
+
+.note-modal-wide #save-button:focus {
+    background: #eab308;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* HUD Header for wide modals */
+.note-modal-wide .modal-header {
+    width: 100%;
+    height: auto;
+    background: $operator-black;
+    padding: 1 2;
+    border-bottom: heavy #eab308;
+}
+
+.note-modal-wide .modal-header-row {
+    width: 100%;
+    height: 1;
+    align: left middle;
+}
+
+.note-modal-wide #modal-title {
+    text-style: bold;
+    color: #eab308;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    width: 1fr;
+    border: none;
+}
+
+.note-modal-wide .modal-status {
+    width: auto;
+    height: 1;
+    color: $pfx-success;
+    text-style: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ENV MODAL WIDE - WIDE CONSOLE PANEL LAYOUT (INDIGO ACCENT)
+   Mirrors password-modal-wide but with indigo accent for config files
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Wide modal container - 90% width, max 120 for ultra-wide screens */
+#pwd-modal.env-modal-wide {
+    width: 90%;
+    max-width: 120;
+    min-width: 80;
+    height: auto;
+    max-height: 85%;
+    background: $operator-black;
+    border: heavy #818cf8;
+    border-title-color: #818cf8;
+}
+
+/* Grid-based form container */
+.env-modal-wide .pwd-form-grid {
+    padding: 1 3;
+    background: $operator-black;
+    width: 100%;
+}
+
+/* Form row - base styles */
+.env-modal-wide .form-row {
+    width: 100%;
+    height: auto;
+    margin-bottom: 1;
+}
+
+/* Full width row (Content) */
+.env-modal-wide .form-row-full {
+    width: 100%;
+}
+
+/* Split row - side-by-side fields (Title + Filename) */
+.env-modal-wide .form-row-split {
+    width: 100%;
+    height: auto;
+    align: left top;
+}
+
+/* Column for side-by-side inputs (50% each) */
+.env-modal-wide .form-col {
+    width: 1fr;
+    height: auto;
+    padding-right: 2;
+}
+
+.env-modal-wide .form-col:last-child {
+    padding-right: 0;
+}
+
+/* Content row - taller for TextArea */
+.env-modal-wide .form-row-content {
+    height: auto;
+    min-height: 12;
+}
+
+/* Input labels - terminal style with prompt */
+.env-modal-wide .input-label {
+    color: #818cf8;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+    height: 2;
+}
+
+/* Terminal-style inputs - left border accent */
+.env-modal-wide Input {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding-left: 2;
+    height: 3;
+    margin: 0;
+    color: $operator-text;
+}
+
+/* Focus state - indigo accent with highlighted left border */
+.env-modal-wide Input:focus {
+    border-left: heavy #818cf8;
+    background: #0a0a12;
+}
+
+/* TextArea content editor - large for text editing */
+.env-modal-wide .env-content-editor {
+    background: $operator-surface;
+    border: none;
+    border-left: solid #818cf8 50%;
+    padding: 1;
+    min-height: 10;
+    height: auto;
+    color: $operator-text;
+}
+
+.env-modal-wide .env-content-editor:focus {
+    border-left: heavy #818cf8;
+    background: #0a0a12;
+}
+
+/* View value display - terminal output style */
+.env-modal-wide .view-value {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 0 0 0 2;
+    height: 2;
+    margin: 0;
+    color: $operator-text;
+    content-align: left middle;
+}
+
+/* Modal footer - docked to bottom, right-aligned buttons */
+.env-modal-wide .modal-footer {
+    padding: 1 3 2 3;
+    align: right middle;
+    background: $operator-black;
+    width: 100%;
+    height: auto;
+    dock: bottom;
+}
+
+/* Import button styling - subtle gray */
+.env-modal-wide #import-button {
+    background: transparent;
+    color: #64748b;
+    border: solid #475569;
+    min-width: 16;
+}
+
+.env-modal-wide #import-button:hover {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+.env-modal-wide #import-button:focus {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+/* Cancel button styling - red/danger */
+.env-modal-wide #cancel-button {
+    background: transparent;
+    color: #ef4444;
+    border: solid #ef4444;
+    min-width: 16;
+}
+
+.env-modal-wide #cancel-button:hover {
+    background: #ef4444;
+    color: $operator-black;
+}
+
+.env-modal-wide #cancel-button:focus {
+    background: #ef4444;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* Save button styling - indigo accent */
+.env-modal-wide #save-button {
+    background: transparent;
+    color: #818cf8;
+    border: solid #818cf8;
+    min-width: 16;
+}
+
+.env-modal-wide #save-button:hover {
+    background: #818cf8;
+    color: $operator-black;
+}
+
+.env-modal-wide #save-button:focus {
+    background: #818cf8;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* HUD Header for wide modals */
+.env-modal-wide .modal-header {
+    width: 100%;
+    height: auto;
+    background: $operator-black;
+    padding: 1 2;
+    border-bottom: heavy #818cf8;
+}
+
+.env-modal-wide .modal-header-row {
+    width: 100%;
+    height: 1;
+    align: left middle;
+}
+
+.env-modal-wide #modal-title {
+    text-style: bold;
+    color: #818cf8;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    width: 1fr;
+    border: none;
+}
+
+.env-modal-wide .modal-status {
+    width: auto;
+    height: 1;
+    color: $pfx-success;
+    text-style: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RECOVERY MODAL WIDE - WIDE CONSOLE PANEL LAYOUT (SALMON ACCENT)
+   Mirrors password-modal-wide but with salmon accent for fail-safe codes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Wide modal container - 90% width, max 120 for ultra-wide screens */
+#pwd-modal.recovery-modal-wide {
+    width: 90%;
+    max-width: 120;
+    min-width: 80;
+    height: auto;
+    max-height: 85%;
+    background: $operator-black;
+    border: heavy #ff6f6f;
+    border-title-color: #ff6f6f;
+}
+
+/* Grid-based form container */
+.recovery-modal-wide .pwd-form-grid {
+    padding: 1 3;
+    background: $operator-black;
+    width: 100%;
+}
+
+/* Form row - base styles */
+.recovery-modal-wide .form-row {
+    width: 100%;
+    height: auto;
+    margin-bottom: 1;
+}
+
+/* Full width row (Title, Content) */
+.recovery-modal-wide .form-row-full {
+    width: 100%;
+}
+
+/* Split row - side-by-side fields (Title + Stats in View) */
+.recovery-modal-wide .form-row-split {
+    width: 100%;
+    height: auto;
+    align: left top;
+}
+
+/* Column for side-by-side inputs (50% each) */
+.recovery-modal-wide .form-col {
+    width: 1fr;
+    height: auto;
+    padding-right: 2;
+}
+
+.recovery-modal-wide .form-col:last-child {
+    padding-right: 0;
+}
+
+/* Content row - taller for TextArea */
+.recovery-modal-wide .form-row-content {
+    height: auto;
+    min-height: 12;
+}
+
+/* Input labels - terminal style with prompt */
+.recovery-modal-wide .input-label {
+    color: #ff6f6f;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+    height: 2;
+}
+
+/* Terminal-style inputs - left border accent */
+.recovery-modal-wide Input {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding-left: 2;
+    height: 3;
+    margin: 0;
+    color: $operator-text;
+}
+
+/* Focus state - salmon accent with highlighted left border */
+.recovery-modal-wide Input:focus {
+    border-left: heavy #ff6f6f;
+    background: #120a0a;
+}
+
+/* TextArea content editor - large for text editing */
+.recovery-modal-wide .recovery-content-editor {
+    background: $operator-surface;
+    border: none;
+    border-left: solid #ff6f6f 50%;
+    padding: 1;
+    min-height: 10;
+    height: auto;
+    color: $operator-text;
+}
+
+.recovery-modal-wide .recovery-content-editor:focus {
+    border-left: heavy #ff6f6f;
+    background: #120a0a;
+}
+
+/* View value display - terminal output style */
+.recovery-modal-wide .view-value {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 0 0 0 2;
+    height: 2;
+    margin: 0;
+    color: $operator-text;
+    content-align: left middle;
+}
+
+/* Modal footer - docked to bottom, right-aligned buttons */
+.recovery-modal-wide .modal-footer {
+    padding: 1 3 2 3;
+    align: right middle;
+    background: $operator-black;
+    width: 100%;
+    height: auto;
+    dock: bottom;
+}
+
+/* Import button styling - subtle gray */
+.recovery-modal-wide #import-button {
+    background: transparent;
+    color: #64748b;
+    border: solid #475569;
+    min-width: 16;
+}
+
+.recovery-modal-wide #import-button:hover {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+.recovery-modal-wide #import-button:focus {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+/* Cancel button styling - red/danger */
+.recovery-modal-wide #cancel-button {
+    background: transparent;
+    color: #ef4444;
+    border: solid #ef4444;
+    min-width: 16;
+}
+
+.recovery-modal-wide #cancel-button:hover {
+    background: #ef4444;
+    color: $operator-black;
+}
+
+.recovery-modal-wide #cancel-button:focus {
+    background: #ef4444;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* Save button styling - salmon accent */
+.recovery-modal-wide #save-button {
+    background: transparent;
+    color: #ff6f6f;
+    border: solid #ff6f6f;
+    min-width: 16;
+}
+
+.recovery-modal-wide #save-button:hover {
+    background: #ff6f6f;
+    color: $operator-black;
+}
+
+.recovery-modal-wide #save-button:focus {
+    background: #ff6f6f;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* HUD Header for wide modals */
+.recovery-modal-wide .modal-header {
+    width: 100%;
+    height: auto;
+    background: $operator-black;
+    padding: 1 2;
+    border-bottom: heavy #ff6f6f;
+}
+
+.recovery-modal-wide .modal-header-row {
+    width: 100%;
+    height: 1;
+    align: left middle;
+}
+
+.recovery-modal-wide #modal-title {
+    text-style: bold;
+    color: #ff6f6f;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    width: 1fr;
+    border: none;
+}
+
+.recovery-modal-wide .modal-status {
+    width: auto;
+    height: 1;
+    color: $pfx-success;
+    text-style: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    GENERATOR SCREEN - OPERATOR THEME CRYPTO CONSOLE
    Theme: Cyan (#00FFFF) primary, Pure Black background
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -4021,88 +4623,7 @@ EnvsScreen .pane-footer {
     border-top: solid $pfx-indigo 30%;
 }
 
-/* Envs modals - landscape layout to prevent scrolling */
-#pwd-modal.env-modal-wide {
-    width: 140;
-    max-height: 85%;
-}
-
-/* Horizontal input row for side-by-side fields */
-.env-modal-wide .input-row {
-    width: 100%;
-    height: auto;
-    align: left top;
-}
-
-/* Column for side-by-side inputs */
-.env-modal-wide .input-col {
-    width: 1fr;
-    height: auto;
-    padding-right: 2;
-}
-
-.env-modal-wide .input-col:last-child {
-    padding-right: 0;
-}
-
-/* TextArea for env content - shorter height */
-.env-modal-wide .note-code-editor {
-    height: 10;
-    min-height: 8;
-    max-height: 12;
-}
-
-/* Modal buttons - compact single line */
-.env-modal-wide #modal-buttons {
-    width: 100%;
-    height: auto;
-    align: center middle;
-    content-align: center middle;
-    padding: 1 0 0 0;
-}
-
-.env-modal-wide #modal-buttons Button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    height: 3;
-    min-height: 3;
-    max-height: 3;
-    margin: 0 1;
-    padding: 0 2;
-}
-
-.env-modal-wide #import-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: $pfx-indigo-dark;
-    color: $pfx-indigo;
-    border: solid $pfx-indigo;
-}
-
-.env-modal-wide #import-button:hover {
-    background: $pfx-indigo;
-    color: #000000;
-}
-
-.env-modal-wide #cancel-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: #1e293b;
-    color: #94a3b8;
-    border: solid #475569;
-}
-
-.env-modal-wide #save-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: #166534;
-    color: #22c55e;
-    border: solid #22c55e;
-}
+/* Legacy env-modal-wide rules removed - now uses standard wide modal pattern */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CODE EDITOR / TEXTAREA STYLING
@@ -4671,65 +5192,7 @@ RecoveryScreen .pane-footer {
     border-top: solid $pfx-salmon 30%;
 }
 
-/* Recovery modals - landscape layout to prevent scrolling */
-#pwd-modal.recovery-modal-wide {
-    width: 100;
-    max-height: 85%;
-}
-
-/* Recovery modal buttons */
-.recovery-modal-wide #modal-buttons {
-    width: 100%;
-    height: auto;
-    align: center middle;
-    content-align: center middle;
-    padding: 1 0 0 0;
-}
-
-.recovery-modal-wide #modal-buttons Button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    height: 3;
-    min-height: 3;
-    max-height: 3;
-    margin: 0 1;
-    padding: 0 2;
-}
-
-.recovery-modal-wide #import-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: $pfx-salmon-dark;
-    color: $pfx-salmon;
-    border: solid $pfx-salmon;
-}
-
-.recovery-modal-wide #import-button:hover {
-    background: $pfx-salmon;
-    color: #000000;
-}
-
-.recovery-modal-wide #cancel-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: #1e293b;
-    color: #94a3b8;
-    border: solid #475569;
-}
-
-.recovery-modal-wide #save-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: #166534;
-    color: #22c55e;
-    border: solid #22c55e;
-}
-
-/* Legacy Recovery modal styles removed - now uses standard #pwd-modal pattern */
+/* Legacy recovery-modal-wide rules removed - now uses standard wide modal pattern */
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    SECURE NOTES SCREEN - ENCRYPTED DATA SHARDS THEME
