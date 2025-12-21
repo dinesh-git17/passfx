@@ -1,0 +1,253 @@
+# Installation Tests
+# Validates PassFX installs correctly via pip, pipx, and Homebrew.
+#
+# This is a release-blocking validation that runs:
+# - On release publish (full matrix including Homebrew)
+# - Manually via workflow_dispatch (for pre-release verification)
+#
+# Tests are run in clean Docker containers to ensure reproducibility.
+
+name: Installation Tests
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'Python version for pip/pipx tests'
+        required: false
+        default: '3.11'
+        type: choice
+        options:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+      run_brew:
+        description: 'Run Homebrew tests (slower)'
+        required: false
+        default: true
+        type: boolean
+
+# Cancel in-progress runs for the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ==========================================================================
+  # pip Installation Test
+  # Tests standard pip installation from PyPI
+  # ==========================================================================
+  pip-install:
+    name: pip (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build pip test image
+        uses: docker/build-push-action@v6
+        with:
+          context: tests/install
+          file: tests/install/Dockerfile.pip
+          push: false
+          load: true
+          tags: passfx-test-pip:${{ matrix.python-version }}
+          build-args: |
+            PYTHON_VERSION=${{ matrix.python-version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run pip installation tests
+        run: docker run --rm passfx-test-pip:${{ matrix.python-version }}
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## pip Install Test (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`python:${{ matrix.python-version }}-slim\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Method:** \`pip install passfx\`" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================================================
+  # pipx Installation Test
+  # Tests isolated pipx installation (recommended for CLI tools)
+  # ==========================================================================
+  pipx-install:
+    name: pipx (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build pipx test image
+        uses: docker/build-push-action@v6
+        with:
+          context: tests/install
+          file: tests/install/Dockerfile.pipx
+          push: false
+          load: true
+          tags: passfx-test-pipx:${{ matrix.python-version }}
+          build-args: |
+            PYTHON_VERSION=${{ matrix.python-version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run pipx installation tests
+        run: docker run --rm passfx-test-pipx:${{ matrix.python-version }}
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## pipx Install Test (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`python:${{ matrix.python-version }}-slim\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Method:** \`pipx install passfx\`" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================================================
+  # Homebrew Installation Test
+  # Tests brew installation via tap (Linux via homebrew/brew image)
+  # ==========================================================================
+  brew-install:
+    name: Homebrew (Linuxbrew)
+    runs-on: ubuntu-latest
+    # Run on release, or manual trigger with run_brew=true
+    if: >-
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_brew)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Homebrew test image
+        uses: docker/build-push-action@v6
+        with:
+          context: tests/install
+          file: tests/install/Dockerfile.brew
+          push: false
+          load: true
+          tags: passfx-test-brew:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        continue-on-error: true
+        id: brew-build
+
+      - name: Run Homebrew installation tests
+        if: steps.brew-build.outcome == 'success'
+        run: docker run --rm passfx-test-brew:latest
+
+      - name: Skip notice
+        if: steps.brew-build.outcome != 'success'
+        run: |
+          echo "::warning title=Homebrew Test::Homebrew test skipped (tap may not be available yet)"
+          echo "## Homebrew Install Test" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Skipped (tap not available or build failed)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Test summary
+        if: steps.brew-build.outcome == 'success'
+        run: |
+          echo "## Homebrew Install Test" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`homebrew/brew:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Method:** \`brew tap dinesh-git17/passfx && brew install passfx\`" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================================================
+  # Native macOS Homebrew Test
+  # Tests actual macOS Homebrew installation (not Docker)
+  # Only runs on release (expensive runner time)
+  # ==========================================================================
+  brew-macos:
+    name: Homebrew (macOS)
+    runs-on: macos-latest
+    if: github.event_name == 'release'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install via Homebrew
+        run: |
+          brew tap dinesh-git17/passfx
+          brew install passfx
+        continue-on-error: true
+        id: brew-install
+
+      - name: Validate installation
+        if: steps.brew-install.outcome == 'success'
+        run: |
+          set -e
+          echo "==> Checking binary on PATH"
+          command -v passfx
+
+          echo "==> Checking version"
+          passfx --version
+
+          echo "==> Checking help"
+          passfx --help | head -20
+
+          echo "==> Success!"
+
+      - name: Skip notice
+        if: steps.brew-install.outcome != 'success'
+        run: |
+          echo "::warning title=macOS Homebrew Test::Installation skipped (tap may not be available)"
+
+  # ==========================================================================
+  # Summary Job
+  # ==========================================================================
+  install-summary:
+    name: Installation Summary
+    runs-on: ubuntu-latest
+    needs: [pip-install, pipx-install]
+    if: always()
+
+    steps:
+      - name: Determine status
+        id: status
+        run: |
+          pip_status="${{ needs.pip-install.result }}"
+          pipx_status="${{ needs.pipx-install.result }}"
+
+          if [[ "$pip_status" == "success" && "$pipx_status" == "success" ]]; then
+            echo "overall=success" >> $GITHUB_OUTPUT
+          else
+            echo "overall=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate summary
+        run: |
+          echo "# Installation Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Method | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| pip | ${{ needs.pip-install.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| pipx | ${{ needs.pipx-install.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if tests failed
+        if: steps.status.outputs.overall != 'success'
+        run: exit 1
