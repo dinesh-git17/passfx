@@ -20,23 +20,29 @@
 
 ## Why PassFX Exists
 
-Most password managers want you to trust them. They ask you to upload your credentials to their servers, use their proprietary sync, and believe their marketing about "military-grade encryption" (a phrase that should make any engineer nervous).
+> _I don’t trust password managers. So I built one._
 
-PassFX takes a different approach: it assumes you do not trust anyone, and builds from there.
+I built PassFX because every password manager I tried eventually asked me to do something I fundamentally disagree with: upload my most sensitive secrets to someone else’s servers and trust that they’ll never screw it up.
 
-Your vault lives on your machine. It never touches a network. There is no account to create, no subscription to manage, no "forgot password" email to request. If someone wants your passwords, they need physical access to your computer and your master password. That is a much smaller attack surface than "the entire internet."
+Cloud sync is convenient — and it dramatically expands your attack surface. Accounts can be breached. Infrastructure can be compromised. Companies can be acquired, hacked, or quietly change their incentives. None of that makes your passwords safer.
 
-This is not a limitation. This is the point.
+PassFX takes a different approach.
 
-PassFX is for developers who understand that the safest byte is the one that never leaves your disk. It is for security-conscious users who would rather memorize one strong password than trust a company that might get acquired, hacked, or quietly change their privacy policy.
+Your vault lives entirely on your machine. It never touches a network. There are no accounts to create, no servers to trust, no recovery emails, and no silent background sync. If someone wants your passwords, they need physical access to your computer _and_ your master password.
 
-If you have ever thought "I should really stop reusing passwords, but I also do not want to give all my credentials to a startup," then you are in the right place.
+This is not a missing feature.  
+This is the threat model.
+
+PassFX is for developers and security-minded users who would rather accept responsibility for their own security than outsource it to a company whose business model depends on trust.
+
+If you’ve ever thought _“I should stop reusing passwords, but I don’t want to give all my credentials to a startup,”_ you’re in the right place.
 
 ---
 
 ## What You Get
 
 **Secure Vault Storage**
+
 - Email and password credentials
 - Credit card details (number, CVV, PIN, expiry)
 - Phone numbers with PINs
@@ -45,27 +51,32 @@ If you have ever thought "I should really stop reusing passwords, but I also do 
 - Encrypted notes for everything else
 
 **Strong Cryptography**
+
 - Fernet authenticated encryption (AES-128-CBC + HMAC-SHA256)
 - PBKDF2-HMAC-SHA256 key derivation with 480,000 iterations
 - 256-bit random salts generated via Python's `secrets` module
 - No custom crypto implementations (we read the rules)
 
 **A Terminal Interface That Does Not Hate You**
+
 - Built on [Textual](https://textual.textualize.io/) with full keyboard and mouse support
 - Modal dialogs, searchable lists, and responsive layouts
 - Cyberpunk aesthetic because security tools should not look like tax software
 
 **Clipboard Safety**
+
 - Automatic clipboard clearing after 15 seconds
 - Because "accidentally pasting your database password into Slack" is a story no one wants to tell
 
 **Password Generation**
+
 - Strong random passwords with configurable length and character sets
 - XKCD-style passphrases for when you need to remember something
 - PIN generation for numeric codes
 - Strength estimation via zxcvbn to reject weak choices before they happen
 
 **Local-First Design**
+
 - Zero network code
 - Zero cloud sync
 - Zero recovery mechanisms (by design, not by accident)
@@ -111,16 +122,16 @@ If you forget this password, your data is gone. This is not a bug. This is the e
 
 ### Navigate
 
-| Key | Action |
-|-----|--------|
-| `Tab` / `Shift+Tab` | Move between fields |
-| `Enter` | Select or submit |
-| `Esc` | Go back or close dialogs |
-| `q` | Quit (auto-locks vault) |
-| `a` | Add new entry |
-| `e` | Edit selected entry |
-| `d` | Delete selected entry |
-| `c` | Copy to clipboard |
+| Key                 | Action                   |
+| ------------------- | ------------------------ |
+| `Tab` / `Shift+Tab` | Move between fields      |
+| `Enter`             | Select or submit         |
+| `Esc`               | Go back or close dialogs |
+| `q`                 | Quit (auto-locks vault)  |
+| `a`                 | Add new entry            |
+| `e`                 | Edit selected entry      |
+| `d`                 | Delete selected entry    |
+| `c`                 | Copy to clipboard        |
 
 For the full manual, see the [User Guide](docs/USER_GUIDE.md).
 
@@ -223,13 +234,13 @@ Trust is not built on marketing copy. It is built on tests that fail when securi
 
 ### Coverage
 
-| Component | Target |
-|-----------|--------|
-| `core/crypto.py` | 100% |
-| `core/vault.py` | 100% |
-| `core/models.py` | 95% |
-| `utils/generator.py` | 95% |
-| Overall | 90% |
+| Component            | Target |
+| -------------------- | ------ |
+| `core/crypto.py`     | 100%   |
+| `core/vault.py`      | 100%   |
+| `core/models.py`     | 95%    |
+| `utils/generator.py` | 95%    |
+| Overall              | 90%    |
 
 ### Test Categories
 
@@ -272,30 +283,36 @@ For the complete testing documentation, see [tests/README.md](tests/README.md).
 Different readers need different information. Here is where to go:
 
 **I am new to password managers and terminals**
+
 - Start with the [Getting Started Guide](docs/GETTING_STARTED.md) for a beginner-friendly walkthrough
 - This guide assumes no programming knowledge and explains everything step-by-step
 
 **I want to use PassFX day-to-day**
+
 - Start with this README for installation
 - Read the [User Guide](docs/USER_GUIDE.md) for detailed usage instructions
 - Keep the keyboard shortcuts handy
 
 **I want to understand the security model**
+
 - Read [SECURITY.md](docs/SECURITY.md) for the complete threat model
 - Review the test suite in `tests/security/` for verified security properties
 - Check [ARCHITECTURE.md](docs/ARCHITECTURE.md) for security boundaries
 
 **I want to contribute code**
+
 - Read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for development setup and quality gates
 - Review [CLAUDE.md](CLAUDE.md) if you use AI assistants (this is mandatory)
 - Check `pyproject.toml` for tooling configuration
 
 **I want to understand how it works**
+
 - Read [ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design
 - Browse `passfx/core/` for the cryptographic implementation
 - Read the test files for executable specifications
 
 **I want to report a security issue**
+
 - Follow the process in [SECURITY.md](docs/SECURITY.md)
 - Use GitHub Security Advisories for private disclosure
 - Do not open public issues for security vulnerabilities
