@@ -95,42 +95,49 @@ def _get_strength_color(score: int) -> str:
 
 
 class AddPhoneModal(ModalScreen[PhoneCredential | None]):
-    """Modal for adding a new phone credential - Operator Grade Secure Write Console."""
+    """Modal for adding a new phone credential - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout."""
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="phone-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: OPEN", classes="modal-status")
 
-            # Form Body
-            with Vertical(id="pwd-form"):
-                # Row 1: Label (Device)
-                yield Label("> TARGET_DEVICE", classes="input-label")
-                yield Input(placeholder="e.g. BANK_HOTLINE", id="label-input")
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Device Label spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> TARGET_DEVICE", classes="input-label")
+                    yield Input(placeholder="e.g. BANK_HOTLINE", id="label-input")
 
-                # Row 2: Phone (Uplink)
-                yield Label("> UPLINK_NUMBER", classes="input-label")
-                yield Input(placeholder="+1 555 000 0000", id="phone-input")
+                # Row 2 (Credentials): Phone + PIN side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
+                        yield Label("> UPLINK_NUMBER", classes="input-label")
+                        yield Input(placeholder="+1 555 000 0000", id="phone-input")
+                    with Vertical(classes="form-col"):
+                        yield Label("> ACCESS_PIN", classes="input-label")
+                        yield Input(
+                            placeholder="••••••",
+                            password=True,
+                            id="pin-input",
+                        )
 
-                # Row 3: PIN (Access Code) - sensitive field
-                yield Label("> ACCESS_PIN", classes="input-label")
-                yield Input(placeholder="••••••", password=True, id="pin-input")
+                # Row 3 (Notes): Full width at bottom
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> METADATA", classes="input-label")
+                    yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
 
-                # Row 4: Notes
-                yield Label("> METADATA", classes="input-label")
-                yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
-
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
-                yield Button(r"\[ ABORT ]", id="cancel-button")
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
+                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
                 yield Button(
                     r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
@@ -171,7 +178,7 @@ class AddPhoneModal(ModalScreen[PhoneCredential | None]):
 
 
 class EditPhoneModal(ModalScreen[dict | None]):
-    """Modal for editing a phone credential - Operator Grade Secure Write Console."""
+    """Modal for editing a phone credential - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -182,8 +189,8 @@ class EditPhoneModal(ModalScreen[dict | None]):
         self.credential = credential
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout."""
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="phone-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
@@ -193,36 +200,55 @@ class EditPhoneModal(ModalScreen[dict | None]):
                     )
                     yield Static("STATUS: EDIT", classes="modal-status")
 
-            with Vertical(id="pwd-form"):
-                yield Label("> TARGET_DEVICE", classes="input-label")
-                yield Input(
-                    value=self.credential.label,
-                    placeholder="e.g. BANK_HOTLINE",
-                    id="label-input",
-                )
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Device Label spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> TARGET_DEVICE", classes="input-label")
+                    yield Input(
+                        value=self.credential.label,
+                        placeholder="e.g. BANK_HOTLINE",
+                        id="label-input",
+                    )
 
-                yield Label("> UPLINK_NUMBER", classes="input-label")
-                yield Input(
-                    value=self.credential.phone,
-                    placeholder="+1 555 000 0000",
-                    id="phone-input",
-                )
+                # Row 2 (Credentials): Phone + PIN side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
+                        yield Label("> UPLINK_NUMBER", classes="input-label")
+                        yield Input(
+                            value=self.credential.phone,
+                            placeholder="+1 555 000 0000",
+                            id="phone-input",
+                        )
+                    with Vertical(classes="form-col"):
+                        yield Label(
+                            "> ACCESS_PIN [BLANK = KEEP]", classes="input-label"
+                        )
+                        yield Input(
+                            placeholder="••••••",
+                            password=True,
+                            id="pin-input",
+                        )
 
-                yield Label("> ACCESS_PIN [BLANK = KEEP]", classes="input-label")
-                yield Input(placeholder="••••••", password=True, id="pin-input")
+                # Row 3 (Notes): Full width at bottom
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> METADATA", classes="input-label")
+                    yield Input(
+                        value=self.credential.notes or "",
+                        placeholder="OPTIONAL_NOTES",
+                        id="notes-input",
+                    )
 
-                yield Label("> METADATA", classes="input-label")
-                yield Input(
-                    value=self.credential.notes or "",
-                    placeholder="OPTIONAL_NOTES",
-                    id="notes-input",
-                )
-
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
                     r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
+
+    def on_mount(self) -> None:
+        """Focus first input (Device Label field)."""
+        self.query_one("#label-input", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -304,7 +330,7 @@ class ConfirmDeleteModal(ModalScreen[bool]):
 
 
 class ViewPhoneModal(ModalScreen[None]):
-    """Modal for viewing a phone credential - Operator Grade Secure Read Console."""
+    """Modal for viewing a phone credential - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -316,7 +342,7 @@ class ViewPhoneModal(ModalScreen[None]):
         self.credential = credential
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade view modal layout."""
+        """Create wide-format console panel view layout."""
         # Get PIN strength for visual indicator
         strength = check_strength(self.credential.password)
         strength_color = _get_strength_color(strength.score)
@@ -325,54 +351,62 @@ class ViewPhoneModal(ModalScreen[None]):
             f"[{strength_color}]{'█' * filled}[/][#1e293b]{'░' * (5 - filled)}[/]"
         )
 
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        with Vertical(id="pwd-modal", classes="phone-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-            # Data Display Body
-            with Vertical(id="pwd-form"):
-                # Row 1: Label (Device)
-                yield Label("> DEVICE_NAME", classes="input-label")
-                yield Static(
-                    f"  {self.credential.label}", classes="view-value", id="label-value"
-                )
-
-                # Row 2: Phone Number
-                yield Label("> UPLINK_NUMBER", classes="input-label")
-                yield Static(
-                    f"  {self.credential.phone}", classes="view-value", id="phone-value"
-                )
-
-                # Row 3: PIN (Secret)
-                yield Label("> ACCESS_PIN", classes="input-label")
-                yield Static(
-                    f"  [#d946ef]{self.credential.password}[/]",
-                    classes="view-value secret",
-                    id="pin-value",
-                )
-
-                # Row 4: Security Level
-                yield Label("> COMPLEXITY", classes="input-label")
-                yield Static(
-                    f"  {security_bars} [{strength_color}]{strength.label.upper()}[/]",
-                    classes="view-value",
-                    id="strength-value",
-                )
-
-                # Row 5: Notes (if present)
-                if self.credential.notes:
-                    yield Label("> METADATA", classes="input-label")
+            # Data Display Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Device Label spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> TARGET_DEVICE", classes="input-label")
                     yield Static(
-                        f"  {self.credential.notes}",
+                        f"  {self.credential.label}",
                         classes="view-value",
-                        id="notes-value",
+                        id="label-value",
                     )
 
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
+                # Row 2 (Credentials): Phone + PIN side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
+                        yield Label("> UPLINK_NUMBER", classes="input-label")
+                        yield Static(
+                            f"  {self.credential.phone}",
+                            classes="view-value",
+                            id="phone-value",
+                        )
+                    with Vertical(classes="form-col"):
+                        yield Label("> ACCESS_PIN", classes="input-label")
+                        yield Static(
+                            f"  [#22c55e]{self.credential.password}[/]",
+                            classes="view-value secret",
+                            id="pin-value",
+                        )
+
+                # Row 3 (Security): Strength indicator spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> SECURITY_LEVEL", classes="input-label")
+                    yield Static(
+                        f"  {security_bars} [{strength_color}]{strength.label.upper()}[/]",
+                        classes="view-value",
+                        id="strength-value",
+                    )
+
+                # Row 4 (Notes): Full width at bottom (if present)
+                if self.credential.notes:
+                    with Vertical(classes="form-row form-row-full"):
+                        yield Label("> METADATA", classes="input-label")
+                        yield Static(
+                            f"  {self.credential.notes}",
+                            classes="view-value",
+                            id="notes-value",
+                        )
+
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
                 yield Button(r"\[ COPY PIN ]", variant="primary", id="save-button")
 

@@ -2558,7 +2558,7 @@ NotesScreen #notes-table > .datatable--odd-row {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PASSWORD MODALS - WIDE CONSOLE PANEL LAYOUT
+   PASSWORD MODALS - WIDE CONSOLE PANEL LAYOUT (PURPLE ACCENT)
    Wide-format horizontal layout for improved data density
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -2570,7 +2570,7 @@ NotesScreen #notes-table > .datatable--odd-row {
     height: auto;
     max-height: 80%;
     background: $operator-black;
-    border: heavy $operator-primary;
+    border: heavy $operator-secondary;
     padding: 0;
 }
 
@@ -2723,7 +2723,7 @@ NotesScreen #notes-table > .datatable--odd-row {
     height: auto;
     background: $operator-black;
     padding: 1 2;
-    border-bottom: heavy $operator-primary;
+    border-bottom: heavy $operator-secondary;
 }
 
 .password-modal-wide .modal-header-row {
@@ -2734,7 +2734,7 @@ NotesScreen #notes-table > .datatable--odd-row {
 
 .password-modal-wide #modal-title {
     text-style: bold;
-    color: $operator-primary;
+    color: $operator-secondary;
     text-align: left;
     padding: 0;
     margin: 0;
@@ -2743,6 +2743,198 @@ NotesScreen #notes-table > .datatable--odd-row {
 }
 
 .password-modal-wide .modal-status {
+    width: auto;
+    height: 1;
+    color: $pfx-success;
+    text-style: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PHONE MODAL WIDE - WIDE CONSOLE PANEL LAYOUT (PINK ACCENT)
+   Mirrors password-modal-wide but with pink accent for phones
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Wide modal container - 90% width, max 120 for ultra-wide screens */
+#pwd-modal.phone-modal-wide {
+    width: 90%;
+    max-width: 120;
+    min-width: 80;
+    height: auto;
+    max-height: 80%;
+    background: $operator-black;
+    border: heavy #ec4899;
+    padding: 0;
+}
+
+/* Grid-based form container */
+.phone-modal-wide .pwd-form-grid {
+    padding: 1 3;
+    background: $operator-black;
+    width: 100%;
+}
+
+/* Form row - base styles */
+.phone-modal-wide .form-row {
+    width: 100%;
+    height: auto;
+    margin-bottom: 1;
+}
+
+/* Full width row (Label, Notes) */
+.phone-modal-wide .form-row-full {
+    width: 100%;
+}
+
+/* Split row - side-by-side fields (Phone + PIN) */
+.phone-modal-wide .form-row-split {
+    width: 100%;
+    height: auto;
+    align: left top;
+}
+
+/* Column for side-by-side inputs (50% each) */
+.phone-modal-wide .form-col {
+    width: 1fr;
+    height: auto;
+    padding-right: 2;
+}
+
+.phone-modal-wide .form-col:last-child {
+    padding-right: 0;
+}
+
+/* Input labels - terminal style with prompt */
+.phone-modal-wide .input-label {
+    color: #ec4899;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+    height: 1;
+}
+
+/* Terminal-style inputs - left border accent */
+.phone-modal-wide Input {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 1 1 0 2;
+    margin: 0 0 0 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 3;
+}
+
+/* Focus state - pink accent with highlighted left border */
+.phone-modal-wide Input:focus {
+    border-left: heavy #ec4899;
+    background: #0a0a12;
+}
+
+/* PIN input styling - green accent for secret fields */
+.phone-modal-wide #pin-input {
+    border-left: solid $pfx-success 50%;
+}
+
+.phone-modal-wide #pin-input:focus {
+    border-left: heavy $pfx-success;
+    background: #0a120a;
+}
+
+/* View value display - terminal output style */
+.phone-modal-wide .view-value {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 0 1 0 2;
+    margin: 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 3;
+    content-align: left middle;
+}
+
+.phone-modal-wide .view-value.secret {
+    border-left: solid $pfx-success 50%;
+    color: $pfx-success;
+}
+
+/* Modal footer - docked to bottom, right-aligned buttons */
+.phone-modal-wide .modal-footer {
+    padding: 1 3 2 3;
+    align: right middle;
+    background: $operator-black;
+    border-top: solid $operator-muted 30%;
+    width: 100%;
+    height: auto;
+    dock: bottom;
+}
+
+/* Cancel button styling */
+.phone-modal-wide #cancel-button {
+    background: transparent;
+    color: #64748b;
+    border: solid #475569;
+    min-width: 14;
+}
+
+.phone-modal-wide #cancel-button:hover {
+    background: #1e293b;
+    color: #94a3b8;
+    border: solid #1e293b;
+}
+
+.phone-modal-wide #cancel-button:focus {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: solid #1e293b;
+}
+
+/* Save button styling - green accent */
+.phone-modal-wide #save-button {
+    background: transparent;
+    color: $pfx-success;
+    border: solid $pfx-success;
+    text-style: bold;
+    min-width: 24;
+}
+
+.phone-modal-wide #save-button:hover {
+    background: $pfx-success;
+    color: $operator-black;
+}
+
+.phone-modal-wide #save-button:focus {
+    background: $pfx-success;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* HUD Header for wide modals */
+.phone-modal-wide .modal-header {
+    width: 100%;
+    height: auto;
+    background: $operator-black;
+    padding: 1 2;
+    border-bottom: heavy #ec4899;
+}
+
+.phone-modal-wide .modal-header-row {
+    width: 100%;
+    height: 1;
+    align: left middle;
+}
+
+.phone-modal-wide #modal-title {
+    text-style: bold;
+    color: #ec4899;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    width: 1fr;
+    border: none;
+}
+
+.phone-modal-wide .modal-status {
     width: auto;
     height: 1;
     color: $pfx-success;
