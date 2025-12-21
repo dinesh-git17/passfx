@@ -846,7 +846,7 @@ class SettingsScreen(Screen):
         pfx_grid = Vertical(classes="stats-grid")
         pfx_section.mount(pfx_grid)
 
-        pfx_grid.mount(Static("  Version:    [dim]1.0.1[/]"))
+        pfx_grid.mount(Static("  Version:    [dim]1.0.2[/]"))
         pfx_grid.mount(Static("  Encryption: [dim]Fernet (AES-128-CBC)[/]"))
         pfx_grid.mount(Static("  KDF:        [dim]PBKDF2-HMAC-SHA256[/]"))
         pfx_grid.mount(Static("  Iterations: [dim]480,000[/]"))

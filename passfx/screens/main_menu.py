@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 HEADER_LOGO = """[bold #00FFFF]█▀█ ▄▀█ █▀ █▀ █▀▀ ▀▄▀
 █▀▀ █▀█ ▄█ ▄█ █▀  █ █[/]"""
 
-VERSION = "v1.0.0"
+VERSION = "v1.0.2"
 
 
 class SecurityScore(Static):

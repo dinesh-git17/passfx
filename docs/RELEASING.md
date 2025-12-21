@@ -9,7 +9,7 @@ This document serves as the release SOP for PassFX. The initial publication is c
 | Item | Status |
 |------|--------|
 | **PyPI Publication** | Complete |
-| **Current Version** | 1.0.1 |
+| **Current Version** | 1.0.2 |
 | **Trusted Publishing** | Active (OIDC) |
 | **PyPI URL** | https://pypi.org/project/passfx/ |
 
@@ -253,7 +253,7 @@ twine check dist/*
 pip install passfx
 
 # Install specific version
-pip install passfx==1.0.1
+pip install passfx==1.0.2
 
 # Upgrade
 pip install --upgrade passfx
@@ -281,6 +281,6 @@ pip install --upgrade passfx
 ---
 
 *Initial publication: December 2025*
-*Current version: 1.0.1*
+*Current version: 1.0.2*
 *Build system: Hatchling*
 *Publishing: GitHub Actions + Trusted Publishing (OIDC)*
