@@ -6,8 +6,11 @@
   width="200"
 />
 
-**A password manager built by a developer who got tired of SaaS security theater.**
+# Secure Terminal Password Manager
 
+**Zero cloud sync. Fernet encryption. Local-first by design. Python 3.10+.**
+
+[![PyPI](https://img.shields.io/pypi/v/passfx.svg)](https://pypi.org/project/passfx/)
 [![CI](https://github.com/dinesh-git17/passfx/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/dinesh-git17/passfx/actions/workflows/code-quality.yml)
 [![codecov](https://codecov.io/gh/dinesh-git17/passfx/branch/main/graph/badge.svg)](https://codecov.io/gh/dinesh-git17/passfx)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
