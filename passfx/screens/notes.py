@@ -75,7 +75,7 @@ def _get_relative_time(iso_timestamp: str | None) -> str:
 
 
 class ViewNoteModal(ModalScreen[None]):
-    """Modal for viewing a note - Operator Grade Secure Read Console."""
+    """Modal for viewing a note - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -87,40 +87,38 @@ class ViewNoteModal(ModalScreen[None]):
         self.note = note
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade view modal layout.
-
-        This is the explicit reveal action - user has pressed V to view content.
-        Full content is displayed securely in a TextArea (read-only).
-        """
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel view layout."""
+        with Vertical(id="pwd-modal", classes="note-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-            # Data Display Body
-            with Vertical(id="pwd-form"):
-                # Row 1: Title + Stats
-                yield Label("> SHARD_TITLE", classes="input-label")
-                yield Static(
-                    f"  {self.note.title}  "
-                    f"[dim]({self.note.line_count}L {self.note.char_count}C)[/]",
-                    classes="view-value",
-                    id="title-value",
-                )
+            # Data Display Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title + Stats spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> SHARD_TITLE", classes="input-label")
+                    yield Static(
+                        f"  {self.note.title}  "
+                        f"[dim]({self.note.line_count}L {self.note.char_count}C)[/]",
+                        classes="view-value",
+                        id="title-value",
+                    )
 
-                # Row 2: Full content in TextArea (read-only reveal)
-                yield Label("> CONTENT [DECRYPTED]", classes="input-label")
-                yield TextArea(
-                    self.note.content,
-                    id="content-area",
-                    classes="note-code-editor",
-                    read_only=True,
-                )
+                # Row 2 (Content): Full content in TextArea (read-only reveal)
+                with Vertical(classes="form-row form-row-full form-row-content"):
+                    yield Label("> CONTENT [DECRYPTED]", classes="input-label")
+                    yield TextArea(
+                        self.note.content,
+                        id="content-area",
+                        classes="note-content-editor",
+                        read_only=True,
+                    )
 
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
                 yield Button(r"\[ COPY ]", variant="primary", id="save-button")
 
@@ -148,37 +146,41 @@ class ViewNoteModal(ModalScreen[None]):
 
 
 class AddNoteModal(ModalScreen[NoteEntry | None]):
-    """Modal for adding a new secure note - Operator Grade Secure Write Console."""
+    """Modal for adding a new secure note - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout with TextArea."""
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="note-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: OPEN", classes="modal-status")
 
-            # Form
-            with Vertical(id="pwd-form"):
-                # Title input
-                yield Label("> SHARD_TITLE", classes="input-label")
-                yield Input(placeholder="e.g. Office Wi-Fi Password", id="title-input")
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> SHARD_TITLE", classes="input-label")
+                    yield Input(
+                        placeholder="e.g. Office Wi-Fi Password", id="title-input"
+                    )
 
-                # Content TextArea
-                yield Label("> CONTENT", classes="input-label")
-                yield TextArea(
-                    "",
-                    id="content-area",
-                    classes="note-code-editor",
-                )
+                # Row 2 (Content): Full width content editor
+                with Vertical(classes="form-row form-row-full form-row-content"):
+                    yield Label("> CONTENT", classes="input-label")
+                    yield TextArea(
+                        "",
+                        id="content-area",
+                        classes="note-content-editor",
+                    )
 
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
                 yield Button(
                     r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
@@ -216,7 +218,7 @@ class AddNoteModal(ModalScreen[NoteEntry | None]):
 
 
 class EditNoteModal(ModalScreen[dict | None]):
-    """Modal for editing an existing secure note - Operator Grade Console."""
+    """Modal for editing an existing secure note - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -227,8 +229,8 @@ class EditNoteModal(ModalScreen[dict | None]):
         self.note = note
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout."""
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="note-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
@@ -238,28 +240,36 @@ class EditNoteModal(ModalScreen[dict | None]):
                     )
                     yield Static("STATUS: EDIT", classes="modal-status")
 
-            # Form
-            with Vertical(id="pwd-form"):
-                yield Label("> SHARD_TITLE", classes="input-label")
-                yield Input(
-                    value=self.note.title,
-                    placeholder="e.g. Office Wi-Fi Password",
-                    id="title-input",
-                )
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title spans full width
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> SHARD_TITLE", classes="input-label")
+                    yield Input(
+                        value=self.note.title,
+                        placeholder="e.g. Office Wi-Fi Password",
+                        id="title-input",
+                    )
 
-                yield Label("> CONTENT", classes="input-label")
-                yield TextArea(
-                    self.note.content,
-                    id="content-area",
-                    classes="note-code-editor",
-                )
+                # Row 2 (Content): Full width content editor
+                with Vertical(classes="form-row form-row-full form-row-content"):
+                    yield Label("> CONTENT", classes="input-label")
+                    yield TextArea(
+                        self.note.content,
+                        id="content-area",
+                        classes="note-content-editor",
+                    )
 
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
                 yield Button(
                     r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
+
+    def on_mount(self) -> None:
+        """Focus first input (Title field)."""
+        self.query_one("#title-input", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""

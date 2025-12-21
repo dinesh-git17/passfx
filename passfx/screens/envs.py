@@ -69,7 +69,7 @@ def _get_relative_time(iso_timestamp: str | None) -> str:
 
 
 class ViewEnvModal(ModalScreen[None]):
-    """Modal for viewing env config - Operator Grade Secure Read Console."""
+    """Modal for viewing env config - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -81,30 +81,26 @@ class ViewEnvModal(ModalScreen[None]):
         self.env = env
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade view modal layout.
-
-        This is the explicit reveal action - user has pressed V to view content.
-        Full content is displayed securely in a TextArea (read-only).
-        """
-        with Vertical(id="pwd-modal", classes="secure-terminal env-modal-wide"):
+        """Create wide-format console panel view layout."""
+        with Vertical(id="pwd-modal", classes="env-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-            # Data Display Body - matches EditEnvModal structure
-            with Vertical(id="pwd-form"):
-                # Row 1: Title and Filename side-by-side
-                with Horizontal(classes="input-row"):
-                    with Vertical(classes="input-col"):
+            # Data Display Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title and Filename side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
                         yield Label("> CONFIG_TITLE", classes="input-label")
                         yield Static(
                             f"  {self.env.title}",
                             classes="view-value",
                             id="title-value",
                         )
-                    with Vertical(classes="input-col"):
+                    with Vertical(classes="form-col"):
                         yield Label("> FILE_TARGET", classes="input-label")
                         yield Static(
                             f"  [#fcd34d]{self.env.filename}[/]  "
@@ -113,18 +109,19 @@ class ViewEnvModal(ModalScreen[None]):
                             id="filename-value",
                         )
 
-                # Row 2: Full content in TextArea (read-only reveal)
-                yield Label("> CONTENT [DECRYPTED]", classes="input-label")
-                yield TextArea(
-                    self.env.content,
-                    id="content-area",
-                    language="dotenv",
-                    classes="note-code-editor",
-                    read_only=True,
-                )
+                # Row 2 (Content): Full content in TextArea (read-only reveal)
+                with Vertical(classes="form-row form-row-full form-row-content"):
+                    yield Label("> CONTENT [DECRYPTED]", classes="input-label")
+                    yield TextArea(
+                        self.env.content,
+                        id="content-area",
+                        language="dotenv",
+                        classes="env-content-editor",
+                        read_only=True,
+                    )
 
-            # Footer Actions
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
                 yield Button(r"\[ COPY ]", variant="primary", id="save-button")
 
@@ -152,50 +149,53 @@ class ViewEnvModal(ModalScreen[None]):
 
 
 class AddEnvModal(ModalScreen[EnvEntry | None]):
-    """Modal for adding a new environment config - Operator Grade Secure Write Console."""
+    """Modal for adding a new environment config - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout with TextArea."""
-        with Vertical(id="pwd-modal", classes="secure-terminal env-modal-wide"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="env-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: OPEN", classes="modal-status")
 
-            # Form - landscape layout
-            with Vertical(id="pwd-form"):
-                # Row 1: Title and Filename side-by-side
-                with Horizontal(classes="input-row"):
-                    with Vertical(classes="input-col"):
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title and Filename side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
                         yield Label("> CONFIG_TITLE", classes="input-label")
                         yield Input(
                             placeholder="e.g. Project X Production", id="title-input"
                         )
-                    with Vertical(classes="input-col"):
+                    with Vertical(classes="form-col"):
                         yield Label("> FILENAME", classes="input-label")
                         yield Input(
                             placeholder="e.g. .env.production", id="filename-input"
                         )
 
-                # Row 2: Content TextArea
-                yield Label("> CONTENT", classes="input-label")
-                yield TextArea(
-                    "",
-                    id="content-area",
-                    language="dotenv",
-                    classes="note-code-editor",
-                )
+                # Row 2 (Content): Full width content editor
+                with Vertical(classes="form-row form-row-full form-row-content"):
+                    yield Label("> CONTENT", classes="input-label")
+                    yield TextArea(
+                        "",
+                        id="content-area",
+                        language="dotenv",
+                        classes="env-content-editor",
+                    )
 
-            # Footer Actions
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ FILE ]", id="import-button")
                 yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
-                yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
+                yield Button(
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
+                )
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -279,7 +279,7 @@ class AddEnvModal(ModalScreen[EnvEntry | None]):
 
 
 class EditEnvModal(ModalScreen[dict | None]):
-    """Modal for editing an existing environment config - Operator Grade Console."""
+    """Modal for editing an existing environment config - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -290,8 +290,8 @@ class EditEnvModal(ModalScreen[dict | None]):
         self.env = env
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout."""
-        with Vertical(id="pwd-modal", classes="secure-terminal env-modal-wide"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="env-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
@@ -301,18 +301,18 @@ class EditEnvModal(ModalScreen[dict | None]):
                     )
                     yield Static("STATUS: EDIT", classes="modal-status")
 
-            # Form - landscape layout
-            with Vertical(id="pwd-form"):
-                # Row 1: Title and Filename side-by-side
-                with Horizontal(classes="input-row"):
-                    with Vertical(classes="input-col"):
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Title and Filename side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
                         yield Label("> CONFIG_TITLE", classes="input-label")
                         yield Input(
                             value=self.env.title,
                             placeholder="e.g. Project X Production",
                             id="title-input",
                         )
-                    with Vertical(classes="input-col"):
+                    with Vertical(classes="form-col"):
                         yield Label("> FILENAME", classes="input-label")
                         yield Input(
                             value=self.env.filename,
@@ -320,20 +320,27 @@ class EditEnvModal(ModalScreen[dict | None]):
                             id="filename-input",
                         )
 
-                # Row 2: Content TextArea
-                yield Label("> CONTENT", classes="input-label")
-                yield TextArea(
-                    self.env.content,
-                    id="content-area",
-                    language="dotenv",
-                    classes="note-code-editor",
-                )
+                # Row 2 (Content): Full width content editor
+                with Vertical(classes="form-row form-row-full form-row-content"):
+                    yield Label("> CONTENT", classes="input-label")
+                    yield TextArea(
+                        self.env.content,
+                        id="content-area",
+                        language="dotenv",
+                        classes="env-content-editor",
+                    )
 
-            # Footer Actions
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ FILE ]", id="import-button")
                 yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
-                yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
+                yield Button(
+                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
+                )
+
+    def on_mount(self) -> None:
+        """Focus first input (Title field)."""
+        self.query_one("#title-input", Input).focus()
 
     def on_drop(self, event: Any) -> None:
         """Handle file drop events."""
