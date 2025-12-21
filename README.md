@@ -75,7 +75,7 @@ If you have ever thought "I should really stop reusing passwords, but I also do 
 
 ## Quick Start
 
-PassFX requires Python 3.10 or higher.
+PassFX requires Python 3.10 or higher. If you do not have Python installed, see the [Getting Started Guide](docs/GETTING_STARTED.md) for step-by-step installation instructions.
 
 ### Install
 
@@ -270,6 +270,10 @@ For the complete testing documentation, see [tests/README.md](tests/README.md).
 ## Documentation Map
 
 Different readers need different information. Here is where to go:
+
+**I am new to password managers and terminals**
+- Start with the [Getting Started Guide](docs/GETTING_STARTED.md) for a beginner-friendly walkthrough
+- This guide assumes no programming knowledge and explains everything step-by-step
 
 **I want to use PassFX day-to-day**
 - Start with this README for installation
