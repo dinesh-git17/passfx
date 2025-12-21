@@ -3457,32 +3457,12 @@ NotesScreen #notes-table > .datatable--odd-row {
     dock: bottom;
 }
 
-/* Cancel button styling */
-.env-modal-wide #cancel-button {
-    background: transparent;
-    color: #64748b;
-    border: solid #475569;
-    min-width: 14;
-}
-
-.env-modal-wide #cancel-button:hover {
-    background: #1e293b;
-    color: #94a3b8;
-    border: solid #1e293b;
-}
-
-.env-modal-wide #cancel-button:focus {
-    background: #1e293b;
-    color: #e2e8f0;
-    border: solid #1e293b;
-}
-
-/* Import button styling - subtle */
+/* Import button styling - subtle gray */
 .env-modal-wide #import-button {
     background: transparent;
     color: #64748b;
     border: solid #475569;
-    min-width: 12;
+    min-width: 16;
 }
 
 .env-modal-wide #import-button:hover {
@@ -3495,15 +3475,31 @@ NotesScreen #notes-table > .datatable--odd-row {
     color: #e2e8f0;
 }
 
-/* Save button styling - indigo accent, wider for text */
+/* Cancel button styling - red/danger */
+.env-modal-wide #cancel-button {
+    background: transparent;
+    color: #ef4444;
+    border: solid #ef4444;
+    min-width: 16;
+}
+
+.env-modal-wide #cancel-button:hover {
+    background: #ef4444;
+    color: $operator-black;
+}
+
+.env-modal-wide #cancel-button:focus {
+    background: #ef4444;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* Save button styling - indigo accent */
 .env-modal-wide #save-button {
     background: transparent;
     color: #818cf8;
     border: solid #818cf8;
-    margin-left: 2;
-    min-width: 22;
-    width: auto;
-    padding: 0 2;
+    min-width: 16;
 }
 
 .env-modal-wide #save-button:hover {
@@ -3673,32 +3669,12 @@ NotesScreen #notes-table > .datatable--odd-row {
     dock: bottom;
 }
 
-/* Cancel button styling */
-.recovery-modal-wide #cancel-button {
-    background: transparent;
-    color: #64748b;
-    border: solid #475569;
-    min-width: 14;
-}
-
-.recovery-modal-wide #cancel-button:hover {
-    background: #1e293b;
-    color: #94a3b8;
-    border: solid #1e293b;
-}
-
-.recovery-modal-wide #cancel-button:focus {
-    background: #1e293b;
-    color: #e2e8f0;
-    border: solid #1e293b;
-}
-
-/* Import button styling - subtle */
+/* Import button styling - subtle gray */
 .recovery-modal-wide #import-button {
     background: transparent;
     color: #64748b;
     border: solid #475569;
-    min-width: 12;
+    min-width: 16;
 }
 
 .recovery-modal-wide #import-button:hover {
@@ -3711,15 +3687,31 @@ NotesScreen #notes-table > .datatable--odd-row {
     color: #e2e8f0;
 }
 
-/* Save button styling - salmon accent, wider for text */
+/* Cancel button styling - red/danger */
+.recovery-modal-wide #cancel-button {
+    background: transparent;
+    color: #ef4444;
+    border: solid #ef4444;
+    min-width: 16;
+}
+
+.recovery-modal-wide #cancel-button:hover {
+    background: #ef4444;
+    color: $operator-black;
+}
+
+.recovery-modal-wide #cancel-button:focus {
+    background: #ef4444;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* Save button styling - salmon accent */
 .recovery-modal-wide #save-button {
     background: transparent;
     color: #ff6f6f;
     border: solid #ff6f6f;
-    margin-left: 2;
-    min-width: 22;
-    width: auto;
-    padding: 0 2;
+    min-width: 16;
 }
 
 .recovery-modal-wide #save-button:hover {
