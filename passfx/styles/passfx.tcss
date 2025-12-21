@@ -3477,12 +3477,12 @@ NotesScreen #notes-table > .datatable--odd-row {
     border: solid #1e293b;
 }
 
-/* Import button styling */
+/* Import button styling - subtle */
 .env-modal-wide #import-button {
     background: transparent;
     color: #64748b;
     border: solid #475569;
-    min-width: 10;
+    min-width: 12;
 }
 
 .env-modal-wide #import-button:hover {
@@ -3495,13 +3495,15 @@ NotesScreen #notes-table > .datatable--odd-row {
     color: #e2e8f0;
 }
 
-/* Save button styling - indigo accent */
+/* Save button styling - indigo accent, wider for text */
 .env-modal-wide #save-button {
     background: transparent;
     color: #818cf8;
     border: solid #818cf8;
     margin-left: 2;
-    min-width: 24;
+    min-width: 22;
+    width: auto;
+    padding: 0 2;
 }
 
 .env-modal-wide #save-button:hover {
@@ -3691,12 +3693,12 @@ NotesScreen #notes-table > .datatable--odd-row {
     border: solid #1e293b;
 }
 
-/* Import button styling */
+/* Import button styling - subtle */
 .recovery-modal-wide #import-button {
     background: transparent;
     color: #64748b;
     border: solid #475569;
-    min-width: 10;
+    min-width: 12;
 }
 
 .recovery-modal-wide #import-button:hover {
@@ -3709,13 +3711,15 @@ NotesScreen #notes-table > .datatable--odd-row {
     color: #e2e8f0;
 }
 
-/* Save button styling - salmon accent */
+/* Save button styling - salmon accent, wider for text */
 .recovery-modal-wide #save-button {
     background: transparent;
     color: #ff6f6f;
     border: solid #ff6f6f;
     margin-left: 2;
-    min-width: 24;
+    min-width: 22;
+    width: auto;
+    padding: 0 2;
 }
 
 .recovery-modal-wide #save-button:hover {
@@ -4627,88 +4631,7 @@ EnvsScreen .pane-footer {
     border-top: solid $pfx-indigo 30%;
 }
 
-/* Envs modals - landscape layout to prevent scrolling */
-#pwd-modal.env-modal-wide {
-    width: 140;
-    max-height: 85%;
-}
-
-/* Horizontal input row for side-by-side fields */
-.env-modal-wide .input-row {
-    width: 100%;
-    height: auto;
-    align: left top;
-}
-
-/* Column for side-by-side inputs */
-.env-modal-wide .input-col {
-    width: 1fr;
-    height: auto;
-    padding-right: 2;
-}
-
-.env-modal-wide .input-col:last-child {
-    padding-right: 0;
-}
-
-/* TextArea for env content - shorter height */
-.env-modal-wide .note-code-editor {
-    height: 10;
-    min-height: 8;
-    max-height: 12;
-}
-
-/* Modal buttons - compact single line */
-.env-modal-wide #modal-buttons {
-    width: 100%;
-    height: auto;
-    align: center middle;
-    content-align: center middle;
-    padding: 1 0 0 0;
-}
-
-.env-modal-wide #modal-buttons Button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    height: 3;
-    min-height: 3;
-    max-height: 3;
-    margin: 0 1;
-    padding: 0 2;
-}
-
-.env-modal-wide #import-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: $pfx-indigo-dark;
-    color: $pfx-indigo;
-    border: solid $pfx-indigo;
-}
-
-.env-modal-wide #import-button:hover {
-    background: $pfx-indigo;
-    color: #000000;
-}
-
-.env-modal-wide #cancel-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: #1e293b;
-    color: #94a3b8;
-    border: solid #475569;
-}
-
-.env-modal-wide #save-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: #166534;
-    color: #22c55e;
-    border: solid #22c55e;
-}
+/* Legacy env-modal-wide rules removed - now uses standard wide modal pattern */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CODE EDITOR / TEXTAREA STYLING
@@ -5277,65 +5200,7 @@ RecoveryScreen .pane-footer {
     border-top: solid $pfx-salmon 30%;
 }
 
-/* Recovery modals - landscape layout to prevent scrolling */
-#pwd-modal.recovery-modal-wide {
-    width: 100;
-    max-height: 85%;
-}
-
-/* Recovery modal buttons */
-.recovery-modal-wide #modal-buttons {
-    width: 100%;
-    height: auto;
-    align: center middle;
-    content-align: center middle;
-    padding: 1 0 0 0;
-}
-
-.recovery-modal-wide #modal-buttons Button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    height: 3;
-    min-height: 3;
-    max-height: 3;
-    margin: 0 1;
-    padding: 0 2;
-}
-
-.recovery-modal-wide #import-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: $pfx-salmon-dark;
-    color: $pfx-salmon;
-    border: solid $pfx-salmon;
-}
-
-.recovery-modal-wide #import-button:hover {
-    background: $pfx-salmon;
-    color: #000000;
-}
-
-.recovery-modal-wide #cancel-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: #1e293b;
-    color: #94a3b8;
-    border: solid #475569;
-}
-
-.recovery-modal-wide #save-button {
-    width: 24;
-    min-width: 24;
-    max-width: 24;
-    background: #166534;
-    color: #22c55e;
-    border: solid #22c55e;
-}
-
-/* Legacy Recovery modal styles removed - now uses standard #pwd-modal pattern */
+/* Legacy recovery-modal-wide rules removed - now uses standard wide modal pattern */
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    SECURE NOTES SCREEN - ENCRYPTED DATA SHARDS THEME

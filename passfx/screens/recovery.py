@@ -181,11 +181,9 @@ class AddRecoveryModal(ModalScreen[RecoveryEntry | None]):
 
             # Footer Actions - docked bottom, right aligned
             with Horizontal(id="modal-buttons", classes="modal-footer"):
-                yield Button(r"\[ FILE ]", id="import-button")
-                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
-                yield Button(
-                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
-                )
+                yield Button(r"\[ IMPORT ]", id="import-button")
+                yield Button(r"\[ CANCEL ]", variant="default", id="cancel-button")
+                yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
 
     def on_mount(self) -> None:
         """Focus first input."""
@@ -301,11 +299,9 @@ class EditRecoveryModal(ModalScreen[dict | None]):
 
             # Footer Actions - docked bottom, right aligned
             with Horizontal(id="modal-buttons", classes="modal-footer"):
-                yield Button(r"\[ FILE ]", id="import-button")
-                yield Button(r"\[ ABORT ]", variant="default", id="cancel-button")
-                yield Button(
-                    r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
-                )
+                yield Button(r"\[ IMPORT ]", id="import-button")
+                yield Button(r"\[ CANCEL ]", variant="default", id="cancel-button")
+                yield Button(r"\[ SAVE ]", variant="primary", id="save-button")
 
     def on_mount(self) -> None:
         """Focus first input (Title field)."""
