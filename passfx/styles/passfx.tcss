@@ -2558,6 +2558,198 @@ NotesScreen #notes-table > .datatable--odd-row {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   PASSWORD MODALS - WIDE CONSOLE PANEL LAYOUT
+   Wide-format horizontal layout for improved data density
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Wide modal container - 90% width, max 120 for ultra-wide screens */
+#pwd-modal.password-modal-wide {
+    width: 90%;
+    max-width: 120;
+    min-width: 80;
+    height: auto;
+    max-height: 80%;
+    background: $operator-black;
+    border: heavy $operator-primary;
+    padding: 0;
+}
+
+/* Grid-based form container */
+.password-modal-wide .pwd-form-grid {
+    padding: 1 3;
+    background: $operator-black;
+    width: 100%;
+}
+
+/* Form row - base styles */
+.password-modal-wide .form-row {
+    width: 100%;
+    height: auto;
+    margin-bottom: 1;
+}
+
+/* Full width row (Title, URL, Notes) */
+.password-modal-wide .form-row-full {
+    width: 100%;
+}
+
+/* Split row - side-by-side fields (Username + Password) */
+.password-modal-wide .form-row-split {
+    width: 100%;
+    height: auto;
+    align: left top;
+}
+
+/* Column for side-by-side inputs (50% each) */
+.password-modal-wide .form-col {
+    width: 1fr;
+    height: auto;
+    padding-right: 2;
+}
+
+.password-modal-wide .form-col:last-child {
+    padding-right: 0;
+}
+
+/* Input labels - terminal style with prompt */
+.password-modal-wide .input-label {
+    color: $operator-secondary;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+    height: 1;
+}
+
+/* Terminal-style inputs - left border accent */
+.password-modal-wide Input {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 1 1 0 2;
+    margin: 0 0 0 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 3;
+}
+
+/* Focus state - purple accent with highlighted left border */
+.password-modal-wide Input:focus {
+    border-left: heavy $operator-secondary;
+    background: #0a0a12;
+}
+
+/* Password input styling */
+.password-modal-wide #password-input {
+    border-left: solid $pfx-success 50%;
+}
+
+.password-modal-wide #password-input:focus {
+    border-left: heavy $pfx-success;
+    background: #0a120a;
+}
+
+/* View value display - terminal output style */
+.password-modal-wide .view-value {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 0 1 0 2;
+    margin: 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 3;
+    content-align: left middle;
+}
+
+.password-modal-wide .view-value.secret {
+    border-left: solid $pfx-success 50%;
+    color: $pfx-success;
+}
+
+/* Modal footer - docked to bottom, right-aligned buttons */
+.password-modal-wide .modal-footer {
+    padding: 1 3 2 3;
+    align: right middle;
+    background: $operator-black;
+    border-top: solid $operator-muted 30%;
+    width: 100%;
+    height: auto;
+    dock: bottom;
+}
+
+/* Cancel button styling */
+.password-modal-wide #cancel-button {
+    background: transparent;
+    color: #64748b;
+    border: solid #475569;
+    min-width: 14;
+}
+
+.password-modal-wide #cancel-button:hover {
+    background: #1e293b;
+    color: #94a3b8;
+    border: solid #1e293b;
+}
+
+.password-modal-wide #cancel-button:focus {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: solid #1e293b;
+}
+
+/* Save button styling - green accent */
+.password-modal-wide #save-button {
+    background: transparent;
+    color: $pfx-success;
+    border: solid $pfx-success;
+    text-style: bold;
+    min-width: 24;
+}
+
+.password-modal-wide #save-button:hover {
+    background: $pfx-success;
+    color: $operator-black;
+}
+
+.password-modal-wide #save-button:focus {
+    background: $pfx-success;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* HUD Header for wide modals */
+.password-modal-wide .modal-header {
+    width: 100%;
+    height: auto;
+    background: $operator-black;
+    padding: 1 2;
+    border-bottom: heavy $operator-primary;
+}
+
+.password-modal-wide .modal-header-row {
+    width: 100%;
+    height: 1;
+    align: left middle;
+}
+
+.password-modal-wide #modal-title {
+    text-style: bold;
+    color: $operator-primary;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    width: 1fr;
+    border: none;
+}
+
+.password-modal-wide .modal-status {
+    width: auto;
+    height: 1;
+    color: $pfx-success;
+    text-style: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    GENERATOR SCREEN - OPERATOR THEME CRYPTO CONSOLE
    Theme: Cyan (#00FFFF) primary, Pure Black background
    ═══════════════════════════════════════════════════════════════════════════ */
