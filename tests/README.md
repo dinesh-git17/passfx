@@ -22,13 +22,12 @@ PassFX is a **password manager**. The test suite exists to guarantee that creden
 
 ### Test Suite at a Glance
 
-| Metric               | Value                                                      |
-| -------------------- | ---------------------------------------------------------- |
-| Total test functions | ~1,146                                                     |
-| Lines of test code   | ~16,800                                                    |
-| Test directories     | 10                                                         |
-| Pytest markers       | 5 (`unit`, `integration`, `security`, `slow`, `edge`)      |
-| Target coverage      | 90% overall, 100% for `core/crypto.py` and `core/vault.py` |
+| Metric               | Value                                                              |
+| -------------------- | ------------------------------------------------------------------ |
+| Lines of test code   | ~23,500                                                            |
+| Test directories     | 11                                                                 |
+| Pytest markers       | 6 (`unit`, `integration`, `security`, `slow`, `edge`, `regression`) |
+| Target coverage      | 90% overall, 100% for `core/crypto.py` and `core/vault.py`         |
 
 ---
 
@@ -36,34 +35,40 @@ PassFX is a **password manager**. The test suite exists to guarantee that creden
 
 ```
 tests/
-├── conftest.py              # Shared fixtures and pytest hooks
-├── unit/                    # Pure function testing, no I/O
+├── conftest.py                     # Shared fixtures and pytest hooks
+├── unit/                           # Pure function testing, no I/O
 │   └── core/
-│       ├── test_crypto.py   # CryptoManager, key derivation, encryption
-│       ├── test_vault.py    # Vault state machine, CRUD operations
-│       └── test_models.py   # Credential dataclasses, serialization
-├── integration/             # Component interaction verification
-│   └── test_vault_roundtrip.py
-├── security/                # Threat model validation
-│   └── test_security_invariants.py
-├── regression/              # Locked-in security contracts
+│       ├── test_crypto.py          # CryptoManager, key derivation, encryption
+│       ├── test_vault.py           # Vault state machine, CRUD operations
+│       └── test_models.py          # Credential dataclasses, serialization
+├── integration/                    # Component interaction verification
+│   └── test_vault_roundtrip.py     # Full create/unlock/save/lock cycles
+├── security/                       # Threat model validation
+│   ├── test_security_invariants.py # Secret leakage, crypto strength, permissions
+│   └── test_search_security.py     # Search does not expose sensitive data
+├── regression/                     # Locked-in security contracts
 │   └── test_security_regressions.py
-├── edge/                    # Failure paths and hardening scenarios
-│   └── test_failure_modes.py
-├── utils/                   # Utility module tests
-│   ├── test_password_generator.py
-│   ├── test_password_strength.py
-│   ├── test_clipboard.py
-│   ├── test_io.py
-│   └── test_platform.py
-├── cli/                     # CLI entry point and signal handling
-│   └── test_cli_entrypoint.py
-├── app/                     # Application lifecycle and state
-│   └── test_app_lifecycle.py
-├── screens/                 # Screen logic and workflows
-│   └── test_credential_screens.py
-└── ui/                      # UI behavior tests
-    └── test_login_security.py
+├── edge/                           # Failure paths and hardening scenarios
+│   └── test_failure_modes.py       # Disk errors, corruption, race conditions
+├── utils/                          # Utility module tests
+│   ├── test_password_generator.py  # Random password/passphrase generation
+│   ├── test_password_strength.py   # zxcvbn-based strength analysis
+│   ├── test_clipboard.py           # Clipboard operations and auto-clear
+│   ├── test_io.py                  # File I/O utilities
+│   └── test_platform.py            # Platform-specific security helpers
+├── cli/                            # CLI entry point and signal handling
+│   └── test_cli_entrypoint.py      # Startup, shutdown, signal traps
+├── app/                            # Application lifecycle and state
+│   ├── test_app_lifecycle.py       # PassFXApp initialization, vault binding
+│   ├── test_search_routing.py      # Global search overlay activation and routing
+│   └── test_autolock_countdown.py  # Auto-lock timer and countdown warnings
+├── screens/                        # Screen logic and workflows
+│   └── test_credential_screens.py  # CRUD operations, modal validation
+├── ui/                             # UI behavior tests
+│   ├── test_login_security.py      # Login screen security behavior
+│   └── test_search_state_machine.py # Search overlay state transitions
+└── performance/                    # Slow tests excluded from fast CI
+    └── test_search_performance.py  # Search timing at scale (1,000+ credentials)
 ```
 
 ### What Belongs Where
@@ -77,9 +82,10 @@ tests/
 | `edge/`        | Failure path coverage     | Disk full, permission denied, corrupt data, race conditions                       | Happy path tests             |
 | `utils/`       | Utility module tests      | Password generation, strength analysis, clipboard, I/O                            | Core crypto tests            |
 | `cli/`         | Entry point tests         | Signal handling, startup, shutdown                                                | Application logic tests      |
-| `app/`         | Application state tests   | PassFXApp lifecycle, vault initialization                                         | Screen-level tests           |
+| `app/`         | Application state tests   | PassFXApp lifecycle, vault initialization, search routing                         | Screen-level tests           |
 | `screens/`     | Screen workflow tests     | CRUD operations, modal validation, state transitions                              | Unit tests for models        |
-| `ui/`          | UI behavior tests         | Login security, focus management                                                  | Integration tests            |
+| `ui/`          | UI behavior tests         | Login security, search state machine, focus management                            | Integration tests            |
+| `performance/` | Slow performance tests    | Benchmarks, timing validation, memory usage at scale                              | Functional correctness tests |
 
 ---
 
@@ -143,17 +149,15 @@ Edge case tests verify graceful failure under abnormal conditions.
 
 These tests often use mocking to simulate failures that are hard to reproduce reliably.
 
-### Slow Tests
+### Performance Tests (`performance/`)
 
-Tests marked with `@pytest.mark.slow` take longer than 1 second. They are excluded from fast runs.
+Performance tests validate timing and memory constraints at scale. They are marked `@pytest.mark.slow` and excluded from fast CI runs.
 
-```bash
-# Skip slow tests (default behavior)
-pytest tests/
+- **Search performance.** <100ms for 1,000+ credentials.
+- **Levenshtein efficiency.** Fuzzy matching algorithm performance.
+- **Memory usage.** Memory baseline under load.
 
-# Include slow tests
-pytest tests/ --run-slow
-```
+These tests run weekly via scheduled workflow or on-demand via manual trigger.
 
 ---
 
@@ -191,11 +195,26 @@ pytest tests/integration/
 # Edge case tests only
 pytest tests/edge/
 
+# Application and UI tests
+pytest tests/app/ tests/ui/ tests/screens/
+
+# Utility tests
+pytest tests/utils/ tests/cli/
+
 # By marker
 pytest -m security
 pytest -m integration
 pytest -m "security or regression"
 pytest -m "not slow"
+```
+
+### Running Performance Tests
+
+Performance tests are excluded by default. Run them explicitly:
+
+```bash
+# Run slow performance tests
+pytest tests/performance --run-slow -v
 ```
 
 ### Running With Coverage
@@ -230,7 +249,7 @@ pytest tests/unit/core/test_crypto.py::TestKeyDerivation::test_derive_key_determ
 | Security + regression tests | ~10-15 seconds   |
 | All tests (including slow)  | ~2-3 minutes     |
 
-Tests are parallelizable with `pytest-xdist` if needed:
+Tests are parallelizable with `pytest-xdist`:
 
 ```bash
 pytest tests/ -n auto
@@ -293,6 +312,8 @@ Ask yourself:
 7. **"Does this test CLI behavior?"** → `cli/`
 8. **"Does this test application lifecycle?"** → `app/`
 9. **"Does this test screen logic?"** → `screens/`
+10. **"Does this test UI behavior or state machines?"** → `ui/`
+11. **"Does this test performance at scale?"** → `performance/`
 
 ### Naming Conventions
 
@@ -336,6 +357,10 @@ def mock_home(temp_dir: Path, monkeypatch) -> Generator[Path, None, None]:
 @pytest.fixture
 def assert_file_permissions() -> Callable[[Path, int], None]:
     """Helper to verify file permissions."""
+
+@pytest.fixture
+def assert_dir_permissions() -> Callable[[Path, int], None]:
+    """Helper to verify directory permissions."""
 ```
 
 Use these instead of creating one-off fixtures for common scenarios.
@@ -352,12 +377,15 @@ def test_password_not_in_exception_message(self):
 
 The test framework enforces this. Unmarked tests in `security/` will fail.
 
-Other markers:
+Available markers (configured in `pyproject.toml`):
 
 ```python
+@pytest.mark.unit         # Isolated tests with no I/O
 @pytest.mark.integration  # Cross-component tests
+@pytest.mark.security     # Threat model and invariant validation
 @pytest.mark.slow         # Tests taking >1 second
 @pytest.mark.edge         # Failure path tests
+@pytest.mark.regression   # Bug fix contracts to prevent recurrence
 ```
 
 ### What Is Acceptable to Mock
@@ -382,7 +410,7 @@ The following must use real implementations in tests:
 - `validate_master_password()`
 - `secrets.compare_digest()`
 
-Mocking these defeats the purpose of testing. If your test needs to mock crypto, reconsider whether it's testing the right thing.
+Mocking these defeats the purpose of testing. If your test needs to mock crypto, reconsider whether it is testing the right thing.
 
 ---
 
@@ -442,15 +470,18 @@ Tests in `security/` and `regression/` are contracts. Deleting them requires:
 
 ---
 
-## CI & Enforcement
+## CI Integration
 
-### Tests Run on Every PR
+### How Tests Run in CI
 
-The GitHub Actions workflow runs:
+The CI pipeline splits tests into logical groups for parallel execution:
 
-1. All tests (`pytest tests/`)
-2. Coverage collection (`--cov=passfx`)
-3. Coverage threshold enforcement (`--cov-fail-under=0` currently, increasing to 90%)
+| CI Job            | Test Directories                                         | Purpose                                       |
+| ----------------- | -------------------------------------------------------- | --------------------------------------------- |
+| Core & Security   | `unit/core/`, `integration/`, `security/`, `regression/` | Cryptographic correctness, threat model       |
+| UI & Screens      | `ui/`, `app/`, `screens/`                                | Terminal UI behavior, screen workflows        |
+| Utilities & CLI   | `utils/`, `cli/`, `edge/`                                | Helper functions, entry points, failure modes |
+| Performance       | `performance/`                                           | Slow tests (scheduled, not on every PR)       |
 
 ### Failing Tests Block Merges
 
@@ -495,7 +526,7 @@ Flaky tests are tests that sometimes pass and sometimes fail. Common causes:
 
 If you find yourself adding `time.sleep()` to make a test pass, stop and reconsider. The test is probably testing the wrong thing.
 
-> Flaky tests are a lifestyle choice we don't support.
+> Flaky tests are a lifestyle choice we do not support.
 
 ### Relying on Timing
 
@@ -563,7 +594,7 @@ def test_password_never_logged():
     ...
 ```
 
-If you're testing a security invariant, it belongs in `security/` or `regression/`, not scattered across unit tests.
+If you are testing a security invariant, it belongs in `security/` or `regression/`, not scattered across unit tests.
 
 ### Testing Private Methods Directly
 
@@ -618,7 +649,7 @@ pytest tests/ --cov=passfx --cov-report=term-missing
 
 ### Getting Help
 
-If a test is failing and you don't understand why:
+If a test is failing and you do not understand why:
 
 1. Read the test docstring and class docstring
 2. Read the code being tested
@@ -627,7 +658,7 @@ If a test is failing and you don't understand why:
 
 If a test seems wrong:
 
-1. Assume it's right until proven otherwise
+1. Assume it is right until proven otherwise
 2. Understand why it was written before proposing changes
 3. Open an issue for discussion before deleting
 

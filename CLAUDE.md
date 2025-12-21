@@ -128,6 +128,8 @@ Before pushing to GitHub, and **before providing a summary**:
 3. Run `bandit -r passfx/` (security audit)
 4. If any check fails, fix the errors before proceeding
 5. Report any issues clearly
+6. If new features were added, make sure to check if unit tests need to updated/added
+7. Update any readme files when information changes to ensure correctness
 
 ---
 
