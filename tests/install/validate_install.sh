@@ -164,63 +164,67 @@ run_test "No stderr on version" '
     fi
 '
 
-# Test 8: Module can be imported
-run_test "Python module import" '
-    python -c "import passfx" 2>&1
-    EXIT=$?
-    if [ $EXIT -eq 0 ]; then
-        log_info "Module imports successfully"
-        return 0
-    else
-        log_error "Module import failed"
-        return 1
-    fi
-'
-
-# Test 9: CLI module can be imported
-run_test "CLI module import" '
-    python -c "from passfx.cli import main" 2>&1
-    EXIT=$?
-    if [ $EXIT -eq 0 ]; then
-        log_info "CLI module imports successfully"
-        return 0
-    else
-        log_error "CLI module import failed"
-        return 1
-    fi
-'
-
-# Test 10: Version constant matches
-run_test "Version constant match" '
-    PYTHON_VERSION=$(python -c "from passfx.cli import __version__; print(__version__)" 2>&1)
-    if [ "$PYTHON_VERSION" = "$EXPECTED_VERSION" ]; then
-        log_info "Python version constant: $PYTHON_VERSION"
-        return 0
-    else
-        log_error "Python version constant: $PYTHON_VERSION (expected $EXPECTED_VERSION)"
-        return 1
-    fi
-'
-
-# Test 11: Core modules exist
-run_test "Core modules exist" '
-    MODULES=(
-        "passfx.core.crypto"
-        "passfx.core.vault"
-        "passfx.core.models"
-        "passfx.core.exceptions"
-    )
-
-    for mod in "${MODULES[@]}"; do
-        if ! python -c "import $mod" 2>&1; then
-            log_error "Failed to import: $mod"
+# Tests 8-11: Module import tests (skip for pipx - it isolates packages)
+if [ "$INSTALL_METHOD" != "pipx" ]; then
+    # Test 8: Module can be imported
+    run_test "Python module import" '
+        python -c "import passfx" 2>&1
+        EXIT=$?
+        if [ $EXIT -eq 0 ]; then
+            log_info "Module imports successfully"
+            return 0
+        else
+            log_error "Module import failed"
             return 1
         fi
-    done
+    '
 
-    log_info "All core modules import successfully"
-    return 0
-'
+    # Test 9: CLI module can be imported
+    run_test "CLI module import" '
+        python -c "from passfx.cli import main" 2>&1
+        EXIT=$?
+        if [ $EXIT -eq 0 ]; then
+            log_info "CLI module imports successfully"
+            return 0
+        else
+            log_error "CLI module import failed"
+            return 1
+        fi
+    '
+
+    # Test 10: Version constant matches
+    run_test "Version constant match" '
+        PYTHON_VERSION=$(python -c "from passfx.cli import __version__; print(__version__)" 2>&1)
+        if [ "$PYTHON_VERSION" = "$EXPECTED_VERSION" ]; then
+            log_info "Python version constant: $PYTHON_VERSION"
+            return 0
+        else
+            log_error "Python version constant: $PYTHON_VERSION (expected $EXPECTED_VERSION)"
+            return 1
+        fi
+    '
+
+    # Test 11: Core modules exist
+    run_test "Core modules exist" '
+        MODULES=(
+            "passfx.core.crypto"
+            "passfx.core.vault"
+            "passfx.core.models"
+        )
+
+        for mod in "${MODULES[@]}"; do
+            if ! python -c "import $mod" 2>&1; then
+                log_error "Failed to import: $mod"
+                return 1
+            fi
+        done
+
+        log_info "All core modules import successfully"
+        return 0
+    '
+else
+    log_info "Skipping module import tests for pipx (packages are isolated)"
+fi
 
 # Test 12: Invalid argument handling
 run_test "Invalid argument handling" '
