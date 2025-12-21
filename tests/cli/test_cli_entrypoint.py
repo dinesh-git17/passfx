@@ -75,6 +75,168 @@ def mock_set_terminal_title() -> Generator[MagicMock, None, None]:
         yield mock_title
 
 
+@pytest.fixture
+def mock_sys_argv() -> Generator[None, None, None]:
+    """Mock sys.argv to prevent argparse from parsing pytest arguments."""
+    with patch.object(sys, "argv", ["passfx"]):
+        yield
+
+
+# ---------------------------------------------------------------------------
+# CLI Argument Parsing Tests
+# ---------------------------------------------------------------------------
+
+
+class TestCliArgumentParsing:
+    """Tests for CLI argument parsing (--help, --version)."""
+
+    @pytest.mark.unit
+    def test_help_flag_prints_help_and_exits(
+        self,
+        reset_cli_module: None,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Verify --help prints help text and returns 0."""
+        from passfx.cli import main
+
+        with patch.object(sys, "argv", ["passfx", "--help"]):
+            result = main()
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "passfx - A secure terminal password manager" in captured.out
+        assert "USAGE:" in captured.out
+        assert "SECURITY:" in captured.out
+
+    @pytest.mark.unit
+    def test_short_help_flag_prints_help_and_exits(
+        self,
+        reset_cli_module: None,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Verify -h prints help text and returns 0."""
+        from passfx.cli import main
+
+        with patch.object(sys, "argv", ["passfx", "-h"]):
+            result = main()
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "passfx - A secure terminal password manager" in captured.out
+
+    @pytest.mark.unit
+    def test_version_flag_prints_version_and_exits(
+        self,
+        reset_cli_module: None,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Verify --version prints version and returns 0."""
+        from passfx.cli import __version__, main
+
+        with patch.object(sys, "argv", ["passfx", "--version"]):
+            result = main()
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert f"passfx {__version__}" in captured.out
+
+    @pytest.mark.unit
+    def test_short_version_flag_prints_version_and_exits(
+        self,
+        reset_cli_module: None,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Verify -V prints version and returns 0."""
+        from passfx.cli import __version__, main
+
+        with patch.object(sys, "argv", ["passfx", "-V"]):
+            result = main()
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert f"passfx {__version__}" in captured.out
+
+    @pytest.mark.unit
+    def test_help_does_not_launch_tui(
+        self,
+        reset_cli_module: None,
+    ) -> None:
+        """Verify --help does not create PassFXApp."""
+        from passfx.cli import main
+
+        with patch("passfx.cli.PassFXApp") as mock_app_class:
+            with patch.object(sys, "argv", ["passfx", "--help"]):
+                main()
+
+            mock_app_class.assert_not_called()
+
+    @pytest.mark.unit
+    def test_version_does_not_launch_tui(
+        self,
+        reset_cli_module: None,
+    ) -> None:
+        """Verify --version does not create PassFXApp."""
+        from passfx.cli import main
+
+        with patch("passfx.cli.PassFXApp") as mock_app_class:
+            with patch.object(sys, "argv", ["passfx", "--version"]):
+                main()
+
+            mock_app_class.assert_not_called()
+
+    @pytest.mark.unit
+    def test_no_args_launches_tui(
+        self,
+        reset_cli_module: None,
+        mock_passfx_app: MagicMock,
+        mock_emergency_cleanup: MagicMock,
+        mock_setproctitle: MagicMock,
+        mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
+    ) -> None:
+        """Verify no arguments launches the TUI."""
+        from passfx.cli import main
+
+        with patch("passfx.cli.signal.signal"):
+            main()
+
+        mock_passfx_app.run.assert_called_once()
+
+    @pytest.mark.unit
+    def test_version_constant_matches_expected_format(self) -> None:
+        """Verify __version__ is a valid semantic version string."""
+        from passfx.cli import __version__
+
+        # Should match semantic versioning pattern
+        assert isinstance(__version__, str)
+        parts = __version__.split(".")
+        assert len(parts) >= 2  # At least major.minor
+        assert all(p.isdigit() for p in parts[:2])
+
+    @pytest.mark.unit
+    def test_help_text_contains_security_info(
+        self,
+        reset_cli_module: None,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Verify help text includes security-relevant information."""
+        from passfx.cli import main
+
+        with patch.object(sys, "argv", ["passfx", "--help"]):
+            main()
+
+        captured = capsys.readouterr()
+        # Should mention encryption
+        assert "Fernet" in captured.out or "AES" in captured.out
+        # Should mention no password recovery
+        assert (
+            "no password recovery" in captured.out.lower()
+            or "forget" in captured.out.lower()
+        )
+        # Should mention data location
+        assert "~/.passfx" in captured.out
+
+
 # ---------------------------------------------------------------------------
 # Startup Behavior Tests
 # ---------------------------------------------------------------------------
@@ -91,6 +253,7 @@ class TestCliStartup:
         mock_emergency_cleanup: MagicMock,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify main() sets the process title to 'PassFX'."""
         from passfx.cli import main
@@ -108,6 +271,7 @@ class TestCliStartup:
         mock_emergency_cleanup: MagicMock,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify main() calls set_terminal_title with expected title."""
         from passfx.cli import TERMINAL_TITLE, main
@@ -125,6 +289,7 @@ class TestCliStartup:
         mock_emergency_cleanup: MagicMock,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify main() registers SIGINT and SIGTERM handlers."""
         from passfx.cli import main
@@ -146,6 +311,7 @@ class TestCliStartup:
         mock_emergency_cleanup: MagicMock,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify main() creates a PassFXApp instance."""
         from passfx.cli import main
@@ -163,6 +329,7 @@ class TestCliStartup:
         mock_emergency_cleanup: MagicMock,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify main() returns 0 on successful exit."""
         from passfx.cli import main
@@ -356,6 +523,7 @@ class TestExitSafety:
         reset_cli_module: None,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify emergency_cleanup is called in finally block."""
         with patch("passfx.cli.PassFXApp") as mock_app_class:
@@ -380,6 +548,7 @@ class TestExitSafety:
         reset_cli_module: None,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify vault is locked in finally block when unlocked."""
         with patch("passfx.cli.PassFXApp") as mock_app_class:
@@ -403,6 +572,7 @@ class TestExitSafety:
         reset_cli_module: None,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify vault.lock() not called when vault is already locked."""
         with patch("passfx.cli.PassFXApp") as mock_app_class:
@@ -426,6 +596,7 @@ class TestExitSafety:
         reset_cli_module: None,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify cleanup runs even when app.run() raises."""
         with patch("passfx.cli.PassFXApp") as mock_app_class:
@@ -452,6 +623,7 @@ class TestExitSafety:
         reset_cli_module: None,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify exceptions from vault.lock() in finally are suppressed."""
         with patch("passfx.cli.PassFXApp") as mock_app_class:
@@ -717,6 +889,7 @@ class TestErrorHandling:
         mock_emergency_cleanup: MagicMock,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify normal exit returns code 0."""
         from passfx.cli import main
@@ -832,6 +1005,7 @@ class TestCliLifecycleIntegration:
         reset_cli_module: None,
         mock_setproctitle: MagicMock,
         mock_set_terminal_title: MagicMock,
+        mock_sys_argv: None,
     ) -> None:
         """Verify complete startup -> run -> shutdown sequence."""
         with patch("passfx.cli.PassFXApp") as mock_app_class:
