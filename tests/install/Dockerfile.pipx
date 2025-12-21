@@ -1,0 +1,58 @@
+# Dockerfile for pipx installation testing
+# Validates PassFX installs correctly via pipx in isolated environments.
+#
+# Build: docker build -f Dockerfile.pipx -t passfx-test-pipx .
+# Run:   docker run --rm passfx-test-pipx
+
+ARG PYTHON_VERSION=3.11
+FROM python:${PYTHON_VERSION}-slim
+
+# Metadata
+LABEL org.opencontainers.image.title="PassFX pipx Install Test"
+LABEL org.opencontainers.image.description="Validates PassFX installation via pipx"
+LABEL org.opencontainers.image.source="https://github.com/dinesh-git17/passfx"
+
+# Prevent Python from buffering stdout/stderr
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Create non-root user for security
+RUN groupadd --gid 1000 testuser && \
+    useradd --uid 1000 --gid 1000 --create-home testuser
+
+# Install system dependencies required by cryptography and setproctitle
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Switch to non-root user
+USER testuser
+WORKDIR /home/testuser
+
+# Upgrade pip and install pipx
+RUN python -m pip install --user --upgrade pip pipx
+
+# Add pipx bin paths
+ENV PATH="/home/testuser/.local/bin:${PATH}"
+ENV PIPX_HOME="/home/testuser/.local/pipx"
+ENV PIPX_BIN_DIR="/home/testuser/.local/bin"
+
+# Ensure pipx path
+RUN python -m pipx ensurepath
+
+# Install PassFX via pipx
+ARG PASSFX_VERSION=""
+RUN if [ -n "$PASSFX_VERSION" ]; then \
+        pipx install "passfx==${PASSFX_VERSION}"; \
+    else \
+        pipx install passfx; \
+    fi
+
+# Copy validation script
+COPY --chown=testuser:testuser validate_install.sh /home/testuser/validate_install.sh
+RUN chmod +x /home/testuser/validate_install.sh
+
+# Run validation
+CMD ["/home/testuser/validate_install.sh", "pipx"]

@@ -1,0 +1,41 @@
+# Dockerfile for Homebrew installation testing
+# Validates PassFX installs correctly via Homebrew tap.
+#
+# Build: docker build -f Dockerfile.brew -t passfx-test-brew .
+# Run:   docker run --rm passfx-test-brew
+#
+# Note: This uses the Linuxbrew environment. macOS-specific behavior
+# cannot be validated in Docker but core functionality is tested.
+
+FROM homebrew/brew:latest
+
+# Metadata
+LABEL org.opencontainers.image.title="PassFX Homebrew Install Test"
+LABEL org.opencontainers.image.description="Validates PassFX installation via Homebrew"
+LABEL org.opencontainers.image.source="https://github.com/dinesh-git17/passfx"
+
+# The homebrew/brew image runs as linuxbrew user by default
+USER linuxbrew
+
+# Update Homebrew (fast, uses shallow clone)
+RUN brew update --quiet
+
+# Option 1: Install from tap (default)
+# Option 2: Install from local formula via ARG
+ARG FORMULA_PATH=""
+ARG TAP_REPO="dinesh-git17/passfx"
+
+# Install PassFX
+# If FORMULA_PATH is provided, use local formula; otherwise use tap
+RUN if [ -n "$FORMULA_PATH" ]; then \
+        brew install --formula "$FORMULA_PATH"; \
+    else \
+        brew tap "$TAP_REPO" && brew install passfx; \
+    fi
+
+# Copy validation script
+COPY --chown=linuxbrew:linuxbrew validate_install.sh /home/linuxbrew/validate_install.sh
+RUN chmod +x /home/linuxbrew/validate_install.sh
+
+# Run validation
+CMD ["/home/linuxbrew/validate_install.sh", "brew"]
