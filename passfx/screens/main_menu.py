@@ -192,6 +192,7 @@ class MainMenuScreen(Screen):
                     Option(_make_menu_item("GEN", "Generator"), id="generator"),
                     Option(_make_menu_item("SET", "Settings"), id="settings"),
                     Option(_make_menu_item("?", "Help"), id="help"),
+                    Option(_make_menu_item("OUT", "Logout"), id="logout"),
                     Option(_make_menu_item("EXIT", "Quit"), id="exit"),
                     id="sidebar-menu",
                 )
@@ -293,9 +294,10 @@ class MainMenuScreen(Screen):
         terminal.log_raw("[dim]Navigate PassFX using commands[/]")
         terminal.log_raw("")
         terminal.log_raw("[#666666]Commands:[/]")
-        terminal.log_raw("  [#00FFFF]/key[/]  [dim]→ Passwords[/]")
-        terminal.log_raw("  [#00FFFF]/gen[/]  [dim]→ Generator[/]")
-        terminal.log_raw("  [#00FFFF]/help[/] [dim]→ All commands[/]")
+        terminal.log_raw("  [#00FFFF]/key[/]    [dim]→ Passwords[/]")
+        terminal.log_raw("  [#00FFFF]/gen[/]    [dim]→ Generator[/]")
+        terminal.log_raw("  [#00FFFF]/logout[/] [dim]→ Lock vault[/]")
+        terminal.log_raw("  [#00FFFF]/help[/]   [dim]→ All commands[/]")
         terminal.log_raw("")
         terminal.log_raw("[dim]Press[/] [#8b5cf6]/[/] [dim]to focus terminal[/]")
         terminal.log_raw("[dim]Press[/] [#8b5cf6]ESC[/] [dim]to return to menu[/]")
@@ -498,6 +500,8 @@ class MainMenuScreen(Screen):
             self.action_settings()
         elif option_id == "help":
             self.action_help()
+        elif option_id == "logout":
+            self.action_logout()
         elif option_id == "exit":
             self.action_quit()
 
@@ -542,6 +546,9 @@ class MainMenuScreen(Screen):
             "SETTINGS": self.action_settings,
             "HELP": self.action_help,
             "?": self.action_help,
+            "OUT": self.action_logout,
+            "LOGOUT": self.action_logout,
+            "LOCK": self.action_logout,
             "QUIT": self.action_quit,
             "EXIT": self.action_quit,
             "Q": self.action_quit,
@@ -624,6 +631,15 @@ class MainMenuScreen(Screen):
         from passfx.screens.help import HelpScreen
 
         self.app.push_screen(HelpScreen())
+
+    def action_logout(self) -> None:
+        """Logout and return to login screen.
+
+        Locks vault, clears sensitive state, returns to login.
+        Application continues running (unlike Exit).
+        """
+        app: PassFXApp = self.app  # type: ignore
+        app.action_logout()
 
     def action_quit(self) -> None:
         """Quit the application."""

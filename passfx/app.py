@@ -185,6 +185,43 @@ class PassFXApp(App):
             self.vault.lock()
         self.exit()
 
+    def action_logout(self) -> None:
+        """Logout and return to login screen without exiting the application.
+
+        Performs secure cleanup:
+        - Locks the vault (wipes crypto keys from memory)
+        - Clears the search index
+        - Clears the clipboard
+        - Resets navigation stack
+        - Returns to LoginScreen
+
+        Safe to call multiple times (idempotent).
+        """
+        # Lock vault if unlocked - this wipes crypto and credential data
+        if self._unlocked and self.vault:
+            self.vault.lock()
+        self._unlocked = False
+
+        # Clear search index
+        self._search_index = None
+
+        # Clear clipboard for security
+        clear_clipboard()
+
+        # Navigate to login - pop all screens except the base, then push fresh login
+        while len(self.screen_stack) > 1:
+            self.pop_screen()
+
+        # Push fresh login screen instance
+        self.push_screen(LoginScreen())
+
+        # Notify user
+        self.notify(
+            "Vault locked. Session ended.",
+            title="Logged Out",
+            severity="information",
+        )
+
     def unlock_vault(self, password: str) -> bool:
         """Attempt to unlock the vault."""
         try:
