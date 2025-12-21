@@ -6,7 +6,7 @@
   width="200"
 />
 
-**A terminal password manager for people who read the source code.**
+**A password manager built by a developer who got tired of SaaS security theater.**
 
 [![CI](https://github.com/dinesh-git17/passfx/actions/workflows/code-quality.yml/badge.svg?branch=main)](https://github.com/dinesh-git17/passfx/actions/workflows/code-quality.yml)
 [![codecov](https://codecov.io/gh/dinesh-git17/passfx/branch/main/graph/badge.svg)](https://codecov.io/gh/dinesh-git17/passfx)
@@ -371,15 +371,27 @@ To report conduct issues: conduct@dineshd.dev
 
 ## Final Notes
 
-PassFX is not the password manager for everyone. It does not sync. It does not have a mobile app. It does not have a browser extension. It will not remind you to change your passwords or check if they have been leaked.
+PassFX is intentionally not a password manager for everyone.
 
-What it does is simple: it stores your credentials locally, encrypts them properly, and gets out of your way.
+It does not sync.  
+It does not have a mobile app.  
+It does not have a browser extension.  
+It will not nag you about password rotations or scan the internet for leaks.
 
-If you want a password manager that "just works" across all your devices, use something else. If you want a password manager where you can read every line of code that touches your data, and where that code is backed by a test suite that treats security properties as non-negotiable, then PassFX might be for you.
+All of that is by design.
 
-Your passwords belong to you. Not to a company. Not to a cloud. Not to anyone else.
+I built PassFX to do one thing well: store your credentials locally, encrypt them properly, and then get out of your way. No accounts. No servers. No hidden behavior. Just code you can read and data you control.
 
-Keep your master password strong. Keep your backups current. And remember: the best security is the kind you actually use.
+If you want a password manager that “just works” across every device with minimal thought, there are plenty of good options out there — and you should use one of them.
+
+But if you want a password manager where every line of code touching your secrets is open, auditable, and backed by tests that treat security guarantees as non-negotiable, then PassFX might be what you’ve been looking for.
+
+Your passwords belong to you.  
+Not to a company.  
+Not to a cloud.  
+Not to anyone else.
+
+Keep your master password strong. Keep your backups current. And remember: the best security isn’t the most convenient or the most marketed — it’s the kind you actually understand and choose to use.
 
 ---
 
