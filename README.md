@@ -99,11 +99,20 @@ PassFX requires Python 3.10 or higher. If you do not have Python installed, see 
 
 ### Install
 
+**Via pip (recommended):**
+
 ```bash
 pip install passfx
 ```
 
-Or from source:
+**Via Homebrew (macOS/Linux):**
+
+```bash
+brew tap dinesh-git17/passfx
+brew install passfx
+```
+
+**From source:**
 
 ```bash
 git clone https://github.com/dinesh-git17/passfx.git
