@@ -550,6 +550,7 @@ class TestCreditCard:
     def test_repr_redacts_card_number_and_cvv(self) -> None:
         """String representation hides card_number and cvv."""
         card = CreditCard(
+            id="aabbccdd",  # Fixed ID to avoid random collision with CVV
             label="Chase",
             card_number="4111222233334444",
             expiry="12/25",
