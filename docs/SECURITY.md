@@ -1,5 +1,7 @@
 # Security Policy
 
+**[PassFX](https://passfx.dineshd.dev)** | [GitHub](https://github.com/dinesh-git17/passfx) | [PyPI](https://pypi.org/project/passfx/)
+
 PassFX is a password manager. The only thing standing between your credentials and the void is the code in this repository. We take that responsibility seriously.
 
 This document describes our security philosophy, how to report vulnerabilities, and what we expect from contributors touching security-sensitive code. If you find a hole in our defenses, we want to hear about it—preferably before anyone else does.

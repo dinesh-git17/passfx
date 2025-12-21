@@ -81,6 +81,17 @@ If you find a security flaw, please report it privately. See our [Security Polic
 
 A clean development environment prevents the classic "but it works in my terminal" problem that has plagued developers since terminals were invented.
 
+### Quick Install (Users)
+
+If you just want to use PassFX:
+
+```bash
+pip install passfx
+passfx
+```
+
+For development, continue with the steps below.
+
 ### Prerequisites
 
 - Python 3.10 or higher

@@ -1,5 +1,7 @@
 # PassFX Test Suite
 
+[![codecov](https://codecov.io/gh/dinesh-git17/passfx/branch/main/graph/badge.svg)](https://codecov.io/gh/dinesh-git17/passfx)
+
 > Tests exist to keep future us out of trouble.
 
 This document is the canonical reference for the PassFX test suite. It covers test organization, execution, contribution guidelines, and the security-critical invariants that tests protect.
