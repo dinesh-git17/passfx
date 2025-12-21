@@ -16,6 +16,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] - 12/21/2025
+
+**"Release Polish"**
+
+Minor release focused on version consistency and release hygiene.
+
+### Fixed
+
+- Synchronized version strings across all UI screens, package metadata, and documentation.
+- Corrected stale version in main menu footer (was showing v1.0.0).
+
+### Changed
+
+- Version display format now consistent: `v1.0.2` in UI, `1.0.2` in package metadata.
+
+---
+
 ## [1.0.0] - 12/17/2025
 
 **"The Beta Release"**
@@ -55,5 +72,6 @@ This is the initial public release of PassFX. It includes the core architecture,
 - Enforced `0o700`/`0o600` permissions on vault directories and files.
 - Added best-effort memory wiping for sensitive key material.
 
-[Unreleased]: https://github.com/dinesh-git17/passfx/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/dinesh-git17/passfx/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/dinesh-git17/passfx/compare/v1.0.0...v1.0.2
 [1.0.0]: https://github.com/dinesh-git17/passfx/releases/tag/v1.0.0

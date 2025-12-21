@@ -213,7 +213,7 @@ class HelpScreen(ModalScreen[None]):
 
             # Subtitle
             yield Static(
-                "[#94a3b8]PassFX Security Terminal v1.0[/]",
+                "[#94a3b8]PassFX Security Terminal v1.0.2[/]",
                 id="help-subtitle",
             )
 

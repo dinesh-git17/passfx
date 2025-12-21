@@ -32,7 +32,7 @@ LOGO = """[bold #00FFFF]
 ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚═╝  ╚═╝
 [/]"""
 
-VERSION = "v1.0.1"
+VERSION = "v1.0.2"
 
 # Persistent rate limiting configuration
 LOCKOUT_FILE = Path.home() / ".passfx" / "lockout.json"

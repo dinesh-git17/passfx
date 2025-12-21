@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "passfx"
-version = "1.0.1"
+version = "1.0.2"
 description = "A secure, stylish terminal password manager. Your secrets are safe with us. Probably."
 readme = "README.md"
 requires-python = ">=3.10"
