@@ -64,8 +64,10 @@ docker run --rm passfx-test-brew
 
 Tests run automatically via `.github/workflows/install-tests.yml`:
 
-- **On release**: Full matrix (pip, pipx, Homebrew on Linux + macOS)
+- **After PyPI publish**: Triggered by `workflow_run` when "Publish to PyPI" completes successfully
 - **Manual trigger**: Configurable via workflow_dispatch (for pre-release verification)
+
+This ensures the package is available on PyPI before installation tests run (no race condition).
 
 ### GitHub Actions Snippet
 
