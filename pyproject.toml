@@ -54,9 +54,11 @@ dev = [
 passfx = "passfx.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/dinesh-git17/passfx"
-Documentation = "https://github.com/dinesh-git17/passfx#readme"
+Homepage = "https://passfx.dineshd.dev"
+Documentation = "https://github.com/dinesh-git17/passfx/tree/main/docs"
+Repository = "https://github.com/dinesh-git17/passfx"
 Issues = "https://github.com/dinesh-git17/passfx/issues"
+Changelog = "https://github.com/dinesh-git17/passfx/blob/main/docs/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["passfx"]
