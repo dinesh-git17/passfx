@@ -2942,6 +2942,220 @@ NotesScreen #notes-table > .datatable--odd-row {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   CARD MODAL WIDE - WIDE CONSOLE PANEL LAYOUT (GREEN ACCENT)
+   Mirrors password-modal-wide but with green accent for financial assets
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Wide modal container - 90% width, max 120 for ultra-wide screens */
+#pwd-modal.card-modal-wide {
+    width: 90%;
+    max-width: 120;
+    min-width: 80;
+    height: auto;
+    max-height: 80%;
+    background: $operator-black;
+    border: heavy $pfx-success;
+    padding: 0;
+}
+
+/* Grid-based form container */
+.card-modal-wide .pwd-form-grid {
+    padding: 1 3;
+    background: $operator-black;
+    width: 100%;
+}
+
+/* Form row - base styles */
+.card-modal-wide .form-row {
+    width: 100%;
+    height: auto;
+    margin-bottom: 1;
+}
+
+/* Full width row (Card Number, Notes) */
+.card-modal-wide .form-row-full {
+    width: 100%;
+}
+
+/* Split row - side-by-side fields (Issuer + Holder, Expiry + CVV) */
+.card-modal-wide .form-row-split {
+    width: 100%;
+    height: auto;
+    align: left top;
+}
+
+/* Column for side-by-side inputs (50% each) */
+.card-modal-wide .form-col {
+    width: 1fr;
+    height: auto;
+    padding-right: 2;
+}
+
+.card-modal-wide .form-col:last-child {
+    padding-right: 0;
+}
+
+/* Narrow column for CVV (25% width) */
+.card-modal-wide .form-col-narrow {
+    width: 16;
+    height: auto;
+    padding-right: 0;
+}
+
+/* Input labels - terminal style with prompt */
+.card-modal-wide .input-label {
+    color: $pfx-success;
+    text-style: bold;
+    padding: 1 0 0 0;
+    margin: 0;
+    height: 1;
+}
+
+/* Terminal-style inputs - left border accent */
+.card-modal-wide Input {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 1 1 0 2;
+    margin: 0 0 0 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 3;
+}
+
+/* Focus state - green accent with highlighted left border */
+.card-modal-wide Input:focus {
+    border-left: heavy $pfx-success;
+    background: #0a120a;
+}
+
+/* Card number input styling - secret field with green accent */
+.card-modal-wide #number-input {
+    border-left: solid $pfx-success 50%;
+}
+
+.card-modal-wide #number-input:focus {
+    border-left: heavy $pfx-success;
+    background: #0a120a;
+}
+
+/* CVV input styling - secret field with amber accent */
+.card-modal-wide #cvv-input {
+    border-left: solid #f59e0b 50%;
+}
+
+.card-modal-wide #cvv-input:focus {
+    border-left: heavy #f59e0b;
+    background: #120f0a;
+}
+
+/* View value display - terminal output style */
+.card-modal-wide .view-value {
+    background: $operator-surface;
+    border: none;
+    border-left: solid $operator-muted;
+    padding: 0 1 0 2;
+    margin: 0;
+    color: $pfx-fg;
+    width: 100%;
+    height: 3;
+    content-align: left middle;
+}
+
+.card-modal-wide .view-value.secret {
+    border-left: solid $pfx-success 50%;
+    color: $pfx-success;
+}
+
+.card-modal-wide .view-value.secret-amber {
+    border-left: solid #f59e0b 50%;
+    color: #f59e0b;
+}
+
+/* Modal footer - docked to bottom, right-aligned buttons */
+.card-modal-wide .modal-footer {
+    padding: 1 3 2 3;
+    align: right middle;
+    background: $operator-black;
+    border-top: solid $operator-muted 30%;
+    width: 100%;
+    height: auto;
+    dock: bottom;
+}
+
+/* Cancel button styling */
+.card-modal-wide #cancel-button {
+    background: transparent;
+    color: #64748b;
+    border: solid #475569;
+    min-width: 14;
+}
+
+.card-modal-wide #cancel-button:hover {
+    background: #1e293b;
+    color: #94a3b8;
+    border: solid #1e293b;
+}
+
+.card-modal-wide #cancel-button:focus {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: solid #1e293b;
+}
+
+/* Save button styling - green accent */
+.card-modal-wide #save-button {
+    background: transparent;
+    color: $pfx-success;
+    border: solid $pfx-success;
+    text-style: bold;
+    min-width: 24;
+}
+
+.card-modal-wide #save-button:hover {
+    background: $pfx-success;
+    color: $operator-black;
+}
+
+.card-modal-wide #save-button:focus {
+    background: $pfx-success;
+    color: $operator-black;
+    text-style: bold;
+}
+
+/* HUD Header for wide modals */
+.card-modal-wide .modal-header {
+    width: 100%;
+    height: auto;
+    background: $operator-black;
+    padding: 1 2;
+    border-bottom: heavy $pfx-success;
+}
+
+.card-modal-wide .modal-header-row {
+    width: 100%;
+    height: 1;
+    align: left middle;
+}
+
+.card-modal-wide #modal-title {
+    text-style: bold;
+    color: $pfx-success;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    width: 1fr;
+    border: none;
+}
+
+.card-modal-wide .modal-status {
+    width: auto;
+    height: 1;
+    color: $pfx-success;
+    text-style: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    GENERATOR SCREEN - OPERATOR THEME CRYPTO CONSOLE
    Theme: Cyan (#00FFFF) primary, Pure Black background
    ═══════════════════════════════════════════════════════════════════════════ */
