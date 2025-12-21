@@ -45,8 +45,12 @@ HELP_DATA: dict[str, dict[str, dict[str, str]]] = {
             "S": "Save generated value to vault",
         },
         "Global": {
-            "Q": "Quit application (locks vault)",
+            "Q": "Quit application (locks vault, exits)",
             "?": "Open this help screen",
+        },
+        "Session": {
+            "Logout": "Lock vault, return to login (app stays open)",
+            "Exit": "Lock vault and terminate application",
         },
         "Terminal Commands": {
             "/key": "Passwords screen",
@@ -59,6 +63,7 @@ HELP_DATA: dict[str, dict[str, dict[str, str]]] = {
             "/set": "Settings screen",
             "/help": "Help screen",
             "/clear": "Clear terminal output",
+            "/logout": "Lock vault and return to login",
             "/quit": "Exit application",
         },
     },
