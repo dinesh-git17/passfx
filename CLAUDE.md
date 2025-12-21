@@ -577,6 +577,132 @@ pre-commit install
 
 ---
 
+## Release Procedures
+
+### Pre-Release Checklist
+
+Before creating a GitHub release, ensure these files have matching versions:
+
+| File                                | Location                      | Example                       |
+| ----------------------------------- | ----------------------------- | ----------------------------- |
+| `pyproject.toml`                    | `version = "X.Y.Z"`           | `version = "1.0.3"`           |
+| `passfx/cli.py`                     | `__version__ = "X.Y.Z"`       | `__version__ = "1.0.3"`       |
+| `tests/install/validate_install.sh` | `EXPECTED_VERSION="X.Y.Z"`    | `EXPECTED_VERSION="1.0.3"`    |
+| `homebrew/passfx.rb`                | `assert_match "passfx X.Y.Z"` | `assert_match "passfx 1.0.3"` |
+
+### Local Installation Testing
+
+Run Docker-based installation tests locally before release:
+
+```bash
+# Run all installation tests
+./tests/install/run_install_tests.sh
+
+# Run specific methods
+./tests/install/run_install_tests.sh pip
+./tests/install/run_install_tests.sh pipx
+./tests/install/run_install_tests.sh brew
+
+# Test with specific Python version
+./tests/install/run_install_tests.sh --python 3.12 pip
+
+# Test specific version (for verifying older releases)
+./tests/install/run_install_tests.sh --version 1.0.2 pip
+```
+
+### GitHub Release Flow
+
+The CI pipeline handles releases automatically:
+
+```
+1. Create GitHub Release (tag: vX.Y.Z)
+        ↓
+2. publish.yml triggers → Builds and uploads to PyPI
+        ↓
+3. install-tests.yml triggers (via workflow_run)
+   - Waits for publish.yml to complete successfully
+   - Runs pip tests (Python 3.10, 3.11, 3.12)
+   - Runs pipx tests
+   - Runs Homebrew tests (Linuxbrew + macOS)
+        ↓
+4. Verify all tests pass
+```
+
+**Key point:** Install tests trigger via `workflow_run` after PyPI publish completes. This prevents race conditions where tests run before the package is available on PyPI.
+
+### Manual Workflow Trigger
+
+To test the install workflow without creating a release:
+
+```bash
+# Trigger via GitHub CLI
+gh workflow run install-tests.yml
+
+# Watch the run
+gh run list --workflow=install-tests.yml --limit 1
+gh run watch <run-id>
+```
+
+### Homebrew Formula Update
+
+After a PyPI release, update the Homebrew tap at `dinesh-git17/homebrew-passfx`:
+
+1. Get the new tarball URL and SHA256:
+
+   ```bash
+   # URL format
+   https://files.pythonhosted.org/packages/.../passfx-X.Y.Z.tar.gz
+
+   # Get SHA256
+   curl -sL <tarball-url> | shasum -a 256
+   ```
+
+2. Update `Formula/passfx.rb`:
+
+   ```ruby
+   url "https://files.pythonhosted.org/packages/.../passfx-X.Y.Z.tar.gz"
+   sha256 "<new-sha256>"
+   ```
+
+3. Update the test block version:
+
+   ```ruby
+   test do
+     assert_match "passfx X.Y.Z", shell_output("#{bin}/passfx --version")
+   end
+   ```
+
+4. Commit and push to the tap repository.
+
+### Post-Release Verification
+
+After release, verify installation works:
+
+```bash
+# Test pip install
+pip install passfx --upgrade
+passfx --version
+
+# Test pipx install
+pipx install passfx --force
+passfx --version
+
+# Test Homebrew (after formula update)
+brew update
+brew upgrade passfx
+passfx --version
+```
+
+### Rollback Procedure
+
+If a release has critical issues:
+
+1. **PyPI**: Use `pip install passfx==X.Y.Z` to pin to previous version (PyPI doesn't allow deletion)
+2. **Homebrew**: Revert the formula in the tap repository
+3. **GitHub**: Mark the release as pre-release or delete the tag
+
+---
+
 ## Git Workflow
 
 ### Commit Format
