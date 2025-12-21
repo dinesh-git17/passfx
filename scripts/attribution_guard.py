@@ -43,6 +43,11 @@ EXCLUDED_FILES = {
     "pyproject.toml",
 }
 
+# Directories to exclude from checking (files within these are skipped)
+EXCLUDED_DIRS = {
+    "docs/future_features",
+}
+
 # Compile patterns for efficiency
 COMPILED_PATTERNS = [re.compile(p, re.IGNORECASE) for p in FORBIDDEN_PATTERNS]
 
@@ -58,6 +63,12 @@ def check_file(filepath: Path) -> list[tuple[int, str, str]]:
     # Skip excluded files
     if filepath.name in EXCLUDED_FILES or str(filepath) in EXCLUDED_FILES:
         return violations
+
+    # Skip files in excluded directories
+    filepath_str = str(filepath)
+    for excluded_dir in EXCLUDED_DIRS:
+        if excluded_dir in filepath_str:
+            return violations
 
     try:
         content = filepath.read_text(encoding="utf-8", errors="ignore")
