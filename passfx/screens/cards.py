@@ -272,51 +272,53 @@ def _validate_cvv(cvv: str) -> tuple[bool, str]:
 
 
 class AddCardModal(ModalScreen[CreditCard | None]):
-    """Modal for adding a new credit card - Operator Grade Secure Write Console."""
+    """Modal for adding a new credit card - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
     ]
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout - compact horizontal design."""
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="card-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE WRITE PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: OPEN", classes="modal-status")
 
-            # Form Body - compact layout
-            with Vertical(id="pwd-form"):
-                # Row 1: Label + Cardholder (side by side)
-                with Horizontal(classes="input-row"):
-                    with Vertical(classes="input-col"):
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Issuer + Cardholder side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
                         yield Label("> ISSUER", classes="input-label")
-                        yield Input(placeholder="CHASE_SAPPHIRE", id="label-input")
-                    with Vertical(classes="input-col"):
+                        yield Input(placeholder="e.g. CHASE_SAPPHIRE", id="label-input")
+                    with Vertical(classes="form-col"):
                         yield Label("> CARDHOLDER", classes="input-label")
                         yield Input(placeholder="NAME ON CARD", id="name-input")
 
-                # Row 2: Card Number (full width)
-                yield Label("> CARD_NUMBER", classes="input-label")
-                yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
+                # Row 2 (Card Number): Full width - secret field
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> CARD_NUMBER", classes="input-label")
+                    yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
 
-                # Row 3: Expiry + CVV (side by side)
-                with Horizontal(classes="input-row"):
-                    with Vertical(classes="input-col"):
+                # Row 3 (Security): Expiry + CVV side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
                         yield Label("> EXPIRY", classes="input-label")
                         yield Input(placeholder="MM/YY", id="expiry-input")
-                    with Vertical(classes="input-col-small"):
+                    with Vertical(classes="form-col-narrow"):
                         yield Label("> CVV", classes="input-label")
                         yield Input(placeholder="•••", password=True, id="cvv-input")
 
-                # Row 4: Notes (full width)
-                yield Label("> NOTES", classes="input-label")
-                yield Input(placeholder="OPTIONAL", id="notes-input")
+                # Row 4 (Notes): Full width at bottom
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> METADATA", classes="input-label")
+                    yield Input(placeholder="OPTIONAL_NOTES", id="notes-input")
 
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
                     r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
@@ -387,7 +389,7 @@ class AddCardModal(ModalScreen[CreditCard | None]):
 
 
 class EditCardModal(ModalScreen[dict | None]):
-    """Modal for editing a credit card - Operator Grade Secure Write Console."""
+    """Modal for editing a credit card - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "cancel", "Cancel"),
@@ -398,8 +400,8 @@ class EditCardModal(ModalScreen[dict | None]):
         self.card = card
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade modal layout - compact horizontal design."""
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        """Create wide-format console panel layout."""
+        with Vertical(id="pwd-modal", classes="card-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
@@ -409,18 +411,18 @@ class EditCardModal(ModalScreen[dict | None]):
                     )
                     yield Static("STATUS: EDIT", classes="modal-status")
 
-            # Form Body - compact layout
-            with Vertical(id="pwd-form"):
-                # Row 1: Label + Cardholder (side by side)
-                with Horizontal(classes="input-row"):
-                    with Vertical(classes="input-col"):
+            # Form Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Issuer + Cardholder side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
                         yield Label("> ISSUER", classes="input-label")
                         yield Input(
                             value=self.card.label,
-                            placeholder="CHASE_SAPPHIRE",
+                            placeholder="e.g. CHASE_SAPPHIRE",
                             id="label-input",
                         )
-                    with Vertical(classes="input-col"):
+                    with Vertical(classes="form-col"):
                         yield Label("> CARDHOLDER", classes="input-label")
                         yield Input(
                             value=self.card.cardholder_name,
@@ -428,36 +430,43 @@ class EditCardModal(ModalScreen[dict | None]):
                             id="name-input",
                         )
 
-                # Row 2: Card Number (full width) - blank to keep
-                yield Label("> CARD_NUMBER [BLANK = KEEP]", classes="input-label")
-                yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
+                # Row 2 (Card Number): Full width - blank to keep
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> CARD_NUMBER [BLANK = KEEP]", classes="input-label")
+                    yield Input(placeholder="•••• •••• •••• ••••", id="number-input")
 
-                # Row 3: Expiry + CVV (side by side)
-                with Horizontal(classes="input-row"):
-                    with Vertical(classes="input-col"):
+                # Row 3 (Security): Expiry + CVV side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
                         yield Label("> EXPIRY", classes="input-label")
                         yield Input(
                             value=self.card.expiry,
                             placeholder="MM/YY",
                             id="expiry-input",
                         )
-                    with Vertical(classes="input-col-small"):
+                    with Vertical(classes="form-col-narrow"):
                         yield Label("> CVV [BLANK = KEEP]", classes="input-label")
                         yield Input(placeholder="•••", password=True, id="cvv-input")
 
-                # Row 4: Notes (full width)
-                yield Label("> NOTES", classes="input-label")
-                yield Input(
-                    value=self.card.notes or "",
-                    placeholder="OPTIONAL",
-                    id="notes-input",
-                )
+                # Row 4 (Notes): Full width at bottom
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> METADATA", classes="input-label")
+                    yield Input(
+                        value=self.card.notes or "",
+                        placeholder="OPTIONAL_NOTES",
+                        id="notes-input",
+                    )
 
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ ABORT ]", id="cancel-button")
                 yield Button(
                     r"\[ ENCRYPT & COMMIT ]", variant="primary", id="save-button"
                 )
+
+    def on_mount(self) -> None:
+        """Focus first input (Issuer field)."""
+        self.query_one("#label-input", Input).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button press."""
@@ -522,7 +531,7 @@ class EditCardModal(ModalScreen[dict | None]):
 
 
 class ViewCardModal(ModalScreen[None]):
-    """Modal for viewing a card - Operator Grade Secure Read Console."""
+    """Modal for viewing a card - Wide Console Panel Layout."""
 
     BINDINGS = [
         Binding("escape", "close", "Close"),
@@ -534,29 +543,29 @@ class ViewCardModal(ModalScreen[None]):
         self.card = card
 
     def compose(self) -> ComposeResult:
-        """Create the Operator-grade view modal layout - compact horizontal design."""
+        """Create wide-format console panel view layout."""
         # Format the card number with spaces
         formatted_number = _format_card_number(self.card.card_number)
 
-        with Vertical(id="pwd-modal", classes="secure-terminal"):
+        with Vertical(id="pwd-modal", classes="card-modal-wide"):
             # HUD Header with status indicator
             with Vertical(classes="modal-header"):
                 with Horizontal(classes="modal-header-row"):
                     yield Static("[ :: SECURE READ PROTOCOL :: ]", id="modal-title")
                     yield Static("STATUS: DECRYPTED", classes="modal-status")
 
-            # Data Display Body - compact layout
-            with Vertical(id="pwd-form"):
-                # Row 1: Issuer + Cardholder (side by side)
-                with Horizontal(classes="input-row"):
-                    with Vertical(classes="input-col"):
+            # Data Display Body - Grid Layout
+            with Vertical(id="pwd-form", classes="pwd-form-grid"):
+                # Row 1 (Identity): Issuer + Cardholder side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
                         yield Label("> ISSUER", classes="input-label")
                         yield Static(
                             f"  {self.card.label}",
                             classes="view-value",
                             id="label-value",
                         )
-                    with Vertical(classes="input-col"):
+                    with Vertical(classes="form-col"):
                         yield Label("> CARDHOLDER", classes="input-label")
                         yield Static(
                             f"  {self.card.cardholder_name}",
@@ -564,33 +573,34 @@ class ViewCardModal(ModalScreen[None]):
                             id="holder-value",
                         )
 
-                # Row 2: Card Number (Secret - full width)
-                yield Label("> CARD_NUMBER", classes="input-label")
-                yield Static(
-                    f"  [#22c55e]{formatted_number}[/]",
-                    classes="view-value secret",
-                    id="number-value",
-                )
+                # Row 2 (Card Number): Full width - secret field
+                with Vertical(classes="form-row form-row-full"):
+                    yield Label("> CARD_NUMBER", classes="input-label")
+                    yield Static(
+                        f"  [#22c55e]{formatted_number}[/]",
+                        classes="view-value secret",
+                        id="number-value",
+                    )
 
-                # Row 3: Expiry + CVV (side by side)
-                with Horizontal(classes="input-row"):
-                    with Vertical(classes="input-col"):
+                # Row 3 (Security): Expiry + CVV side-by-side
+                with Horizontal(classes="form-row form-row-split"):
+                    with Vertical(classes="form-col"):
                         yield Label("> EXPIRY", classes="input-label")
                         yield Static(
                             f"  {self.card.expiry}",
                             classes="view-value",
                             id="expiry-value",
                         )
-                    with Vertical(classes="input-col-small"):
+                    with Vertical(classes="form-col-narrow"):
                         yield Label("> CVV", classes="input-label")
                         yield Static(
                             f"  [#f59e0b]{self.card.cvv}[/]",
-                            classes="view-value secret",
+                            classes="view-value secret-amber",
                             id="cvv-value",
                         )
 
-            # Footer Actions - right aligned
-            with Horizontal(id="modal-buttons"):
+            # Footer Actions - docked bottom, right aligned
+            with Horizontal(id="modal-buttons", classes="modal-footer"):
                 yield Button(r"\[ DISMISS ]", variant="default", id="cancel-button")
                 yield Button(r"\[ COPY NUMBER ]", variant="primary", id="save-button")
 
