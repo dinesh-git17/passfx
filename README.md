@@ -17,6 +17,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+<img
+  src="https://raw.githubusercontent.com/dinesh-git17/passfx/main/assets/screenshot.jpg"
+  alt="PassFX terminal interface showing cyberpunk-themed login screen with matrix rain effect"
+  width="700"
+/>
+
 </div>
 
 ---
