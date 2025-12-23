@@ -29,12 +29,13 @@ class PlatformSecurityError(Exception):
 
 # Windows-specific implementation
 def _get_current_user_sid_windows() -> (  # pragma: no cover
-    tuple[ctypes.c_void_p, int]
+    tuple[ctypes.Array[ctypes.c_ubyte], ctypes.c_void_p, int]
 ):  # pylint: disable=import-outside-toplevel
     """Get the current user's SID on Windows.
 
     Returns:
-        Tuple of (SID pointer, SID length).
+        Tuple of (SID buffer, SID pointer, SID length).
+        The buffer must be kept alive while the pointer is in use.
 
     Raises:
         PlatformSecurityError: If SID cannot be obtained.
@@ -145,7 +146,9 @@ def _get_current_user_sid_windows() -> (  # pragma: no cover
         ):
             raise PlatformSecurityError(f"CopySid failed: {kernel32.GetLastError()}")
 
-        return ctypes.cast(ctypes.byref(sid_buffer), ctypes.c_void_p), sid_length
+        # Return buffer AND pointer - buffer must stay alive while pointer is used
+        sid_ptr_out = ctypes.cast(ctypes.byref(sid_buffer), ctypes.c_void_p)
+        return sid_buffer, sid_ptr_out, sid_length
 
     finally:
         if token_handle:
@@ -270,9 +273,14 @@ def _set_windows_acl(  # pragma: no cover  # pylint: disable=import-outside-topl
     ]
     advapi32.SetFileSecurityW.restype = wintypes.BOOL
 
+    # Declare sid_buffer outside try block so it stays alive for entire function
+    sid_buffer: ctypes.Array[ctypes.c_ubyte] | None = None
+
     try:
         # Get current user's SID
-        sid_ptr, sid_length = _get_current_user_sid_windows()
+        # CRITICAL: sid_buffer must remain referenced while sid_ptr is used.
+        # The pointer is only valid while the underlying buffer exists in memory.
+        sid_buffer, sid_ptr, sid_length = _get_current_user_sid_windows()
 
         # Calculate ACL size
         # ACL header + ACCESS_ALLOWED_ACE (header + mask + SID - 4 bytes for SidStart)
@@ -342,6 +350,9 @@ def _set_windows_acl(  # pragma: no cover  # pylint: disable=import-outside-topl
         raise
     except Exception as e:
         raise PlatformSecurityError(f"Unexpected error setting Windows ACL: {e}") from e
+    finally:
+        # Explicitly delete SID buffer to clean up memory
+        del sid_buffer
 
 
 def secure_file_permissions(path: Path) -> None:
