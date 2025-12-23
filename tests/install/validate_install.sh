@@ -11,7 +11,7 @@ set -euo pipefail
 
 # Configuration
 INSTALL_METHOD="${1:-unknown}"
-EXPECTED_VERSION="1.0.2"
+EXPECTED_VERSION="1.0.3"
 EXIT_CODE=0
 TESTS_RUN=0
 TESTS_PASSED=0

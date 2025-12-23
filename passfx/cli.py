@@ -17,7 +17,7 @@ from passfx.app import PassFXApp
 from passfx.utils.clipboard import emergency_cleanup
 
 # Version constant - kept in sync with pyproject.toml
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 # Help text for --help output
 HELP_TEXT = """\

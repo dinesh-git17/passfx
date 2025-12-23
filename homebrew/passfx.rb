@@ -107,7 +107,7 @@ class Passfx < Formula
 
   test do
     # Verify CLI responds correctly
-    assert_match "passfx 1.0.2", shell_output("#{bin}/passfx --version")
+    assert_match "passfx 1.0.3", shell_output("#{bin}/passfx --version")
 
     # Verify help output contains expected content
     help_output = shell_output("#{bin}/passfx --help")
