@@ -140,7 +140,7 @@ jobs:
           echo "- \`tests/regression/\` - Security invariant locks (~100 tests)" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         if: matrix.python-version == '3.11'
         with:
           files: ./coverage-core.xml
@@ -204,7 +204,7 @@ jobs:
           echo "- \`tests/screens/\` - Credential screen behavior (~50 tests)" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         if: matrix.python-version == '3.11'
         with:
           files: ./coverage-ui.xml
@@ -267,7 +267,7 @@ jobs:
           echo "- \`tests/edge/\` - Failure modes and edge cases (~100 tests)" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         if: matrix.python-version == '3.11'
         with:
           files: ./coverage-utils.xml
