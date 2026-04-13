@@ -27,7 +27,7 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "rich>=14.0.0,<15.0.0",
+    "rich>=14.0.0,<16.0.0",
     "cryptography>=46.0.0,<47.0.0",
     "pyperclip>=1.11.0,<2.0.0",
     "zxcvbn>=4.5.0,<5.0.0",
