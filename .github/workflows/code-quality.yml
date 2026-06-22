@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
@@ -104,7 +104,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -140,7 +140,7 @@ jobs:
           echo "- \`tests/regression/\` - Security invariant locks (~100 tests)" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         if: matrix.python-version == '3.11'
         with:
           files: ./coverage-core.xml
@@ -168,7 +168,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -204,7 +204,7 @@ jobs:
           echo "- \`tests/screens/\` - Credential screen behavior (~50 tests)" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         if: matrix.python-version == '3.11'
         with:
           files: ./coverage-ui.xml
@@ -232,7 +232,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
@@ -267,7 +267,7 @@ jobs:
           echo "- \`tests/edge/\` - Failure modes and edge cases (~100 tests)" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         if: matrix.python-version == '3.11'
         with:
           files: ./coverage-utils.xml
@@ -289,7 +289,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
